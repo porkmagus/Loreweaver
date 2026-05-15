@@ -210,6 +210,203 @@ Decision: accept until upstream workspace packages update major versions.
 
 ---
 
+## Phase1Persistence
+
+Drizzle ORM persistence layer completed for 9 tables.
+
+### Architecture decisions
+- Serial integer PKs chosen over UUIDs for simplicity and join performance.
+- Schema isolated in `apps/api/src/db/schema.ts` with snake_case DB columns.
+- DB client + pool isolated in `apps/api/src/db/client.ts` using `pg` + `drizzle-orm`.
+- Migration output directed to `apps/api/drizzle/` via `drizzle.config.ts`.
+- Seed script kept as a standalone executable: `npx tsx src/seed/index.ts`.
+- JSONB used for flexible metadata (memories, timeline_events, chat_messages).
+- Indexes created on all FK columns for predictable join performance.
+- ON DELETE cascade on character/world relationships; set null on `chat_sessions.user_id`.
+- `text` for long descriptions, `varchar` for short names/roles/titles.
+- Tags stored as plain `text` (comma-separated) rather than arrays for portability.
+
+### Implementation conventions
+- All tables include `created_at`/`updated_at` with `default now()`.
+- Relationships table stores multi-dimensional emotional weights (`trust`, `respect`, `affection`, `rivalry`, `fear`, `alignment`) as `real`.
+- Memories use `importance real` + `is_active boolean` for runtime filtering.
+- Timeline events use `significance integer` + `happened_at` for chronological ordering.
+- Chat sessions link `world_id`, `character_id`, and optional `user_id`.
+- Seed script cleans tables in reverse dependency order before inserting to avoid FK violations.
+- Insert order: users → worlds → characters → lore_entries → memories → relationships → timeline_events → chat_sessions → chat_messages.
+
+### Lessons learned
+- Containers must use `postgres` hostname for DB; host-side scripts must use `localhost`.
+- `tsc` build is required after editing `.ts` files before restarting the container.
+- `docker compose restart` does NOT rebuild the image; use `docker compose up -d --build` after Dockerfile changes.
+- `drizzle-kit generate` creates SQL; `drizzle-kit migrate` (or `push`) applies it.
+- `npx tsx` is the simplest way to run TypeScript seed scripts without separate ts-node config.
+- Drizzle serial PKs return as plain `number` in TypeScript; type inference works cleanly.
+
+### Pitfalls encountered
+- Dockerfile CMD was previously misaligned with `docker-compose.yml` volume mounts, causing container to look for `/app/dist/index.js` at the wrong path. Resolved by ensuring `apps/api/dist/index.js` is copied correctly and CMD matches the production stage layout.
+- Seed script initially failed because `DATABASE_URL` pointed to `postgres` hostname outside containers.
+- Rebuilding `apps/api` package was skipped after seed edits, leaving stale `dist/seed/index.js` in the container.
+- Confusion between `generate` and `migrate` in drizzle-kit caused a temporary state where schema existed but migration SQL had not been produced.
+
+### Verification commands
+```bash
+# Table counts
+docker exec loreweaver_postgres psql -U loreweaver -d loreweaver -c "SELECT 'users', COUNT(*) FROM users UNION ALL SELECT 'worlds', COUNT(*) FROM worlds UNION ALL SELECT 'characters', COUNT(*) FROM characters;"
+
+# API endpoints
+curl -s http://localhost:3001/api/worlds
+curl -s http://localhost:3001/api/characters/3/memories
+```
+
+---
+
+## Phase4Retrieval
+
+Lore ingestion + semantic retrieval pipeline completed and verified end-to-end.
+
+### Architecture decisions
+- **Chunking**: paragraph-aware deterministic chunker in `apps/api/src/services/chunker.ts`. Splits on `\n\n` with a 1500-character soft max and 50-character overlap. No sentence-boundary or semantic splitting.
+- **Embeddings**: OpenAI `text-embedding-3-small` via `openai` SDK in `apps/api/src/services/embedding.ts`. Configurable via `EMBEDDING_MODEL` and `EMBEDDING_DIMENSION` env vars (default 1536). Single provider; no abstraction layer.
+- **Vector store**: Qdrant collection `lore_chunks` created on first upsert with `Cosine` distance. Payload indexes on `worldId` and `loreEntryId` for filtered search.
+- **Deterministic IDs**: `loreEntryId * 10000 + chunkIndex` to guarantee idempotent re-ingestion without duplicate points.
+- **Postgres canonical source**: Qdrant stores only vectors + payload metadata. Lore titles, content, and relationships remain in Postgres.
+
+### Env vars added
+```bash
+OPENAI_API_KEY=<required>
+EMBEDDING_MODEL=text-embedding-3-small  # optional
+EMBEDDING_DIMENSION=1536                  # optional
+```
+
+### Endpoints implemented
+- `POST /api/lore` — create lore entry (title, content, worldId, category, tags)
+- `GET /api/lore/world/:worldId` — list lore by world
+- `POST /api/lore/:id/ingest` — chunk, embed, and upsert to Qdrant
+- `POST /api/search/lore` — semantic search with worldId filter; returns chunks enriched with `entryExists` from Postgres
+
+### Verification performed (2026-05-15)
+1. Docker stack rebuilt and restarted (`docker compose up -d --build api web`)
+2. API health: `GET /api/health` → 200 `{status: "ok"}`
+3. Qdrant health: `GET /collections` → empty collections list, then populated after ingest
+4. Created lore entry for world 2 (id=4)
+5. Ingested lore entry (1 chunk produced)
+6. Verified point `40000` exists in `lore_chunks` with correct payload and 1536-dim vector
+7. Semantic search for `"shattered crown gems Wraithwood"` returned the chunk with score ~0.012 and `entryExists: true`
+8. `npm audit` in `apps/api`: 0 vulnerabilities
+9. `npm test` in `apps/api`: 28 tests passing (chunker + routes)
+
+### Known limitations
+- **No hybrid search**: pure vector similarity only; no BM25 or keyword boost
+- **No reranking**: results returned in raw cosine order
+- **Synchronous ingestion**: no background queue; large lore entries may block the request
+- **Single chunk for short text**: the test lore entry fit in one chunk; multi-chunk behavior is implemented but not yet exercised at scale
+- **No embedding fallback**: if OpenAI is unavailable, ingestion/search fails hard
+- **Scope limited to lore**: characters, timelines, relationships are not yet searchable
+
+### Files touched in Phase 4
+- `apps/api/src/services/chunker.ts` (deterministic chunking)
+- `apps/api/src/services/embedding.ts` (OpenAI embedding with env config)
+- `apps/api/src/services/qdrant.ts` (collection management, upsert, search)
+- `apps/api/src/services/ingestService.ts` (orchestration: chunk → embed → upsert)
+- `apps/api/src/routes/lore.ts` (lore CRUD + ingest endpoint)
+- `apps/api/src/routes/search.ts` (semantic search endpoint)
+- `packages/shared/src/index.ts` (removed broken `types.js` export)
+- `README.md` (status, env vars, retrieval limits, verification steps)
+- `MEMORY.md` (this section)
+
+---
+
+## Phase5CharacterChat
+
+Character chat + persistent memory completed and verified end-to-end.
+
+### Architecture decisions
+- **Chat sessions**: stored in `chat_sessions` table linking `character_id`, `world_id`, and optional `user_id`. `getOrCreateSession()` returns the most recently updated matching session to preserve continuity.
+- **Messages**: stored in `chat_messages` with `role` (user/assistant/system) and `content`. `JSONB` metadata column reserved for future token counts, model info, or source citations.
+- **Prompt assembly**: `buildChatContext()` performs parallel retrieval from Postgres (memories, relationships, timeline, history) and Qdrant (vector lore search). Falls back to DB lore if vector search fails (e.g., no API key).
+- **Structured prompt sections**: SYSTEM / RELEVANT LORE / MEMORIES / RELATIONSHIPS / TIMELINE EVENTS / CONVERSATION HISTORY / TASK / USER. History truncated to last 6 messages to control token usage.
+- **LLM integration**: OpenAI SDK with configurable `CHAT_MODEL` (default `gpt-4o-mini`). Graceful fallback to a simulated in-character response when `OPENAI_API_KEY` is absent, preserving testability and local development.
+- **No streaming**: responses delivered synchronously to keep the endpoint simple and frontend state predictable.
+
+### Endpoints implemented
+- `POST /api/chat/character/:id` — send message; returns `{reply, sessionId}`
+- `GET /api/chat/character/:id/history?sessionId=<n>` — fetch persisted messages for a session
+
+### Frontend
+- `Chat.tsx` page: world selector, character selector, message list, textarea input, loading indicator, error banner
+- `useApi` hook powers data fetching; `apiPost` handles chat submission
+- Messages optimistically appended to local state before API confirmation; refetch history in background for durability
+
+### Verification performed (2026-05-15)
+1. Docker stack rebuilt and restarted (`docker compose up -d --build api web`)
+2. API health: `GET /api/health` -> 200 `{status: "ok"}`
+3. Created world (id=1), character (id=1), lore entry (id=1)
+4. Ingested lore entry (1 chunk produced in Qdrant)
+5. Sent chat message: `POST /api/chat/character/1` -> 200 with `reply` and `sessionId`
+6. Verified chat history: `GET /api/chat/character/1/history?sessionId=1` -> array of messages
+7. `npm test` in `apps/api`: 34 tests passing (all suites green)
+8. `npm run build` in `apps/web`: 1773 modules transformed, no errors
+
+### Known limitations
+- **Relationship updates**: keyword-based heuristic scoring per message; not semantic or LLM-driven
+- **Timeline mutation**: deduplicated by title within 5-minute window; may miss genuinely new similar events
+- **Memory dedup**: deduplicated by exact content within 24-hour window; paraphrased memories may still duplicate
+- **Scoring bounded**: per-axis raw delta capped at ±5 per message with dampening after first keyword hit
+- **No user authentication**: `userId` is optional in sessions; multi-user separation is manual
+- **History truncation hardcoded**: last 6 messages only; no dynamic context window management
+- **Simulated fallback is basic**: when OpenAI key is absent, the response is a template string, not a local LLM
+- **No streaming**: large responses may feel slow; adding SSE or chunked delivery is a future optimization
+- **No retry logic**: transient OpenAI failures return 500; client must retry
+
+### Files touched in Phase 5
+- `apps/api/src/services/chatService.ts` (session, messages, context building, prompt assembly, LLM call)
+- `apps/api/src/routes/chat.ts` (chat POST + history GET endpoints)
+- `apps/api/src/db/schema.ts` (chat_sessions, chat_messages tables)
+- `apps/web/src/pages/Chat.tsx` (full chat UI)
+- `apps/web/src/components/ui/Spinner.tsx` (loading spinner)
+- `apps/api/src/__tests__/routes.test.ts` (chat endpoint tests, listCharacters mock fix)
+- `README.md` (Phase 5 status, verification steps, chat config notes)
+- `MEMORY.md` (this section)
+
+---
+
+## Phase7Polish
+
+UI polish + deployment preparation + documentation enrichment completed and verified.
+
+### Scope
+- README polish (Quick Start, tech stack, architecture decisions, env vars, screenshots placeholders)
+- Deployment docs (`docs/deployment.md`): VPS prerequisites, Docker Compose runtime, Caddy setup, troubleshooting table, production checklist
+- Demo script (`docs/demo-script.md`): 15-step walkthrough with curl commands and known limitations
+- Screenshot checklist (`docs/screenshots.md`): 13-item capture guide with prerequisites and README integration
+- Production environment template (`.env.production.example`): all production variables with safe defaults
+- Docker Compose production readiness: resource limits (512M api/pg/qdrant, 256M web), log rotation (json-file, 10m/3), restart `unless-stopped`
+- Caddy reverse proxy (`infra/caddy/Caddyfile`): automatic TLS, gzip/zstd, JSON logging, www redirect
+- UI polish pass: auto-scroll in chat, context-refresh spinners, loading/empty/error states verified across all pages
+- Roadmap and memory updates
+
+### Chat UX improvements
+- `useRef` + `scrollIntoView` for auto-scroll on new messages and sending state
+- `contextRefreshing` state triggers mini spinners on Relationships/Timeline/Memories panel headers
+- `Spinner` component accepts `className` for size override
+
+### Files touched in Phase 7
+- `README.md` (screenshots section, status update)
+- `docker-compose.yml` (resource limits, log rotation)
+- `docs/deployment.md` (full rewrite)
+- `docs/demo-script.md` (full rewrite)
+- `docs/screenshots.md` (new)
+- `docs/roadmap.md` (Phase 7 detail)
+- `.env.production.example` (new)
+- `infra/caddy/Caddyfile` (new)
+- `apps/web/src/pages/Chat.tsx` (auto-scroll, context spinners)
+- `apps/web/src/components/ui/Spinner.tsx` (className override)
+- `MEMORY.md` (this section)
+- `TASK.md` (status update)
+
+---
+
 ## RuntimeMantra
 
 Preserve momentum.

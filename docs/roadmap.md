@@ -36,6 +36,12 @@
 - Timeline system
 
 # Phase 7
-- UI polish
-- Deployment
-- Documentation
+- README polish (Quick Start, tech stack, architecture decisions, env vars)
+- Deployment docs (VPS + Docker Compose + Caddy step-by-step guide)
+- Demo script (15-step walkthrough with curl commands)
+- Screenshot checklist and capture guide
+- Production environment template (`.env.production.example`)
+- Docker Compose production readiness (resource limits, log rotation)
+- Caddy reverse proxy configuration (`infra/caddy/Caddyfile`)
+- UI polish pass (empty states, loading states, error states, responsive gaps)
+- Roadmap and memory updates

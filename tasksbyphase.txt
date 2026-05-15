@@ -1,0 +1,523 @@
+# TASK.md
+
+# Current Objective
+
+Complete Phase 1: Database Schema + Seed Data.
+
+## Scope
+
+Implement the foundational persistence layer.
+
+## Required Tables
+
+- users
+- worlds
+- characters
+- lore_entries
+- memories
+- relationships
+- timeline_events
+- chat_sessions
+- chat_messages
+
+## Requirements
+
+- use Drizzle ORM unless another ORM is already established
+- create migrations
+- configure database connection handling
+- create seed scripts
+- seed one demo world
+- seed two demo characters
+- seed relationship state
+- seed timeline events
+
+## Required API Endpoints
+
+- GET /worlds
+- GET /worlds/:id
+- GET /worlds/:id/characters
+- GET /characters/:id
+- GET /characters/:id/timeline
+- GET /characters/:id/memories
+
+## Constraints
+
+- no auth
+- no AI generation
+- no vector ingestion
+- no frontend redesign
+- preserve Docker runtime
+
+## Success Criteria
+
+- migrations run successfully
+- seed script works
+- demo data loads
+- API returns world data
+- API returns character data
+- README updated
+- MEMORY.md updated
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# TASK.md
+
+# Current Objective
+
+Complete Phase 2: Backend API Layer.
+
+## Scope
+
+Expand the Fastify API into a structured application backend.
+
+## Required Work
+
+Implement:
+- route organization
+- service layer
+- schema validation
+- typed API responses
+- structured error handling
+- request logging
+
+## Required Routes
+
+- POST /worlds
+- POST /characters
+- POST /lore
+- GET /timeline
+- GET /relationships
+
+## Requirements
+
+- use Zod validation
+- use typed response structures
+- keep routes thin
+- move business logic into services
+
+## Constraints
+
+- no AI generation
+- no streaming
+- no auth
+- no websocket systems
+- avoid unnecessary abstractions
+
+## Success Criteria
+
+- API routes stable
+- validation functioning
+- services modularized
+- logging operational
+- types pass
+- docker runtime stable
+- MEMORY.md updated
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# TASK.md
+
+# Current Objective
+
+Complete Phase 3: Frontend Application Shell.
+
+## Scope
+
+Build the primary frontend application structure.
+
+## Required Pages
+
+- dashboard
+- worlds
+- character profiles
+- lore viewer
+- timeline viewer
+- placeholder chat interface
+
+## Requirements
+
+Use:
+- React Router
+- Tailwind
+- shadcn/ui
+
+Implement:
+- layouts
+- sidebar navigation
+- responsive UI
+- API integration
+- loading/error states
+
+## Constraints
+
+- no AI chat yet
+- no streaming
+- no advanced animation systems
+- avoid overengineering frontend state
+
+## Success Criteria
+
+- pages navigable
+- API data visible
+- responsive layouts working
+- dark mode functioning
+- screenshot-worthy UI baseline established
+- MEMORY.md updated
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# TASK.md
+
+# Current Objective
+
+Complete Phase 4: Lore Ingestion + Retrieval Pipeline.
+
+## Scope
+
+Implement semantic retrieval infrastructure.
+
+## Required Work
+
+Implement:
+- lore upload
+- markdown/text ingestion
+- chunking pipeline
+- embedding generation
+- Qdrant storage
+- retrieval endpoint
+
+## Requirements
+
+Store:
+- raw lore in Postgres
+- embeddings in Qdrant
+
+Metadata:
+- worldId
+- loreEntryId
+- chunkIndex
+- semantic identifiers
+
+## Required Endpoints
+
+- POST /lore/upload
+- POST /search/lore
+
+## Constraints
+
+- no AI chat generation yet
+- no autonomous retrieval loops
+- avoid oversized chunking
+- preserve deterministic flows
+
+## Success Criteria
+
+- lore uploads successfully
+- chunks generated
+- embeddings stored
+- semantic retrieval operational
+- retrieval quality reasonable
+- docker runtime stable
+- MEMORY.md updated
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# TASK.md
+
+# Current Objective
+
+Complete Phase 5: Character Chat + Persistent Memory.
+
+## Scope
+
+Implement grounded AI conversation system.
+
+## Required Work
+
+Build:
+- chat endpoint
+- retrieval orchestration
+- prompt assembly
+- memory integration
+- persistent message storage
+
+## Prompt Context Must Include
+
+- character profile
+- relevant lore
+- recent memories
+- relationship state
+- recent messages
+- timeline context
+
+## Requirements
+
+- retrieval-augmented prompting
+- structured prompt assembly
+- deterministic memory handling
+- message persistence
+- response validation
+
+## Constraints
+
+- avoid autonomous recursion
+- avoid agent swarms
+- avoid giant prompts
+- avoid uncontrolled context injection
+
+## Success Criteria
+
+- character chat operational
+- lore retrieval functioning
+- persistent memory functioning
+- chat survives refresh
+- generation quality coherent
+- MEMORY.md updated
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# TASK.md
+
+# Current Objective
+
+Complete Phase 6: Relationship + Timeline Systems.
+
+## Scope
+
+Implement persistent emotional and historical state systems.
+
+## Required Work
+
+Implement:
+- relationship scoring
+- relationship persistence
+- timeline event generation
+- memory extraction
+- semantic summaries
+
+## Relationship Fields
+
+- trust
+- respect
+- fear
+- affection
+- rivalry
+
+## Timeline Types
+
+- conversation
+- discovery
+- alliance
+- betrayal
+- conflict
+- lore_reveal
+
+## Requirements
+
+- JSON structured extraction
+- validated persistence
+- visible frontend state
+- chronological timeline rendering
+
+## Constraints
+
+- avoid overcomplicated simulation
+- avoid uncontrolled emotional drift
+- preserve deterministic state transitions
+
+## Success Criteria
+
+- relationships persist
+- timeline updates automatically
+- memory summaries generated
+- frontend displays state correctly
+- MEMORY.md updated
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# TASK.md
+
+# Current Objective
+
+Complete Phase 7: Polish + Deployment Preparation.
+
+## Scope
+
+Prepare the project for public presentation and deployment.
+
+## Required Work
+
+Implement:
+- README improvements
+- screenshots
+- deployment documentation
+- environment documentation
+- cleanup/refactors
+- UI polish
+- error handling improvements
+
+## Requirements
+
+Deployment:
+- Docker Compose
+- reverse proxy support
+- production environment config
+
+Documentation:
+- architecture
+- deployment
+- demo flow
+- setup instructions
+
+## Constraints
+
+- no major rewrites
+- no feature creep
+- preserve stable systems
+
+## Success Criteria
+
+- project deploys cleanly
+- docs complete
+- screenshots ready
+- UI polished
+- demo flow functional
+- repository presentation professional
+- MEMORY.md updated
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

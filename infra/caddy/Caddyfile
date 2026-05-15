@@ -1,0 +1,33 @@
+# Loreweaver production reverse proxy
+# Place this file at /etc/caddy/Caddyfile or use it with docker compose
+#
+# Quick start on a VPS:
+# 1. Install Caddy: https://caddyserver.com/docs/install
+# 2. Replace loreweaver.example.com with your domain
+# 3. Point DNS A record to your server IP
+# 4. Run: caddy adapt --config /etc/caddy/Caddyfile && caddy run
+# 5. Caddy automatically provisions TLS via Let's Encrypt
+
+loreweaver.example.com {
+	# Frontend
+	reverse_proxy web:5173
+
+	# API
+	handle /api/* {
+		reverse_proxy api:3001
+	}
+
+	# Enable compression
+	encode gzip zstd
+
+	# Logging
+	log {
+		output file /var/log/caddy/loreweaver.access.log
+		format json
+	}
+}
+
+# Optional: redirect www to apex
+www.loreweaver.example.com {
+	redir https://loreweaver.example.com{uri} permanent
+}

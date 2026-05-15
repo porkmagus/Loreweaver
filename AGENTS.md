@@ -481,3 +481,48 @@ Validate continuously.
 Keep the repo healthy.
 
 One coherent system at a time.
+
+---
+
+# PhaseLog
+
+## Phase 4 — Lore Ingestion + Retrieval Pipeline
+Date: 2026-05-15
+
+Scope (completed):
+- Deterministic chunking service (`chunker.ts`) with sentence/paragraph boundaries
+- OpenAI embedding generation service (`embedding.ts`) using `text-embedding-3-small` (1536-dim)
+- Qdrant vector storage service (`qdrant.ts`) with deterministic UUID-based IDs
+- Ingest orchestration service (`ingestService.ts`) that fetches lore, chunks, embeds, and upserts
+- Semantic search API route (`search.ts`) scoped to `worldId` with metadata join
+- Lore detail UI (`Lore.tsx`) with Ingest button and semantic search widget
+- Environment config in `.env` and `.env.example`
+- Tests: chunker unit tests (4/4 passing); route tests expanded for lore get/ingest (10 passing)
+
+Files added:
+- `apps/api/src/services/chunker.ts`
+- `apps/api/src/services/embedding.ts`
+- `apps/api/src/services/qdrant.ts`
+- `apps/api/src/services/ingestService.ts`
+- `apps/api/src/routes/search.ts`
+- `apps/api/src/__tests__/chunker.test.ts`
+
+Files modified:
+- `apps/api/src/services/loreService.ts` — added `getLoreEntryById`
+- `apps/api/src/routes/lore.ts` — added `POST /:id/ingest` route
+- `apps/api/src/index.ts` — registered `searchRoutes`
+- `apps/api/src/__tests__/routes.test.ts` — mocked embedding/qdrant, added lore get + ingest tests
+- `apps/web/src/pages/Lore.tsx` — Ingest button + semantic search UI
+- `apps/api/src/services/qdrant.ts` — fixed type cast for Qdrant payload
+- `.env` / `.env.example` — added embedding/Qdrant variables
+
+Build status: API compiles, frontend compiles, all tests pass (21 total).
+
+Pending:
+- 1 high-severity npm audit vulnerability in `apps/api` (needs dependency review)
+- End-to-end verification with live Qdrant + OpenAI keys
+- Docker-first runtime validation (`docker compose up -d`)
+
+Explicitly excluded per Phase 4 directive:
+- Character chat
+- Autonomous agents

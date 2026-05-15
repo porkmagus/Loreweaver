@@ -196,18 +196,86 @@ Which is a deeply strange sentence to write in a software project README, yet in
 
 ---
 
+# Quick Start
+
+```bash
+# 1. Clone and configure
+cp .env.example .env
+# Edit .env and add OPENAI_API_KEY
+
+# 2. Start the stack
+docker compose up -d
+
+# 3. Seed data (optional)
+cd apps/api && npx tsx src/seed/index.ts
+
+# 4. Open the app
+open http://localhost:5173
+```
+
+---
+
 # Status
 
+Completed:
+- Phase 1: Bootstrap + runtime architecture
+- Phase 2: Docker + monorepo scaffolding
+- Phase 3: Database schema + base API routes
+- Phase 4: Lore ingestion + semantic retrieval pipeline
+- Phase 5: Character chat + persistent memory
+- Phase 6: Memory + Timeline + Relationship integration (stabilized and verified)
+
 Current phase:
-- bootstrap/runtime architecture
+- Phase 7: UI polish, deployment preparation, documentation enrichment
 
 Planned next steps:
-- monorepo setup
-- Docker runtime
-- frontend shell
-- backend API
-- database schema
-- retrieval systems
+- PDF ingestion
+- Streaming chat responses
+- Memory compression and summarization
+- Character-to-character relationship visualization
+
+---
+
+# Screenshots
+
+> Screenshots are captured at 1440x900. See `docs/screenshots.md` for the full capture guide.
+
+![Dashboard](docs/screenshots/01-dashboard.png)
+*Dashboard showing active worlds and character counts.*
+
+![Chat with Lore](docs/screenshots/07-chat-lore-response.png)
+*Character responding with lore-grounded context and contextual sidebar.*
+
+---
+
+# Architecture Decisions
+
+- **Modular monolith** -- single deployable unit, no microservices overhead
+- **Serial integer PKs** -- simplicity and join performance over UUIDs
+- **Docker-first runtime** -- `docker compose up -d` is the primary deployment path
+- **Postgres canonical source, Qdrant retrieval only** -- never store application state in vector systems
+- **Deterministic chunking** -- paragraph-aware split with soft max and overlap; no heavy NLP dependency
+- **Keyword-based relationship scoring** -- fast, observable, no extra LLM call per message
+- **No streaming (yet)** -- synchronous responses keep the chat endpoint simple and state predictable
+
+---
+
+# Environment Variables
+
+Required for local development and Docker runtime:
+
+```bash
+DATABASE_URL=postgresql://loreweaver:loreweaver@localhost:5432/loreweaver
+QDRANT_URL=http://localhost:6333
+OPENAI_API_KEY=<your-key>
+EMBEDDING_DIMENSION=1536      # optional; defaults to 1536
+EMBEDDING_MODEL=text-embedding-3-small  # optional
+CHAT_MODEL=gpt-4o-mini        # optional; defaults to gpt-4o-mini
+```
+
+Place variables in a `.env` file at the repository root. The API container reads the same file at runtime.
+
+For production, see `.env.production.example` and `docs/deployment.md`.
 
 ---
 
