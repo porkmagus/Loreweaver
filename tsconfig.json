@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "node16",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@loreweaver/shared": ["./packages/shared/src/index.ts"]
+    }
+  },
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./apps/api" },
+    { "path": "./apps/web" }
+  ]
+}

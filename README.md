@@ -77,12 +77,18 @@ loreweaver/
 ├── MEMORY.md
 ├── prompting.md
 ├── ARCHITECTURE.md
+├── BOOTSTRAP.md
 ├── README.md
 ├── apps/
+│   ├── api/
+│   └── web/
 ├── packages/
-├── docs/
+│   └── shared/
 ├── infra/
-└── skills/
+│   ├── docker/
+│   ├── caddy/
+│   └── scripts/
+└── docs/
 ```
 
 ---

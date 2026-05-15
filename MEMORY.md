@@ -191,6 +191,25 @@ Optimize only after stability.
 
 ---
 
+## BootstrapHistory
+
+Phase 0 bootstrap completed:
+- monorepo structure established (apps/api, apps/web, packages/shared)
+- Docker Compose stack operational (postgres, qdrant, api, web)
+- all container healthchecks passing
+- API health endpoint verified at /api/health
+- web frontend serving on port 5173
+- .env template created and activated
+- npm overrides added for fast-uri and esbuild to reduce audit surface
+- repository docs reorganized per BOOTSTRAP.md (docs/, skills/)
+
+Remaining audit items:
+- fastify 4.27.0: 1 high (requires fastify@5.8.5, breaking change)
+- vite 5.x: 1 moderate (requires vite@8.0.13, breaking change)
+Decision: accept until upstream workspace packages update major versions.
+
+---
+
 ## RuntimeMantra
 
 Preserve momentum.
