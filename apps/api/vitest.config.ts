@@ -5,5 +5,6 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     pool: 'forks',
+    exclude: ['dist/**', 'node_modules/**'],
   },
 });

@@ -1,6 +1,8 @@
-# Loreweaver
+# Loreweaver v0.1.0
 
 AI-native persistent storytelling and memory platform.
+
+> **Portfolio-ready MVP.** A full-stack AI application demonstrating retrieval-augmented generation (RAG), persistent conversational memory, semantic search, and Docker-first deployment. Built with Fastify + PostgreSQL + Qdrant + React + Tailwind, fully tested (44 unit/integration tests + E2E smoke suite), and deployable on a single VPS via Docker Compose.
 
 Built as an experimental long-memory narrative system combining:
 - semantic retrieval
@@ -203,15 +205,38 @@ Which is a deeply strange sentence to write in a software project README, yet in
 cp .env.example .env
 # Edit .env and add OPENAI_API_KEY
 
-# 2. Start the stack
+# 2. Install dependencies
+npm install
+
+# 3. Start the stack
 docker compose up -d
 
-# 3. Seed data (optional)
+# 4. Seed data (optional)
 cd apps/api && npx tsx src/seed/index.ts
 
-# 4. Open the app
+# 5. Open the app
 open http://localhost:5173
 ```
+
+---
+
+# Test Commands
+
+```bash
+# Run all unit + integration tests (API layer)
+npm run test:unit
+
+# Run type checking across all workspaces
+npm run typecheck
+
+# Run E2E smoke tests (requires dev servers running)
+npm run test:e2e
+
+# Full verification pipeline
+npm run verify
+```
+
+The API test suite covers: lore chunking, relationship scoring, route validation, lore ingestion, semantic search, and chat-driven memory/timeline/relationship persistence. 44 tests run in ~500ms.
 
 ---
 
@@ -224,9 +249,7 @@ Completed:
 - Phase 4: Lore ingestion + semantic retrieval pipeline
 - Phase 5: Character chat + persistent memory
 - Phase 6: Memory + Timeline + Relationship integration (stabilized and verified)
-
-Current phase:
-- Phase 7: UI polish, deployment preparation, documentation enrichment
+- Phase 7: Final release pass — stabilization, polish, deployment-readiness, and testing
 
 Planned next steps:
 - PDF ingestion

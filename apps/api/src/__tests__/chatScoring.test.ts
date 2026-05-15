@@ -91,3 +91,43 @@ describe('clampScore', () => {
     expect(clampScore(-1, 0, 1)).toBe(0);
   });
 });
+
+describe('scoreChatRelationship edge cases', () => {
+  it('intensifies positive delta with intensifier', () => {
+    const d1 = scoreChatRelationship('I trust you.');
+    const d2 = scoreChatRelationship('I completely trust you.');
+    expect(d2.trust).toBeGreaterThan(d1.trust);
+    expect(d2.trust).toBeLessThanOrEqual(5);
+  });
+
+  it('negates trust when negator precedes keyword', () => {
+    const d = scoreChatRelationship('I do not trust you.');
+    expect(d.trust).toBeLessThanOrEqual(0);
+    expect(d.trust).toBeGreaterThanOrEqual(-5);
+  });
+
+  it('handles empty string', () => {
+    const d = scoreChatRelationship('');
+    expect(d.trust).toBe(0);
+    expect(d.affection).toBe(0);
+  });
+});
+
+describe('extractSummary edge cases', () => {
+  it('handles empty string gracefully', () => {
+    const s = extractSummary('');
+    expect(s.topic).toBe('');
+    expect(s.significance).toBe(1);
+  });
+
+  it('clamps significance at 10 even with many intensifiers', () => {
+    const s = extractSummary('very very very very very strongly strongly strongly war death betrayal secret reveal');
+    expect(s.significance).toBeGreaterThanOrEqual(8);
+    expect(s.significance).toBeLessThanOrEqual(10);
+  });
+
+  it('falls back to first tokens when no capitalized words exist', () => {
+    const s = extractSummary('the quick brown fox jumps over');
+    expect(s.topic).toBe('the quick brown fox jumps');
+  });
+});

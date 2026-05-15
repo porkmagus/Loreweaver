@@ -1,6 +1,6 @@
 {
   "name": "loreweaver",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "AI-native persistent storytelling and memory platform",
   "type": "module",
@@ -11,9 +11,10 @@
   "scripts": {
     "dev": "docker compose up -d",
     "build": "npm run build --workspaces",
-    "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test --workspace=apps/api && npm run test:e2e --workspace=apps/web --if-present",
+    "test:e2e": "npm run test:e2e --workspace=apps/web --if-present",
+    "verify": "npm run typecheck --workspaces --if-present && npm run test",
     "clean": "rm -rf apps/*/node_modules apps/*/dist packages/*/node_modules packages/*/dist node_modules"
   },
   "devDependencies": {

@@ -2,33 +2,34 @@
 
 # Current Objective
 
-Complete Phase 7: Polish + Deployment Preparation.
+Complete the Final Release Pass for Loreweaver v0.1.0 Portfolio MVP.
 
-## Scope
+This is a stabilization, polish, deployment-readiness, and testing phase.
 
-Prepare the project for public GitHub presentation, local demo reliability, and simple VPS deployment.
+It is NOT a feature expansion phase.
 
-This phase is about polish, documentation, demo readiness, and deployment preparation.
+---
 
-It is not a feature-expansion phase.
-
-## Required Work
+# Scope
 
 Complete:
 
 - README polish
 - deployment documentation
 - demo script
-- screenshot guide or screenshot placeholders
+- screenshot checklist/placeholders
 - production environment notes
 - Docker Compose production readiness review
 - Caddy/reverse proxy example
 - UI polish pass
 - empty/loading/error states
 - final verification checklist
-- MEMORY.md final phase update
+- release-quality test pyramid
+- MEMORY.md final release update
 
-## Documentation Requirements
+---
+
+# Documentation Requirements
 
 Update or create:
 
@@ -48,15 +49,18 @@ README must include:
 - quickstart
 - environment variables
 - development commands
+- test commands
 - demo flow
 - screenshots section
 - deployment overview
 - known limitations
 - portfolio/resume bullet
 
-## Deployment Requirements
+---
 
-Document simple deployment using:
+# Deployment Requirements
+
+Document deployment using:
 
 - VPS
 - Docker Compose
@@ -70,11 +74,13 @@ Include:
 - Postgres persistence notes
 - Qdrant persistence notes
 - backup notes
-- basic troubleshooting
+- troubleshooting notes
 
 Do not require Kubernetes.
 
-## UI Polish Requirements
+---
+
+# UI Polish Requirements
 
 Review and improve:
 
@@ -83,7 +89,8 @@ Review and improve:
 - character profile
 - chat page
 - lore ingestion/search page
-- timeline/memory display
+- timeline display
+- memory display
 
 Add or improve:
 
@@ -95,39 +102,109 @@ Add or improve:
 
 Keep polish targeted.
 
-Do not redesign the entire frontend.
+Do not redesign the frontend.
 
-## Screenshot/Demo Requirements
+---
 
-Create a documented screenshot checklist:
+# Testing Requirements
 
-- dashboard/status screen
-- world overview
-- character profile
-- lore upload/search
-- chat with lore-grounded response
-- relationship panel
-- timeline panel
-- memory panel
+Implement a minimal release-quality test pyramid.
 
-Create a demo script showing:
+## Unit Tests
 
-1. start app
-2. open dashboard
-3. open character
-4. add lore
-5. ingest lore
-6. ask character about lore
-7. show relationship update
-8. show timeline event
-9. show memory persistence
-10. refresh and show persisted chat
+Add only for critical pure logic not already covered:
 
-## Constraints
+- chunking
+- relationship scoring
+- memory dedup
+- timeline dedup
+- prompt assembly helpers
+
+---
+
+## Integration Tests
+
+Implement backend integration tests for:
+
+- lore creation → ingestion → semantic retrieval
+- chat → persistence → memory creation
+- chat → relationship update
+- chat → timeline event creation
+
+---
+
+## E2E Smoke Tests
+
+Implement minimal Playwright smoke tests covering:
+
+### Main Flow
+
+- app loads
+- dashboard/status visible
+- open character chat
+- send message
+- message appears
+- relationship/timeline/memory sidebar updates
+
+### Optional Lore Flow
+
+- add lore
+- ingest lore
+- search lore
+- search result appears
+
+---
+
+# Testing Constraints
+
+Do not:
+
+- introduce large testing architecture
+- add visual regression testing
+- add broad coverage thresholds
+- add Cypress if Playwright is used
+- rewrite existing tests unnecessarily
+
+Prefer:
+- deterministic tests
+- stable tests
+- low runtime overhead
+
+Simulated mode is acceptable for LLM behavior.
+
+---
+
+# Known MVP Limitation To Document
+
+The frontend currently refetches relationship, timeline, and memory panels after chat with a short delay to allow backend writes to complete.
+
+Document future improvement:
+
+Return updated sidebar context payload directly from the chat response instead of delayed frontend refetch.
+
+---
+
+# Package Script Goals
+
+Add or verify scripts for:
+
+- build
+- lint
+- typecheck
+- test
+- test:unit
+- test:integration
+- test:e2e
+- verify
+
+Adjust scripts to current workspace/package manager setup.
+
+---
+
+# Constraints
 
 Do not implement:
 
-- new major features
 - auth
 - billing
 - multiplayer
@@ -136,6 +213,7 @@ Do not implement:
 - background jobs
 - Kubernetes
 - major architecture rewrites
+- advanced provider abstraction
 - advanced emotional simulation
 - complex reranking
 
@@ -143,38 +221,60 @@ Preserve:
 
 - existing Docker runtime
 - existing API conventions
-- existing database schema unless minor fixes are required
+- existing database schema unless minor fixes required
 - existing retrieval pipeline
 - existing chat flow
-- working builds
 - passing tests
+- type safety
 
-## Known Limitation To Document
+---
 
-The frontend currently refetches relationship, timeline, and memory panels after chat with a short delay to allow backend writes to complete.
+# Verification Requirements
 
-Document this as a known MVP limitation and future improvement:
+Run and report:
 
-- future improvement: return updated context panel payload directly from chat response.
+- docker compose up -d
+- npm run build
+- npm run lint if configured
+- npm run typecheck if configured
+- npm test
+- npm run test:e2e if added
+- manual demo flow verification
 
-## Success Criteria
+---
 
-- [x] README is portfolio-ready
-- [x] deployment docs are usable
-- [x] demo script is complete
-- [x] screenshot checklist exists
-- [x] .env.example is complete
-- [x] MEMORY.md updated
-- [x] UI has reasonable empty/loading/error states
-- [x] docker compose up -d works
-- [x] docker compose config validates
-- [x] project is ready for GitHub presentation
+# Success Criteria
 
-### Verification
+- README is portfolio-ready
+- deployment docs are usable
+- demo script is complete
+- screenshot checklist exists
+- .env.example is complete
+- MEMORY.md updated
+- UI has loading/error/empty states
+- integration tests cover core backend flows
+- E2E smoke tests cover demo path
+- docker compose runtime healthy
+- all builds pass
+- all tests pass
+- repository ready for GitHub presentation
+- repository ready for portfolio/demo usage
 
-- `docker compose config` passes (no syntax errors)
-- All docs cross-linked and consistent
-- No application code builds broken (only UI polish edits: Chat.tsx, Spinner.tsx)
-- Resource limits and log rotation added to docker-compose.yml
-- Caddyfile ready for production reverse proxy
-- Screenshot placeholders added to README
+---
+
+# Final Deliverables
+
+Provide:
+
+- release summary
+- changed files
+- deployment readiness notes
+- known limitations
+- verification command results
+- recommended git tag command
+
+Recommended tag target:
+
+```bash
+git tag v0.1.0-portfolio-mvp
+```
