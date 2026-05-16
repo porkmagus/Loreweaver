@@ -1,6 +1,22 @@
-import { ImageOff } from 'lucide-react';
+import { ImageOff, Sparkles, AlertTriangle, Ban } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { visualStatusLabel, type VisualAsset } from '@/lib/visualAssets';
+import { visualStatusLabel, visualStatusShort, type VisualAsset } from '@/lib/visualAssets';
+
+function StatusDot({ asset }: { asset: VisualAsset | null }) {
+  if (!asset) return <span className="h-1.5 w-1.5 rounded-full bg-ghost" />;
+  if (asset.status === 'generated') return <span className="h-1.5 w-1.5 rounded-full bg-gold" />;
+  if (asset.status === 'failed') return <span className="h-1.5 w-1.5 rounded-full bg-fear" />;
+  if (asset.status === 'disabled') return <span className="h-1.5 w-1.5 rounded-full bg-dust" />;
+  return <span className="h-1.5 w-1.5 rounded-full bg-ghost" />;
+}
+
+function StatusIcon({ asset }: { asset: VisualAsset | null }) {
+  if (!asset || asset.status === 'fallback') return <ImageOff className="h-3 w-3 shrink-0 text-dust" strokeWidth={1.5} />;
+  if (asset.status === 'generated') return <Sparkles className="h-3 w-3 shrink-0 text-gold" strokeWidth={1.5} />;
+  if (asset.status === 'failed') return <AlertTriangle className="h-3 w-3 shrink-0 text-fear" strokeWidth={1.5} />;
+  if (asset.status === 'disabled') return <Ban className="h-3 w-3 shrink-0 text-dust" strokeWidth={1.5} />;
+  return <ImageOff className="h-3 w-3 shrink-0 text-dust" strokeWidth={1.5} />;
+}
 
 export function WorldBannerFrame({
   asset,
@@ -25,7 +41,7 @@ export function WorldBannerFrame({
       <div className="relative flex h-full min-h-[220px] flex-col justify-end p-inner">
         <div className="max-w-2xl space-y-2">
           <div className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+            <StatusDot asset={asset} />
             <span className="text-tiny uppercase tracking-widest text-dust">{visualStatusLabel(asset)}</span>
           </div>
           <h2 className="font-serif text-display text-parchment">{title}</h2>
@@ -59,9 +75,10 @@ export function PortraitFrame({
         <p className="truncate font-serif text-h3 text-parchment">{name}</p>
         <div className="mt-1 flex items-center justify-between gap-2">
           {role && <p className="truncate text-tiny uppercase tracking-widest text-ash">{role}</p>}
-          {asset?.status !== 'generated' && (
-            <ImageOff className="h-3.5 w-3.5 shrink-0 text-dust" strokeWidth={1.5} />
-          )}
+          <span className="inline-flex items-center gap-1 text-tiny text-dust" title={visualStatusLabel(asset)}>
+            <StatusIcon asset={asset} />
+            <span className="hidden sm:inline">{visualStatusShort(asset)}</span>
+          </span>
         </div>
       </div>
     </div>

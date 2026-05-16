@@ -2,254 +2,217 @@
 
 # Current Objective
 
-Implement Dynamic Character Portraits and World Banner Generation for Loreweaver.
+Execute a Chat UX Emergency Stabilization Pass.
 
-The app now has:
-- world generation
-- retrieval
-- streaming cognition
-- memory systems
-- relationships
-- timelines
-- polished visual identity
+The app recently added:
+- SSE streaming chat
+- cognition inspector
+- relationship/timeline/memory feedback
+- visual asset fallbacks
+- image generation plumbing
 
-The next priority is:
+However, the chat experience is currently unstable and visually cramped.
+
+This is a bugfix and UX stabilization task.
+
+Do not add new product features.
+
+Do not expand image generation systems.
+
+Do not redesign the full app.
+
+Focus on making chat reliable, usable, and visually sane.
+
+---
+
+# Critical Bugs To Fix
+
+## 1. Streaming State Reversion
+
+Current behavior:
+- user sends message
+- user message appears
+- assistant response starts streaming
+- when streaming finishes, chat reverts to stale history
+- user message disappears
+
+This must be fixed.
+
+Likely issue:
+- optimistic/streaming messages are being overwritten by stale refetch results
+- done event/session refresh uses old state
+- local message state and fetched history are competing
+
+Required behavior:
+- user message appears immediately
+- assistant message streams in place
+- final assistant message remains visible
+- chat history does not revert
+- refresh still loads persisted messages correctly
+
+Solution guidance:
+- establish a single authoritative message state for active chat
+- merge fetched history carefully
+- do not overwrite newer optimistic/streaming messages with older server history
+- after stream done, either:
+  - replace temporary message IDs with persisted IDs, or
+  - refetch only after persistence is confirmed and merge deterministically
+
+---
+
+## 2. Chat Scroll Behavior
+
+Current behavior:
+- chat window has no useful scroll
+- cognition blocks consume too much vertical space
+- bottom metadata panels take over the chat area
+
+Required behavior:
+- message list has its own scroll region
+- chat input remains reachable
+- streaming response auto-scrolls only when user is near bottom
+- user can scroll up without being yanked back down
+- cognition/metadata panels do not consume half the conversation area
+
+---
+
+## 3. Cognition Blocks Must Move Out Of Main Chat Flow
+
+Current issue:
+These blocks appear inside or near the base of the chat window and consume too much space:
+
+- Retrieved Lore
+- Recalled Memory
+- Relationship Drift
+- Timeline
+
+Required behavior:
+- move these into the cognition inspector/sidebar
+- or collapse them behind compact toggles
+- do not render large metadata cards inside the primary message stream
+- main chat should prioritize conversation readability
+
+Preferred layout:
+- main center column: messages only
+- right side/collapsible panel: cognition context
+- compact inline badges allowed, but not giant blocks
+
+---
+
+## 4. Image Generation Visibility Confusion
+
+Current issue:
+- user sees fancy placeholder messages
+- no obvious proof of real image generation
+- existing characters show fallback portraits
+- unclear whether provider images work
+
+Required behavior:
+- clearly indicate image status:
+  - fallback
+  - generated
+  - generating
+  - failed
+  - disabled
+- add tooltip or subtle status label on portraits/banners
+- if using fallback assets, do not imply live AI image generation happened
+- README/MEMORY should clarify existing seeded data uses fallback unless regenerated/backfilled with provider enabled
+
+Do not spend live provider credits unless explicitly configured.
+
+---
+
+# Required Fixes
+
+## Chat State Fix
+
+Implement deterministic streaming message handling.
+
+Requirements:
+- temporary user message should not disappear
+- streaming assistant message should persist after completion
+- persisted history should merge without wiping current state
+- sessionId should remain stable
+- done event should update local state safely
+
+Add tests if practical for:
+- stream event handling
+- message merge behavior
+- stale history protection
+
+---
+
+## Chat Layout Fix
+
+Improve chat page layout:
+
+- fixed/contained height for chat shell
+- scrollable message area
+- sticky or fixed input area
+- inspector panel independently scrollable
+- stable scrollbar gutters
+- responsive behavior
+
+Do not let inspector content overlap message content.
+
+---
+
+## Cognition Inspector Refactor
+
+Move large cognition result blocks into:
+
+- CognitionPanel
+- collapsible inspector drawer
+- compact side panel
+
+Main chat may show compact indicators only:
+
+Example:
 ```txt
-make generated worlds visually alive
+3 lore chunks · 2 memories · Trust +1 · Timeline updated
 ```
 
-This phase focuses on:
-- generated character portraits
-- generated world banners
-- immersive visual identity
-- persistent visual world assets
-
-The goal is:
-```txt
-generated worlds should feel visually real immediately
-```
-
-This is a high-impact portfolio and demo phase.
-
-Not a major backend rewrite.
+Click/expand to inspect details.
 
 ---
 
-# Primary Goals
+## Visual Asset Status
 
-Generated worlds should now include:
-- visual identity
-- atmospheric imagery
-- memorable characters
+For portraits/banners:
 
-Users should feel:
-```txt
-I just created a living world
-```
+Show status subtly:
 
-not:
-```txt
-I generated some database rows
-```
+- Generated
+- Fallback
+- Disabled
+- Failed
 
----
+Do not make this ugly.
 
-# Scope
-
-Implement:
-
-- generated character portraits
-- generated world banners
-- persistent image storage references
-- image generation pipeline
-- graceful fallback behavior
-- polished visual presentation
-
-Do not:
-- redesign retrieval architecture
-- redesign persistence systems
-- add auth
-- add multiplayer
-- add advanced asset management systems
-
----
-
-# 1. World Banner Generation
-
-When a world is generated:
-- generate a world banner image
-
-Banner should visually reflect:
-- world tone
-- genre
-- atmosphere
-- factions/themes
-
-Examples:
-- gothic kingdoms
-- sci-fi ruins
-- haunted forests
-- cosmic archives
-
-Banner should:
-- persist
-- display on dashboard/world page
-- become part of world identity
-
----
-
-# 2. Character Portrait Generation
-
-When characters are generated:
-- generate stylized portraits
-
-Portraits should reflect:
-- character role
-- personality
-- world aesthetic
-- faction alignment
-
-Portrait style direction:
-- painterly
-- cinematic
-- dark fantasy/sci-fi
-- restrained
-- atmospheric
-
-Avoid:
-- anime overload
-- meme aesthetics
-- hypersexualized designs
-- generic AI headshots
-
----
-
-# 3. Generation Provider Architecture
-
-Use the simplest viable image generation path.
-
-Preferred:
-- OpenAI image API
-- Fal
-- Replicate
-- equivalent existing provider
-
-Do not:
-- build giant provider abstraction systems
-- add unnecessary orchestration layers
-
-Keep implementation pragmatic.
-
----
-
-# 4. Fallback Behavior
-
-If image generation is unavailable:
-- use deterministic fallback placeholders
-- preserve layout quality
-- clearly indicate image generation unavailable
-
-Do not break onboarding or world generation.
-
----
-
-# 5. Persistence Requirements
-
-Persist:
-- image URLs
-- asset metadata
-- generation status if useful
-
-Do not:
-- build full asset CDN systems
-- add object storage infrastructure unless already trivial
-
-Simple persistent URLs are acceptable.
-
----
-
-# 6. UI Integration
-
-Integrate imagery into:
-
-- onboarding flow
-- dashboard
-- world overview
-- character profile
-- chat header/sidebar if appropriate
-
-Imagery should feel:
-- atmospheric
-- premium
-- cohesive with VISUAL_DIRECTION.md
-
-Avoid:
-- giant cluttered image walls
-- noisy gallery layouts
-
----
-
-# 7. Loading & Generation States
-
-Image generation may take time.
-
-Add:
-- elegant loading states
-- generation placeholders
-- retry behavior if practical
-
-Avoid:
-- ugly spinners
-- layout jumps
-- broken empty boxes
-
----
-
-# 8. Visual Consistency
-
-All imagery must match:
-- existing visual overhaul
-- dark codex/archive aesthetic
-- restrained atmosphere
-
-Avoid:
-- bright startup aesthetics
-- neon cyberpunk overload
-- inconsistent styles
-
----
-
-# 9. Documentation
-
-Update:
-- README.md
-- MEMORY.md
-
-Document:
-- image generation behavior
-- provider configuration
-- fallback behavior
-- known limitations
+Keep visual direction intact.
 
 ---
 
 # Constraints
 
 Do not:
+- add new major features
 - redesign backend architecture
 - add auth
 - add billing
-- add multiplayer
-- add complex asset pipelines
 - add autonomous agents
-- add background queues unless absolutely required
+- add background queues
+- add giant frontend state libraries
+- add new image providers
+- rewrite the whole chat page from scratch unless unavoidable
 
 Preserve:
-- onboarding flow
-- retrieval pipeline
-- streaming cognition systems
-- Docker runtime
-- current tests/builds
+- SSE route
+- sync fallback route
+- existing cognition inspector concept
+- current visual design direction
+- Docker-first runtime
+- passing builds/tests
 
 ---
 
@@ -258,42 +221,58 @@ Preserve:
 Run and report:
 
 ```bash
-docker compose up -d --build
-npm run build
 npm run typecheck
-npm test
+npm run build
+npm test --workspace=apps/api
+docker compose up -d --build
 ```
 
-Manual verification:
-- onboarding still works
-- world generation still works
-- banner generates
-- portraits generate
-- fallback behavior works without provider
-- generated imagery persists
-- layouts remain visually cohesive
+Manual verification required:
+
+1. Open character chat page.
+2. Send first message.
+3. Confirm user message remains visible.
+4. Confirm assistant response streams.
+5. Confirm final assistant response remains visible.
+6. Send second message.
+7. Confirm both exchanges remain visible.
+8. Refresh page.
+9. Confirm persisted chat history loads.
+10. Confirm message list scrolls properly.
+11. Confirm input remains usable.
+12. Confirm cognition details are visible but not consuming main chat.
+13. Confirm portrait/banner status clearly indicates fallback/generated state.
+
+If Playwright host issues exist:
+- use Dockerized Playwright path
+- document result
 
 ---
 
 # Success Criteria
 
-- worlds gain strong visual identity
-- characters feel memorable
-- onboarding becomes emotionally impactful
-- screenshots become dramatically stronger
-- visual atmosphere improves substantially
-- fallback behavior remains stable
+- chat supports more than one message
+- streamed messages do not disappear
+- stale refetch does not overwrite active conversation
+- chat scroll is usable
+- input remains reachable
+- cognition details no longer dominate main chat window
+- inspector remains useful
+- visual asset state is understandable
 - builds/tests remain green
+- app feels usable again
 
 ---
 
-# Final Deliverables
+# Deliverables
 
 Provide:
+
+- root cause summary
 - changed files
-- image generation architecture summary
-- provider configuration summary
-- fallback behavior summary
-- screenshots/checklist
+- streaming state fix summary
+- chat layout fix summary
+- cognition UI change summary
+- image status clarification summary
 - verification results
 - remaining limitations

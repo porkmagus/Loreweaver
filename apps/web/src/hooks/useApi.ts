@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const FALLBACK_BASE = typeof window === 'undefined'
   ? 'http://localhost:3001'
@@ -14,9 +14,13 @@ interface ApiState<T> {
 
 export function useApi<T>(url: string | null): ApiState<T> & { refetch: () => void } {
   const [state, setState] = useState<ApiState<T>>({ data: null, loading: !!url, error: null });
+  const urlRef = useRef(url);
 
   const fetchData = useCallback(async () => {
-    if (!url) return;
+    if (!url) {
+      setState({ data: null, loading: false, error: null });
+      return;
+    }
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
       const res = await fetch(`${API_BASE}${url}`);
@@ -29,8 +33,16 @@ export function useApi<T>(url: string | null): ApiState<T> & { refetch: () => vo
   }, [url]);
 
   useEffect(() => {
+    if (url !== urlRef.current) {
+      urlRef.current = url;
+      if (!url) {
+        setState({ data: null, loading: false, error: null });
+        return;
+      }
+      setState({ data: null, loading: true, error: null });
+    }
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, url]);
 
   return { ...state, refetch: fetchData };
 }

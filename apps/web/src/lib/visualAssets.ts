@@ -1,4 +1,4 @@
-export type VisualAssetStatus = 'generated' | 'fallback' | 'failed';
+export type VisualAssetStatus = 'generated' | 'fallback' | 'failed' | 'disabled';
 
 export interface VisualAsset {
   kind: 'world-banner' | 'character-portrait';
@@ -29,8 +29,17 @@ export function getCharacterPortrait(metadata: unknown): VisualAsset | null {
 export function visualStatusLabel(asset: VisualAsset | null): string {
   if (!asset) return 'visual pending';
   if (asset.status === 'generated') return 'generated image';
-  if (asset.status === 'failed') return 'fallback image';
+  if (asset.status === 'failed') return 'failed · fallback';
+  if (asset.status === 'disabled') return 'disabled';
   return 'fallback image';
+}
+
+export function visualStatusShort(asset: VisualAsset | null): string {
+  if (!asset) return 'pending';
+  if (asset.status === 'generated') return 'generated';
+  if (asset.status === 'failed') return 'failed';
+  if (asset.status === 'disabled') return 'disabled';
+  return 'fallback';
 }
 
 function readVisualMetadata(metadata: unknown): VisualMetadata | null {

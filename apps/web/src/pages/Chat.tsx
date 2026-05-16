@@ -10,7 +10,7 @@ import { MemoryCard } from '@/components/MemoryCard';
 import { CognitionPanel, type CognitionData, type CognitionLoreHit } from '@/components/CognitionPanel';
 import { PortraitFrame } from '@/components/VisualAssetFrame';
 import { getCharacterPortrait } from '@/lib/visualAssets';
-import { Send, Bot, User, Sparkles, BookOpen, Brain, Clock, HeartPulse, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Send, Bot, User, Sparkles, BookOpen, Brain, HeartPulse, Clock, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import type { World, Character, Relationship, TimelineEvent, Memory } from '@loreweaver/shared';
 import { useSearchParams } from 'react-router-dom';
 
@@ -43,6 +43,56 @@ type StreamEvent =
   | { type: 'done'; sessionId?: number; effects?: PostChatEffects }
   | { type: 'error'; error?: string };
 
+function useMergeableHistory(historyData: ChatMessage[] | null) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  useEffect(() => {
+    if (!historyData || !Array.isArray(historyData)) return;
+
+    setMessages((prev) => {
+      // Never overwrite while optimistic/streaming messages are active
+      if (prev.some((m) => m.pending)) return prev;
+      // Load server history when local state is empty (initial mount / after reset)
+      if (prev.length === 0) return historyData;
+
+      const lastLocal = prev[prev.length - 1];
+      const lastServer = historyData[historyData.length - 1];
+      // Accept server history only if it has the same or more messages
+      // AND the last message content/role match the local last message.
+      // This proves the server state is fresh (not a stale refetch).
+      const serverIsFresh =
+        historyData.length >= prev.length &&
+        lastServer.role === lastLocal.role &&
+        lastServer.content === lastLocal.content;
+
+      return serverIsFresh ? historyData : prev;
+    });
+  }, [historyData]);
+
+  return { messages, setMessages };
+}
+
+function useSmartScroll() {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const isNearBottomRef = useRef(true);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    if (isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior });
+    }
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const threshold = 80;
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+  }, []);
+
+  return { scrollContainerRef, messagesEndRef, scrollToBottom, handleScroll, isNearBottomRef };
+}
+
 export function Chat() {
   const [searchParams] = useSearchParams();
   const { data: worlds } = useApi<World[]>('/worlds');
@@ -67,7 +117,7 @@ export function Chat() {
   const memoriesUrl = selectedCharacterId ? `/characters/${selectedCharacterId}/memories` : null;
   const { data: memoriesData, refetch: refetchMemories } = useApi<Memory[]>(memoriesUrl);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { messages, setMessages } = useMergeableHistory(historyData);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,13 +128,7 @@ export function Chat() {
   const [latestEffects, setLatestEffects] = useState<PostChatEffects | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(true);
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (historyData && Array.isArray(historyData)) {
-      setMessages(historyData);
-    }
-  }, [historyData]);
+  const { scrollContainerRef, messagesEndRef, scrollToBottom, handleScroll } = useSmartScroll();
 
   useEffect(() => {
     const worldParam = Number(searchParams.get('worldId'));
@@ -101,8 +145,8 @@ export function Chat() {
   }, [searchParams, selectedCharacterId, characters]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, sending]);
+    scrollToBottom('smooth');
+  }, [messages, sending, scrollToBottom]);
 
   const refreshContextPanels = useCallback(() => {
     setContextRefreshing(true);
@@ -351,7 +395,11 @@ export function Chat() {
         <Card className="flex flex-1 flex-col overflow-hidden border-ridge">
           <CardContent className="flex flex-1 flex-col p-0">
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-inner space-y-6">
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto p-inner space-y-6 [scrollbar-gutter:stable]"
+            >
               {selectedCharacterId && (
                 <div className="grid gap-2 border-b border-ridge/70 pb-4 text-tiny text-dust sm:grid-cols-5">
                   {pipelineSteps.map(({ label, active }) => (
@@ -423,77 +471,38 @@ export function Chat() {
                 </div>
               ))}
 
+              {/* Compact cognition badges (non-blocking) */}
               {(retrievedLore.length > 0 || recalledMemories.length > 0 || latestEffects) && (
-                <div className="space-y-3 border-t border-ridge/70 pt-4">
+                <div className="flex flex-wrap gap-2 border-t border-ridge/70 pt-3">
                   {retrievedLore.length > 0 && (
-                    <div className="rounded-card border border-ridge bg-depth/70 p-3">
-                      <div className="mb-2 flex items-center gap-2">
-                        <BookOpen className="h-4 w-4 text-gold" strokeWidth={1.5} />
-                        <p className="text-label">Retrieved Lore</p>
-                      </div>
-                      <div className="space-y-2">
-                        {retrievedLore.slice(0, 2).map((hit) => (
-                          <div key={`${hit.id}-${hit.payload.chunkIndex}`} className="text-small text-ash">
-                            <span className="text-parchment">{hit.payload.title}</span>
-                            <span className="ml-2 font-mono text-tiny text-dust">{hit.score.toFixed(3)}</span>
-                            <p className="mt-1 line-clamp-2 text-tiny leading-relaxed text-dust">{hit.payload.chunkText}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-card border border-ridge bg-depth/70 px-2 py-1 text-tiny text-dust">
+                      <BookOpen className="h-3 w-3 text-gold" strokeWidth={1.5} />
+                      {retrievedLore.length} lore {retrievedLore.length === 1 ? 'chunk' : 'chunks'}
+                    </span>
                   )}
-
                   {recalledMemories.length > 0 && (
-                    <div className="rounded-card border border-ridge bg-depth/70 p-3">
-                      <div className="mb-2 flex items-center gap-2">
-                        <Brain className="h-4 w-4 text-memory" strokeWidth={1.5} />
-                        <p className="text-label">Recalled Memory</p>
-                      </div>
-                      <p className="line-clamp-2 text-small italic leading-relaxed text-ash">
-                        "{recalledMemories[0].content}"
-                      </p>
-                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-card border border-ridge bg-depth/70 px-2 py-1 text-tiny text-dust">
+                      <Brain className="h-3 w-3 text-memory" strokeWidth={1.5} />
+                      {recalledMemories.length} {recalledMemories.length === 1 ? 'memory' : 'memories'}
+                    </span>
                   )}
-
-                  {latestEffects && (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-card border border-ridge bg-depth/70 p-3">
-                        <div className="mb-2 flex items-center gap-2">
-                          <HeartPulse className="h-4 w-4 text-trust" strokeWidth={1.5} />
-                          <p className="text-label">Relationship Drift</p>
-                        </div>
-                        {latestEffects.relationshipUpdates.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {latestEffects.relationshipUpdates.flatMap((update) => [
-                              ['Trust', update.trustDelta],
-                              ['Respect', update.respectDelta],
-                              ['Affection', update.affectionDelta],
-                              ['Rivalry', update.rivalryDelta],
-                              ['Fear', update.fearDelta],
-                            ] as const).filter(([, value]) => value !== 0).slice(0, 5).map(([label, value]) => (
-                              <span key={`${label}-${value}`} className="rounded-card border border-ridge px-2 py-1 font-mono text-tiny text-ash">
-                                {label} {value > 0 ? '+' : ''}{value.toFixed(2)}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-small text-dust">No measurable shift.</p>
-                        )}
-                      </div>
-                      <div className="rounded-card border border-ridge bg-depth/70 p-3">
-                        <div className="mb-2 flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-ember" strokeWidth={1.5} />
-                          <p className="text-label">Timeline</p>
-                        </div>
-                        <p className="text-small text-ash">
-                          {latestEffects.timelineCreated
-                            ? `Timeline updated: ${latestEffects.topic}`
-                            : latestEffects.memoryCreated
-                              ? `Memory preserved: ${latestEffects.topic}`
-                              : `No new archive event for ${latestEffects.topic}.`}
-                        </p>
-                      </div>
-                    </div>
+                  {latestEffects && latestEffects.relationshipUpdates.some((u) => [u.trustDelta, u.respectDelta, u.affectionDelta, u.rivalryDelta, u.fearDelta].some((v) => v !== 0)) && (
+                    <span className="inline-flex items-center gap-1.5 rounded-card border border-ridge bg-depth/70 px-2 py-1 text-tiny text-dust">
+                      <HeartPulse className="h-3 w-3 text-trust" strokeWidth={1.5} />
+                      Relationships shifted
+                    </span>
+                  )}
+                  {latestEffects?.timelineCreated && (
+                    <span className="inline-flex items-center gap-1.5 rounded-card border border-ridge bg-depth/70 px-2 py-1 text-tiny text-dust">
+                      <Clock className="h-3 w-3 text-ember" strokeWidth={1.5} />
+                      Timeline updated
+                    </span>
+                  )}
+                  {latestEffects?.memoryCreated && (
+                    <span className="inline-flex items-center gap-1.5 rounded-card border border-ridge bg-depth/70 px-2 py-1 text-tiny text-dust">
+                      <Brain className="h-3 w-3 text-memory" strokeWidth={1.5} />
+                      Memory preserved
+                    </span>
                   )}
                 </div>
               )}
