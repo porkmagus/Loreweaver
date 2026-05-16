@@ -2,277 +2,128 @@
 
 # Current Objective
 
-Execute a Chat UX Emergency Stabilization Pass.
+Execute a Chat Session Persistence Forensics and Repair Pass.
 
-The app recently added:
-- SSE streaming chat
-- cognition inspector
-- relationship/timeline/memory feedback
-- visual asset fallbacks
-- image generation plumbing
+Critical observed evidence:
 
-However, the chat experience is currently unstable and visually cramped.
+- After chatting in a newly generated world, the world stats still show `0 chat sessions`.
+- Chat appears during active streaming.
+- After leaving and returning to the character, chat history is gone.
 
-This is a bugfix and UX stabilization task.
+This strongly suggests the streaming chat path is not creating or linking canonical `chat_sessions`, or the stats/history queries are not reading the same session/message model.
 
-Do not add new product features.
+Do not add features.
+Do not do visual polish.
+Do not work on image generation.
+Do not start narrative drift.
 
-Do not expand image generation systems.
-
-Do not redesign the full app.
-
-Focus on making chat reliable, usable, and visually sane.
+Focus only on fixing canonical chat persistence.
 
 ---
 
-# Critical Bugs To Fix
+# Primary Bug
 
-## 1. Streaming State Reversion
+Expected behavior:
+
+1. User sends message to character.
+2. A `chat_sessions` row exists for that character/world.
+3. User message is persisted.
+4. Assistant message is persisted.
+5. World stats show chat session count > 0.
+6. Leaving and returning loads the persisted conversation.
+7. Browser refresh loads the persisted conversation.
 
 Current behavior:
-- user sends message
-- user message appears
-- assistant response starts streaming
-- when streaming finishes, chat reverts to stale history
-- user message disappears
 
-This must be fixed.
-
-Likely issue:
-- optimistic/streaming messages are being overwritten by stale refetch results
-- done event/session refresh uses old state
-- local message state and fetched history are competing
-
-Required behavior:
-- user message appears immediately
-- assistant message streams in place
-- final assistant message remains visible
-- chat history does not revert
-- refresh still loads persisted messages correctly
-
-Solution guidance:
-- establish a single authoritative message state for active chat
-- merge fetched history carefully
-- do not overwrite newer optimistic/streaming messages with older server history
-- after stream done, either:
-  - replace temporary message IDs with persisted IDs, or
-  - refetch only after persistence is confirmed and merge deterministically
+- Active streaming appears to work.
+- World stats still show `0 chat sessions`.
+- Returning to character shows no chat history.
 
 ---
 
-## 2. Chat Scroll Behavior
+# Investigation Requirements
 
-Current behavior:
-- chat window has no useful scroll
-- cognition blocks consume too much vertical space
-- bottom metadata panels take over the chat area
+Before fixing, inspect and document:
 
-Required behavior:
-- message list has its own scroll region
-- chat input remains reachable
-- streaming response auto-scrolls only when user is near bottom
-- user can scroll up without being yanked back down
-- cognition/metadata panels do not consume half the conversation area
+## Backend Persistence
 
----
+- Does `POST /api/chat/character/:characterId/stream` create a `chat_sessions` row?
+- Does the non-streaming chat route create a `chat_sessions` row?
+- Are user and assistant messages linked to `chat_session_id`?
+- Are sessions linked to `character_id`?
+- Are sessions linked to `world_id` directly or indirectly?
+- Does the world stats query count from `chat_sessions`?
+- Does the history endpoint read from `chat_sessions` + `chat_messages`?
+- Is the streaming route using a different persistence path than the sync route?
 
-## 3. Cognition Blocks Must Move Out Of Main Chat Flow
+## Frontend Session Handling
 
-Current issue:
-These blocks appear inside or near the base of the chat window and consume too much space:
-
-- Retrieved Lore
-- Recalled Memory
-- Relationship Drift
-- Timeline
-
-Required behavior:
-- move these into the cognition inspector/sidebar
-- or collapse them behind compact toggles
-- do not render large metadata cards inside the primary message stream
-- main chat should prioritize conversation readability
-
-Preferred layout:
-- main center column: messages only
-- right side/collapsible panel: cognition context
-- compact inline badges allowed, but not giant blocks
+- Does the stream `done` event include a valid persisted `sessionId`?
+- Does Chat.tsx store/use that `sessionId`?
+- On mount, does Chat.tsx request latest session/history for the character?
+- Is the history route scoped by character or session?
 
 ---
 
-## 4. Image Generation Visibility Confusion
+# Required Persistence Model
 
-Current issue:
-- user sees fancy placeholder messages
-- no obvious proof of real image generation
-- existing characters show fallback portraits
-- unclear whether provider images work
+Use one canonical model.
 
-Required behavior:
-- clearly indicate image status:
-  - fallback
-  - generated
-  - generating
-  - failed
-  - disabled
-- add tooltip or subtle status label on portraits/banners
-- if using fallback assets, do not imply live AI image generation happened
-- README/MEMORY should clarify existing seeded data uses fallback unless regenerated/backfilled with provider enabled
+Preferred:
 
-Do not spend live provider credits unless explicitly configured.
+## Chat Sessions
 
----
+A chat session must be created or reused whenever a user sends a message.
 
-# Required Fixes
+Session fields should include or be derivable from:
 
-## Chat State Fix
+- id
+- characterId
+- worldId if schema supports it
+- createdAt
+- updatedAt
 
-Implement deterministic streaming message handling.
+## Chat Messages
 
-Requirements:
-- temporary user message should not disappear
-- streaming assistant message should persist after completion
-- persisted history should merge without wiping current state
-- sessionId should remain stable
-- done event should update local state safely
+Every message must be linked to:
 
-Add tests if practical for:
-- stream event handling
-- message merge behavior
-- stale history protection
+- chatSessionId
+- role
+- content
+- createdAt
+
+Roles:
+
+- user
+- assistant
 
 ---
 
-## Chat Layout Fix
+# Required Backend Behavior
 
-Improve chat page layout:
+For both sync and streaming chat paths:
 
-- fixed/contained height for chat shell
-- scrollable message area
-- sticky or fixed input area
-- inspector panel independently scrollable
-- stable scrollbar gutters
-- responsive behavior
+1. Resolve character.
+2. Resolve world.
+3. Create or reuse latest active chat session for character.
+4. Persist user message.
+5. Generate or stream assistant response.
+6. Persist final assistant message.
+7. Emit/return sessionId.
+8. Ensure history endpoint can retrieve those messages.
+9. Ensure world stats count the session.
 
-Do not let inspector content overlap message content.
+The streaming route and sync route must not diverge in persistence behavior.
 
 ---
 
-## Cognition Inspector Refactor
+# Required Endpoints
 
-Move large cognition result blocks into:
+Add or verify:
 
-- CognitionPanel
-- collapsible inspector drawer
-- compact side panel
-
-Main chat may show compact indicators only:
-
-Example:
 ```txt
-3 lore chunks · 2 memories · Trust +1 · Timeline updated
-```
-
-Click/expand to inspect details.
-
----
-
-## Visual Asset Status
-
-For portraits/banners:
-
-Show status subtly:
-
-- Generated
-- Fallback
-- Disabled
-- Failed
-
-Do not make this ugly.
-
-Keep visual direction intact.
-
----
-
-# Constraints
-
-Do not:
-- add new major features
-- redesign backend architecture
-- add auth
-- add billing
-- add autonomous agents
-- add background queues
-- add giant frontend state libraries
-- add new image providers
-- rewrite the whole chat page from scratch unless unavoidable
-
-Preserve:
-- SSE route
-- sync fallback route
-- existing cognition inspector concept
-- current visual design direction
-- Docker-first runtime
-- passing builds/tests
-
----
-
-# Verification Requirements
-
-Run and report:
-
-```bash
-npm run typecheck
-npm run build
-npm test --workspace=apps/api
-docker compose up -d --build
-```
-
-Manual verification required:
-
-1. Open character chat page.
-2. Send first message.
-3. Confirm user message remains visible.
-4. Confirm assistant response streams.
-5. Confirm final assistant response remains visible.
-6. Send second message.
-7. Confirm both exchanges remain visible.
-8. Refresh page.
-9. Confirm persisted chat history loads.
-10. Confirm message list scrolls properly.
-11. Confirm input remains usable.
-12. Confirm cognition details are visible but not consuming main chat.
-13. Confirm portrait/banner status clearly indicates fallback/generated state.
-
-If Playwright host issues exist:
-- use Dockerized Playwright path
-- document result
-
----
-
-# Success Criteria
-
-- chat supports more than one message
-- streamed messages do not disappear
-- stale refetch does not overwrite active conversation
-- chat scroll is usable
-- input remains reachable
-- cognition details no longer dominate main chat window
-- inspector remains useful
-- visual asset state is understandable
-- builds/tests remain green
-- app feels usable again
-
----
-
-# Deliverables
-
-Provide:
-
-- root cause summary
-- changed files
-- streaming state fix summary
-- chat layout fix summary
-- cognition UI change summary
-- image status clarification summary
-- verification results
-- remaining limitations
+GET /api/chat/character/:characterId/history
+GET /api/chat/character/:characterId/sessions
+GET /api/chat/session/:sessionId/messages
+POST /api/chat/character/:characterId
+POST /api/chat/character/:characterId/stream
