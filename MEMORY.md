@@ -191,6 +191,61 @@ Optimize only after stability.
 
 ---
 
+## Phase9ImageProviderSettings
+
+Image provider settings and hardening phase completed.
+
+### Scope
+- Created dedicated image provider adapter (`apps/api/src/services/imageProvider.ts`) with full provider abstraction.
+- Supported providers: `openai-image`, `custom-image-endpoint`, `disabled`.
+- Refactored `imageGenerationService.ts` to use the adapter while preserving deterministic SVG fallback behavior.
+- Added clear visual asset status semantics: `generated`, `fallback`, `failed`, `disabled`, `generating`.
+- Extended backend settings routes (`settings.ts`) with `GET/POST/POST-test` endpoints for image provider configuration.
+- Extended health route (`health.ts`) to include image provider status in health response.
+- Extended Settings UI (`Settings.tsx`) with new Image Generation section:
+  - Enable/disable toggle with clear descriptions
+  - Provider type selector (OpenAI Image, Custom Image Endpoint, Disabled)
+  - Presets for OpenAI Image, Custom Endpoint, and Disabled/Fallback Only
+  - Fields: Base URL, API Key, Model, Size, Quality, Format
+  - Save and Test buttons
+  - Cost-safe test flow with explicit warning before any paid test
+  - Test result display with provider/model/warning/error details
+  - Configuration summary card
+- localStorage persistence for image provider settings via `loreweaver-image-provider-config` key.
+- Updated shared types (`packages/shared/src/types.ts`) with `ImageProviderConfig`, `ImageProviderStatus`, `ImageProviderType`.
+- Updated shared schemas (`packages/shared/src/schemas.ts`) with health response fields for image provider.
+- Updated `.env.example` with all new image provider variables (`IMAGE_PROVIDER`, `IMAGE_MODEL`, `IMAGE_SIZE`, `IMAGE_FORMAT`, `IMAGE_BASE_URL`, `IMAGE_API_KEY`).
+- Updated `README.md` and `MEMORY.md` with image provider documentation.
+- Cost-safe testing: OpenAI image test uses `models.list()` probe; custom endpoint test attempts `/models` probe first. Both return clear warnings rather than silently spending credits.
+
+### Files added
+- `apps/api/src/services/imageProvider.ts`
+
+### Files modified
+- `apps/api/src/services/imageGenerationService.ts` — refactored to use adapter, preserved fallback behavior
+- `apps/api/src/routes/settings.ts` — added image provider CRUD + test endpoints
+- `apps/api/src/routes/health.ts` — added image provider status to health response
+- `apps/web/src/pages/Settings.tsx` — added Image Generation section with full controls
+- `apps/web/src/lib/visualAssets.ts` — expanded `VisualAssetStatus` and `provider` types
+- `packages/shared/src/types.ts` — added image provider types
+- `packages/shared/src/schemas.ts` — expanded health schema with image fields
+- `.env.example` — added image provider environment variables
+- `README.md` — documented image provider setup and limitations
+- `MEMORY.md` — added this phase log
+
+### Verification
+- `npm run typecheck` — pending
+- `npm run build` — pending
+- `npm test --workspace=apps/api` — pending
+- `docker compose up -d --build` — pending
+
+### Known limitations
+- Image data URI storage remains in row metadata (same as before). No object storage introduced.
+- Custom image endpoints are validated via `/models` probe; actual image generation compatibility depends on the proxy implementation.
+- No background queue for image generation — still synchronous from user perspective.
+
+---
+
 ## Phase5TransparentCognitionStreaming
 
 Transparent cognition and streaming UX pass completed:

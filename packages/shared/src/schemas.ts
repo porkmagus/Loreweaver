@@ -11,6 +11,10 @@ export const HealthResponseSchema = z.object({
   embeddingModel: z.string().optional(),
   provider: z.string().optional(),
   chatModel: z.string().optional(),
+  imageProvider: z.string().optional(),
+  imageModel: z.string().optional(),
+  imageEnabled: z.boolean().optional(),
+  imageStatus: z.string().optional(),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;

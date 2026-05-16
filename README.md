@@ -162,10 +162,17 @@ QDRANT_URL=http://qdrant:6333
 EMBEDDING_DIMENSION=1536
 EMBEDDING_MODEL=text-embedding-3-small
 CHAT_MODEL=gpt-4o-mini
+
+# Image generation
 IMAGE_GENERATION_ENABLED=true
-IMAGE_MODEL=gpt-image-1-mini
+IMAGE_PROVIDER=openai-image
+IMAGE_MODEL=gpt-image-2
 IMAGE_QUALITY=low
+IMAGE_SIZE=1536x1024
+IMAGE_FORMAT=webp
 IMAGE_GENERATION_TIMEOUT_MS=20000
+IMAGE_BASE_URL=
+IMAGE_API_KEY=
 ```
 
 Without an `OPENAI_API_KEY`, the app uses deterministic simulated responses and deterministic visual fallbacks — fully usable for exploration and demos.
@@ -223,7 +230,9 @@ Stable velocity > sporadic brilliance
 - **Playwright E2E on Ubuntu 26.04**: Host OS not officially supported by Playwright 1.60.0. Tests run successfully inside `mcr.microsoft.com/playwright:v1.60.0-jammy` Docker container.
 - **Simulated AI fallback**: Without an `OPENAI_API_KEY`, chat uses deterministic template responses.
 - **Image fallback**: Without image generation, world banners and portraits use deterministic archival data-URI artwork.
+- **Image provider flexibility**: Image generation supports `openai-image` (official API), `custom-image-endpoint` (OpenAI-compatible proxies), and `disabled` (fallback-only). Configure via Settings UI or environment variables.
 - **Image storage**: Generated images are stored as simple data URLs in row metadata. This is pragmatic for demos, but not a replacement for object storage at scale.
+- **Cost-safe image testing**: The Settings page warns before running a live image generation test and attempts a lightweight probe first.
 - **Streaming fallback**: If the SSE request fails before completion, the web client falls back to the existing synchronous chat endpoint.
 - **Cognition visibility**: The inspector shows assembled context and retrieval signals, but it does not yet provide full token accounting or semantic memory compression.
 - **No auth / multi-user isolation**: All data is shared.

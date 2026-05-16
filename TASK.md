@@ -2,305 +2,245 @@
 
 # Current Objective
 
-Implement flexible LLM provider configuration for Loreweaver.
+Implement dedicated Image Provider Settings and Image Generation Hardening for Loreweaver.
 
-The app must support practical low-cost, local, and custom inference setups.
+Loreweaver now supports flexible LLM providers for text generation, but image generation is still too tightly coupled to OpenAI assumptions and fallback placeholders.
 
-Primary provider targets:
+This phase adds a pragmatic image provider layer.
 
-- Custom OpenAI-compatible endpoint
-- Ollama local
-- Ollama remote/cloud
-- OpenRouter
+Primary goals:
 
-The user must be able to type:
-- custom base URL
-- custom model name
-- optional API key
-- optional embedding model
+- make image generation configurable
+- make image status transparent
+- support official OpenAI image generation cleanly
+- prepare for future image providers without overbuilding
+- preserve deterministic fallback behavior
 
-This is a high-priority usability phase.
+This is not a major architecture rewrite.
 
 ---
 
-# Primary Goal
+# Provider Targets
 
-Loreweaver should no longer feel locked to OpenAI.
-
-Users should be able to use:
-- local Ollama
-- remote Ollama servers
-- OpenRouter
-- LM Studio
-- LiteLLM
-- vLLM OpenAI-compatible servers
-- llama.cpp OpenAI-compatible servers
-- any OpenAI-compatible gateway
-
----
-
-# Required Settings UI
-
-Create or improve a Settings page with:
-
-## Provider Preset
-
-Options:
+Support at minimum:
 
 ```txt
-Custom OpenAI-Compatible
-Ollama Local
-Ollama Remote / Cloud
-OpenRouter
+openai-image
+custom-image-endpoint
+disabled/fallback
 ```
 
-Optional existing providers may remain, but do not prioritize them.
+Optional future-ready provider labels may be documented but not fully implemented:
+
+```txt
+codex-oauth-image
+replicate
+fal
+stability
+comfyui
+automatic1111
+```
+
+Do not implement unsupported OAuth flows unless there is already a stable working credential path in the repo.
 
 ---
 
-## Required Fields
+# OpenAI Image Provider
 
-Allow editing:
+Use official OpenAI API image generation.
+
+Default model:
 
 ```txt
-Provider
-Base URL
-API Key
-Chat Model
-Embedding Model
+gpt-image-2
+```
+
+Allow user override:
+
+```txt
+gpt-image-2
+gpt-image-1.5
+gpt-image-1
+gpt-image-1-mini
+```
+
+Do not hardcode this as a closed list. Free-text model names should be allowed.
+
+Required settings:
+
+```txt
+IMAGE_PROVIDER=openai-image
+IMAGE_MODEL=gpt-image-2
+IMAGE_API_KEY=
+IMAGE_BASE_URL=
+IMAGE_SIZE=
+IMAGE_QUALITY=
+IMAGE_FORMAT=
+IMAGE_GENERATION_ENABLED=true
+```
+
+Use actual env naming consistent with the repo if different.
+
+---
+
+# Custom Image Endpoint
+
+Add a custom image provider mode.
+
+Required fields:
+
+```txt
+Image Provider
+Image Base URL
+Image API Key
 Image Model
-Temperature
-Max Tokens
+Image Size
+Image Quality
+Image Format
 ```
 
-Embedding/Image fields may be optional if unsupported.
+This should support future OpenAI-compatible or proxy image providers where practical.
+
+If implementation cannot safely call arbitrary custom providers yet:
+
+- expose settings
+- persist settings
+- clearly mark provider as configured but unsupported
+- preserve fallback behavior
+
+Do not fake success.
 
 ---
 
-# Provider Defaults
+# Settings UI Requirements
 
-## Custom OpenAI-Compatible
+Extend the Settings page with an Image Generation section.
 
-Default:
+Fields:
+
+- Image Provider
+- Image Base URL
+- Image API Key
+- Image Model
+- Image Size
+- Image Quality
+- Image Format
+- Enable/Disable Image Generation
+- Test Image Provider button
+
+Provider presets:
 
 ```txt
-Base URL: http://localhost:1234/v1
-Chat Model: user-defined
-Embedding Model: user-defined
-API Key: optional
+OpenAI Image
+Custom Image Endpoint
+Disabled / Fallback Only
 ```
 
-Designed for:
-- LM Studio
-- LiteLLM
-- vLLM
-- llama.cpp server
-- local gateways
+The UI must clearly show:
+
+- image generation enabled/disabled
+- configured provider
+- configured model
+- whether generated assets are real or fallback
 
 ---
 
-## Ollama Local
+# Image Test Button
 
-Default:
-
-```txt
-Base URL: http://localhost:11434
-Chat Model: user-defined
-API Key: none
-```
-
-Should support:
-- local Ollama chat
-- custom model names
-
-Embedding support optional if clean.
-
----
-
-## Ollama Remote / Cloud
-
-Allow:
-
-```txt
-Base URL: user-defined
-API Key: optional
-Chat Model: user-defined
-```
-
-This should work for:
-- remote Ollama servers
-- tunneled Ollama
-- hosted Ollama-compatible endpoints
-
----
-
-## OpenRouter
-
-Default:
-
-```txt
-Base URL: https://openrouter.ai/api/v1
-Chat Model: user-defined
-API Key: required
-```
-
-Support custom OpenRouter model names such as:
-
-```txt
-qwen/qwen3-coder
-deepseek/deepseek-chat
-meta-llama/llama-3.1-70b-instruct
-mistralai/mistral-large
-```
-
-Do not hardcode model list as authoritative.
-
-Allow free text model names.
-
----
-
-# Backend Provider Behavior
-
-Implement a pragmatic provider adapter.
-
-Do not build a giant provider framework.
-
-Minimum required behavior:
-
-- chat completion supports selected provider
-- streaming chat supports selected provider where possible
-- world generation uses selected provider
-- fallback simulated mode still works if provider unavailable
-- provider status endpoint reports current config/mode
-
----
-
-# OpenAI-Compatible Behavior
-
-For Custom OpenAI-Compatible and OpenRouter:
-
-Use OpenAI-compatible chat completion format:
-
-```txt
-POST {baseUrl}/chat/completions
-```
-
-Streaming:
-
-```txt
-stream: true
-```
-
-Use:
-- Authorization Bearer API key if provided
-- no auth if API key empty and provider allows it
-
----
-
-# Ollama Behavior
-
-Support Ollama native API if easiest:
-
-```txt
-POST /api/chat
-```
-
-or OpenAI-compatible Ollama endpoint if configured:
-
-```txt
-/v1/chat/completions
-```
-
-Prefer the simplest reliable approach.
-
-Must support:
-- local base URL
-- remote base URL
-- custom model name
-- streaming if practical
-
-If Ollama streaming differs from OpenAI-compatible streaming, normalize events internally.
-
----
-
-# Settings Persistence
-
-MVP acceptable:
-
-- store provider settings in localStorage
-- send selected config with chat/world-generation requests
-
-Better if simple:
-
-- backend can also read env defaults
-
-Do not add auth or user accounts.
-
----
-
-# Environment Defaults
-
-Update `.env.example`:
-
-```env
-AI_PROVIDER=custom-openai
-
-AI_BASE_URL=http://localhost:1234/v1
-AI_API_KEY=
-AI_CHAT_MODEL=
-AI_EMBEDDING_MODEL=
-AI_IMAGE_MODEL=
-
-OPENROUTER_API_KEY=
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_CHAT_MODEL=
-```
-
-Use actual naming consistent with the existing app.
-
----
-
-# Test Connection
-
-Add a Test Connection button.
+Add a Test Image Provider button.
 
 Behavior:
 
-- verifies base URL reachable
-- verifies model works if practical
-- reports provider mode
-- reports streaming support if practical
+- does not spend large amounts
+- generates a tiny/simple test image if safe
+- or performs a non-generating validation if provider supports it
+- returns clear status
 
-For OpenAI-compatible providers:
+If live test would incur cost:
 
-- perform small chat completion request
+- warn clearly
+- require explicit click
+- keep prompt tiny
 
-For Ollama:
-
-- call tags/list models endpoint if practical
-- or perform small chat request
-
-Do not make this fragile.
+Do not silently generate paid images.
 
 ---
 
-# UI Requirements
+# Image Generation Pipeline
 
-Settings page should clearly show:
+When world generation runs:
 
-- current provider
-- current chat model
-- current base URL
-- whether API key is configured
-- whether embeddings are available
-- whether image generation is available
-- live/simulated/fallback status
+- generate world banner if image provider is enabled
+- generate character portraits if image provider is enabled
+- if image generation fails, use deterministic fallback
+- preserve world/character creation even if image generation fails
 
-Use existing visual direction.
+All image generation must be best-effort.
 
-Do not make it look like a raw config file.
+Image failures must not break:
+
+- onboarding
+- world generation
+- character creation
+- chat
+
+---
+
+# Storage Strategy
+
+Current data URI storage is acceptable for MVP but should be documented.
+
+Review current image storage behavior.
+
+If easy and safe, improve local storage:
+
+- save generated images to a local mounted volume
+- store file path/URL in metadata
+
+If not easy:
+
+- keep data URI strategy
+- document limitation clearly
+
+Do not introduce S3/CDN/object storage in this phase.
+
+---
+
+# Status Semantics
+
+Every visual asset should have clear status:
+
+```txt
+generated
+fallback
+failed
+disabled
+generating
+```
+
+UI should not imply fallback art is real AI-generated output.
+
+---
+
+# Codex/OAuth Note
+
+Document but do not implement unless already safely supported:
+
+Some agent runtimes may support OpenAI/ChatGPT/Codex OAuth-backed image generation through their own credential systems.
+
+Loreweaver should not depend on unofficial or runtime-specific OAuth flows by default.
+
+Future provider possibility:
+
+```txt
+codex-oauth-image
+```
+
+Only implement later if:
+- credential source is explicit
+- auth flow is stable
+- user consent is clear
+- ToS/compliance risk is understood
 
 ---
 
@@ -312,43 +252,14 @@ Update:
 - MEMORY.md
 - .env.example
 
-Document provider examples:
+Document:
 
-## LM Studio
-
-```txt
-Provider: Custom OpenAI-Compatible
-Base URL: http://localhost:1234/v1
-Model: your-loaded-model-name
-API Key: empty
-```
-
-## Ollama Local
-
-```txt
-Provider: Ollama Local
-Base URL: http://localhost:11434
-Model: llama3.1
-API Key: empty
-```
-
-## Ollama Remote
-
-```txt
-Provider: Ollama Remote / Cloud
-Base URL: https://your-ollama-host.example.com
-Model: qwen2.5
-API Key: optional
-```
-
-## OpenRouter
-
-```txt
-Provider: OpenRouter
-Base URL: https://openrouter.ai/api/v1
-Model: openrouter-model-id
-API Key: required
-```
+- OpenAI image setup
+- custom image provider settings
+- fallback behavior
+- image status meanings
+- known limitations
+- cost warning for live image generation
 
 ---
 
@@ -356,25 +267,24 @@ API Key: required
 
 Do not:
 
-- add auth
-- add accounts
-- add billing
-- add a huge provider marketplace
-- hardcode a giant model registry
-- break OpenAI-compatible support
+- break existing text provider settings
 - break streaming chat
-- break simulated fallback
-- rewrite the whole AI layer
+- break onboarding
+- add auth/accounts
+- add billing
+- add S3/CDN systems
+- add giant image provider marketplace
+- implement unsupported OAuth token scraping
+- spend live image credits during tests without explicit setting
 
 Preserve:
 
 - Docker-first runtime
-- existing chat persistence
-- streaming UX
-- cognition inspector
-- world generation
-- retrieval pipeline
-- tests/builds
+- fallback image behavior
+- current visual design
+- world generation flow
+- character generation flow
+- passing tests
 
 ---
 
@@ -391,32 +301,25 @@ docker compose up -d --build
 
 Manual verification:
 
-- select Custom OpenAI-Compatible provider
-- enter custom base URL/model
-- save settings
-- verify selected model appears in status
-- chat request uses selected provider config
-- select Ollama Local
-- verify model/base URL are accepted
-- select OpenRouter
-- verify API key/model fields work
-- simulated fallback still works when provider unavailable
-- streaming chat still works with default provider
+- Settings page shows image provider section
+- Disabled/fallback mode works
+- OpenAI image provider can be configured
+- Custom provider fields persist
+- world generation does not break if images fail
+- fallback assets still render
+- status labels correctly distinguish generated/fallback/failed/disabled
+
+Do not require paid live image generation for normal verification.
 
 ---
 
 # Success Criteria
 
-- user can configure custom base URL
-- user can type custom model name
-- user can use custom OpenAI-compatible endpoints
-- user can configure Ollama local
-- user can configure Ollama remote/cloud
-- user can configure OpenRouter
-- provider status is visible
-- settings persist locally
-- streaming chat remains functional
-- world generation remains functional
-- fallback mode remains functional
-- README documents provider setup
+- image generation is configurable
+- OpenAI image provider is cleanly supported
+- custom image provider settings exist
+- fallback behavior remains reliable
+- image status is transparent
+- docs explain setup and limitations
+- no unsupported OAuth hack is introduced
 - builds/tests remain green

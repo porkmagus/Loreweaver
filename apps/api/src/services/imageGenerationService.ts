@@ -1,20 +1,18 @@
-import OpenAI from 'openai';
+import {
+  resolveImageProviderConfig,
+  generateImage,
+  type GenerateImageResult,
+} from './imageProvider.js';
 
-const apiKey = process.env.OPENAI_API_KEY;
-const openai = apiKey ? new OpenAI({ apiKey }) : null;
-
-const imageModel = process.env.IMAGE_MODEL ?? 'gpt-image-1-mini';
-const imageQuality = process.env.IMAGE_QUALITY ?? 'low';
-const generationEnabled = process.env.IMAGE_GENERATION_ENABLED !== 'false';
 const imageTimeoutMs = Number(process.env.IMAGE_GENERATION_TIMEOUT_MS ?? 20_000);
 
 export type VisualAssetKind = 'world-banner' | 'character-portrait';
-export type VisualAssetStatus = 'generated' | 'fallback' | 'failed';
+export type VisualAssetStatus = 'generated' | 'fallback' | 'failed' | 'disabled' | 'generating';
 
 export interface VisualAsset {
   kind: VisualAssetKind;
   status: VisualAssetStatus;
-  provider: 'openai' | 'deterministic';
+  provider: 'openai-image' | 'custom-image-endpoint' | 'deterministic';
   imageUrl: string;
   prompt: string;
   model?: string;
@@ -134,39 +132,41 @@ async function generateVisualAsset({
   fallbackSubLabel?: string;
   size: '1024x1024' | '1536x1024';
 }): Promise<VisualAsset> {
-  if (!openai || !generationEnabled) {
-    return deterministicVisualAsset(kind, prompt, fallbackSeed, fallbackLabel, fallbackSubLabel, 'image generation unavailable');
+  const config = resolveImageProviderConfig();
+
+  if (!config.enabled || config.provider === 'disabled') {
+    return deterministicVisualAsset(kind, prompt, fallbackSeed, fallbackLabel, fallbackSubLabel, 'image generation disabled', 'disabled');
   }
 
   try {
-    const response = await openai.images.generate({
-      model: imageModel,
-      prompt,
-      size,
-      n: 1,
-      quality: imageQuality as 'low' | 'medium' | 'high' | 'auto',
-      output_format: 'webp',
-      background: 'opaque',
-    }, { timeout: imageTimeoutMs });
+    const result = await withTimeout(
+      generateImage(config, { prompt, size }),
+      imageTimeoutMs,
+      'image generation timed out',
+    );
 
-    const image = response.data?.[0];
-    const imageUrl = image?.b64_json
-      ? `data:image/webp;base64,${image.b64_json}`
-      : image?.url;
-
-    if (!imageUrl) {
-      throw new Error('Image provider returned no image data');
+    if (result.imageUrl) {
+      return {
+        kind,
+        status: 'generated',
+        provider: config.provider === 'custom-image-endpoint' ? 'custom-image-endpoint' : 'openai-image',
+        imageUrl: result.imageUrl,
+        prompt,
+        model: result.model,
+        generatedAt: new Date().toISOString(),
+      };
     }
 
-    return {
+    // Provider returned no image — fall back deterministically
+    return deterministicVisualAsset(
       kind,
-      status: 'generated',
-      provider: 'openai',
-      imageUrl,
       prompt,
-      model: imageModel,
-      generatedAt: new Date().toISOString(),
-    };
+      fallbackSeed,
+      fallbackLabel,
+      fallbackSubLabel,
+      result.error ?? 'image provider returned no image',
+      'failed',
+    );
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'image generation failed';
     return deterministicVisualAsset(kind, prompt, fallbackSeed, fallbackLabel, fallbackSubLabel, reason, 'failed');
@@ -261,9 +261,16 @@ function paletteFromSeed(seed: string): [string, string, string] {
 
 function escapeXml(value: string): string {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    .replace(/&/g, '&' + 'amp;')
+    .replace(/</g, '&' + 'lt;')
+    .replace(/>/g, '&' + 'gt;')
+    .replace(/"/g, '&' + 'quot;')
+    .replace(/'/g, '&' + '#39;');
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, timeoutMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(timeoutMessage)), ms)),
+  ]);
 }

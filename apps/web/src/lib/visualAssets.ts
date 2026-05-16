@@ -1,9 +1,9 @@
-export type VisualAssetStatus = 'generated' | 'fallback' | 'failed' | 'disabled';
+export type VisualAssetStatus = 'generated' | 'fallback' | 'failed' | 'disabled' | 'generating';
 
 export interface VisualAsset {
   kind: 'world-banner' | 'character-portrait';
   status: VisualAssetStatus;
-  provider: 'openai' | 'deterministic';
+  provider: 'openai-image' | 'custom-image-endpoint' | 'deterministic';
   imageUrl: string;
   prompt?: string;
   model?: string;
@@ -31,6 +31,7 @@ export function visualStatusLabel(asset: VisualAsset | null): string {
   if (asset.status === 'generated') return 'generated image';
   if (asset.status === 'failed') return 'failed · fallback';
   if (asset.status === 'disabled') return 'disabled';
+  if (asset.status === 'generating') return 'generating…';
   return 'fallback image';
 }
 
@@ -39,6 +40,7 @@ export function visualStatusShort(asset: VisualAsset | null): string {
   if (asset.status === 'generated') return 'generated';
   if (asset.status === 'failed') return 'failed';
   if (asset.status === 'disabled') return 'disabled';
+  if (asset.status === 'generating') return 'generating';
   return 'fallback';
 }
 

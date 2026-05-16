@@ -31,12 +31,12 @@ describe('imageGenerationService', () => {
 
     expect(banner).toMatchObject({
       kind: 'world-banner',
-      status: 'fallback',
+      status: 'disabled',
       provider: 'deterministic',
     });
     expect(portrait).toMatchObject({
       kind: 'character-portrait',
-      status: 'fallback',
+      status: 'disabled',
       provider: 'deterministic',
     });
     expect(banner.imageUrl).toContain('data:image/svg+xml');
