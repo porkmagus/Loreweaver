@@ -22,13 +22,13 @@ export default defineConfig({
       command: 'cd ../api && npm run dev',
       url: 'http://localhost:3001/api/health',
       timeout: 120_000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: process.env.PW_REUSE_SERVER !== 'false',
     },
     {
       command: 'npm run dev',
       url: 'http://localhost:5173',
       timeout: 120_000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: process.env.PW_REUSE_SERVER !== 'false',
     },
   ],
 });
