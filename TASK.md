@@ -7,210 +7,126 @@ Execute a Chat Scroll Containment and Long-Response Readability Pass — COMPLET
 
 Next: None. Both critical chat passes are done.
 
-Chat persistence appears fixed, but the chat message history still cannot be reliably scrolled. Long responses may extend out of frame vertically, making previous content unreadable.
+---
 
-This is a critical chat usability bug.
+# Phase A — Chat Persistence Forensics & Repair (Completed)
 
-Do not add new features.
-Do not redesign the whole app.
-Do not touch backend persistence unless absolutely necessary.
+## Root Cause
+- Streaming and sync chat routes WERE persisting to `chat_sessions` + `chat_messages` correctly.
+- The frontend never stored `sessionId` in URL state, so on navigation/remount it lost the session context.
+- The history endpoint required an explicit `sessionId` query parameter, which the frontend didn't have on remount.
+- The Dashboard hardcoded `0` for chat sessions instead of querying real counts.
 
-Focus only on making the chat layout scroll correctly and remain readable.
+## Persistence Model After Fix
+- `saveMessage` now bumps `chat_sessions.updated_at` so `getOrCreateSession` returns the most recently active session.
+- `GET /chat/character/:id/history` auto-resolves the latest session when `sessionId` is omitted.
+- `GET /chat/character/:id/sessions` returns all sessions for a character.
+- `GET /worlds/:id/stats` returns real aggregated counts (characters, lore, timeline, chat sessions).
+- Frontend stores `worldId`, `characterId`, and `sessionId` in URL query params via `useSearchParams`.
+
+## Changed Files
+- `apps/api/src/services/chatService.ts` — added `getLatestSessionForCharacter`, `listCharacterChatSessions`, `updated_at` bump in `saveMessage`
+- `apps/api/src/routes/chat.ts` — added `/chat/character/:id/sessions`, made history endpoint auto-resolve latest session
+- `apps/api/src/services/worldService.ts` — added `getWorldStats`
+- `apps/api/src/routes/worlds.ts` — added `GET /worlds/:id/stats`
+- `apps/web/src/pages/Dashboard.tsx` — fetches real stats, renders dynamic chat session count
+- `apps/web/src/pages/Chat.tsx` — URL sync for session persistence, auto-restore on mount
+
+## Tests
+- `apps/api/src/__tests__/routes.test.ts` — added history + sessions endpoint tests
+- `apps/api/src/__tests__/integration.test.ts` — added world stats integration test
+- `apps/api/src/__tests__/chatService.test.ts` — new file covering session/message helpers
+- `apps/api/src/__tests__/worldService.test.ts` — new file covering stats aggregation
+- API tests: 60/60 passing
+
+## Manual Verification
+- Sent messages via streaming and sync endpoints → both persisted to Postgres
+- `GET /worlds/2/stats` returned `chatSessions: 2` after chats
+- History endpoint returned all messages without explicit `sessionId`
+- Docker build and API tests pass
 
 ---
 
-# Primary Bug
+# Phase B — Chat Scroll Containment & Readability (Completed)
 
-Current observed behavior:
+## Root Cause
+- Broken height chain: `Layout` content wrapper (`max-w-5xl`) had no `h-full`, so `h-full` on `Chat` failed silently.
+- `Chat` used `h-[calc(100vh-8rem)]`, a brittle viewport-unit guess that didn't account for nested padding.
+- Competing scroll layers: `Layout` content div had `overflow-auto`, creating a second scrollable layer that stole scroll events from the message list.
+- Missing `min-h-0`: Flex items default to `min-height: auto` and refused to shrink, causing the message list to expand outward instead of scrolling internally.
+- `scrollIntoView` targeted the window/ancestor instead of the message list container, fighting the user.
+- Inspector panel had `overflow-y-auto` but no `h-full`, so it couldn't scroll independently.
 
-- chat messages persist
-- user can return to character and see history exists
-- but the chat message area does not scroll correctly
-- long assistant responses can overflow out of frame
-- user cannot scroll up to read history
-
-Expected behavior:
-
-- chat page fits inside viewport
-- message history has a dedicated scroll container
-- long responses remain inside the scrollable area
-- user can scroll up and down through full history
-- input remains visible and usable
-- cognition inspector scrolls independently
-- page itself does not rely on whole-window scrolling for chat history
-
----
-
-# Investigation Requirements
-
-Inspect:
-
-- Chat.tsx layout hierarchy
-- parent container heights
-- flex/min-height behavior
-- overflow settings
-- message list container
-- chat card/container sizing
-- inspector panel overflow
-- app layout wrapper constraints
-
-Common likely causes:
-
-- parent flex container missing `min-h-0`
-- message list missing `min-h-0`
-- outer page using `overflow-hidden` incorrectly
-- chat shell height not applied to correct parent
-- sticky input consuming layout without shrinking message list
-- child container using `h-full` without parent height
-- scroll container nested inside non-constrained parent
-- `scrollIntoView` still targeting wrong element
-
----
-
-# Required Fix
-
-Implement a robust chat shell layout.
-
-Preferred structure:
+## Layout Fix Summary
+Implemented the required robust chat shell:
 
 ```txt
-ChatPage
-└── viewport-height shell
-    ├── chat column
-    │   ├── chat header
-    │   ├── scrollable message list
-    │   └── sticky/fixed input area
-    └── cognition inspector
-        └── independent scroll region
+Layout (h-screen flex)
+└── main (flex-1 overflow-auto)
+    └── content wrapper (h-full)
+        └── Chat (h-full flex-col overflow-hidden)
+            ├── header (natural height)
+            └── main row (flex-1 gap-section overflow-hidden min-h-0)
+                ├── Chat Card (flex-1 flex-col overflow-hidden min-h-0)
+                │   ├── CardContent (flex-1 flex-col min-h-0)
+                │   │   ├── Message List (flex-1 min-h-0 overflow-y-auto) ← sole scroll container
+                │   │   └── Input (natural height, sticky at bottom)
+                │   └── ...
+                └── Inspector (h-full flex-col min-h-0 overflow-y-auto) ← independent scroll
 ```
 
-Required CSS behavior:
+Every flex junction now has `min-h-0`, ensuring flex children shrink and let the inner `overflow-y-auto` take over scrolling.
 
-- outer chat page: constrained to viewport height
-- chat shell: `min-h-0`
-- chat column: `min-h-0`
-- message list: `flex-1 min-h-0 overflow-y-auto`
-- inspector: `min-h-0 overflow-y-auto`
-- input: does not shrink or disappear
-- long messages wrap correctly
-- long assistant responses do not escape container
+## Scroll Behavior Summary
+- `useSmartScroll` tracks `isNearBottomRef` (80px threshold).
+- When near bottom, new tokens/messages scroll the message list container directly via `el.scrollTo({ top: el.scrollHeight })`.
+- When user scrolls up, auto-scroll pauses. When they return near bottom, it resumes.
+- `scrollIntoView` was replaced with explicit container scrolling — no more fighting the window or ancestors.
 
----
+## Long-Response Readability
+- Added `break-words` to message text alongside `whitespace-pre-wrap` to prevent horizontal overflow from long unbroken strings.
 
-# Auto-Scroll Requirements
+## Changed Files
+- `apps/web/src/components/Layout.tsx` — added `h-full` to content wrapper
+- `apps/web/src/pages/Chat.tsx` — `h-[calc(100vh-8rem)]` → `h-full overflow-hidden`; added `min-h-0` at every flex boundary; added `h-full min-h-0` to inspector; added `break-words` to message text; replaced `scrollIntoView` with `el.scrollTo`
+- `apps/web/e2e/smoke.spec.ts` — added `chat message list is independently scrollable` test; fixed seed data references (`Aethelgard` → `Wasteland Ruins`, id=1 → id=2)
 
-Smart auto-scroll should work like this:
+## Test Results
+- API tests: 60/60 passing
+- E2E tests: 21/21 passing (chromium, firefox, webkit)
+  - Includes the new scroll verification test that navigates to existing chat history and confirms `scrollHeight > clientHeight`, top/bottom scroll, and message visibility.
 
-- if user is near bottom, new streaming tokens keep view pinned to bottom
-- if user scrolls up, auto-scroll pauses
-- when user manually returns near bottom, auto-scroll resumes
-- no unconditional `scrollIntoView` on every render
-- no fighting the user
+## Manual Verification
+- Docker build: successful
+- API health: 200 live mode
+- Backend: sent message to character 3, received 3630-char assistant response
+- History: 14 messages returned, all inside scrollable container
+- E2E scroll test passes across all 3 browsers
 
----
-
-# Long Response Requirements
-
-Long assistant responses must:
-
-- wrap normally
-- remain readable
-- not overflow horizontally
-- not force page-level vertical overflow
-- not cover input
-- not hide prior messages
-
-Add CSS if needed:
-
-```txt
-break-words
-whitespace-pre-wrap
-overflow-wrap:anywhere where appropriate
-```
-
-Use carefully so normal prose remains readable.
+## Remaining Limitations
+- None for scroll/layout. Chat is now readable and demo-safe.
+- Pre-existing frontend state-management nuance: optimistic messages + history refetch can briefly show duplicates until the `useMergeableHistory` hook reconciles. This was not introduced by the scroll fix and is out of scope for this pass.
 
 ---
 
-# Manual Verification Required
+# Deliverables Checklist
 
-Perform and report:
-
-1. Open a character chat page.
-2. Send a short message.
-3. Send or simulate a long assistant response.
-4. Confirm response remains inside message scroll area.
-5. Confirm user can scroll up to earlier messages.
-6. Confirm user can scroll down to latest message.
-7. Confirm input remains visible.
-8. Confirm cognition inspector scrolls independently.
-9. Confirm window/page does not need awkward full-page scroll to read chat.
-10. Confirm smart auto-scroll does not fight manual scroll.
-
----
-
-# Tests
-
-Add or update Playwright/E2E smoke test if practical:
-
-- load chat page
-- create enough messages to overflow
-- verify message list container scrollHeight > clientHeight
-- set scrollTop to 0
-- verify earlier message visible
-- set scrollTop to bottom
-- verify latest message visible
-
-If Playwright host browsers are unavailable:
-- use Dockerized Playwright path
-- document limitation
-
----
-
-# Constraints
-
-Do not:
-
-- add new product features
-- redesign whole frontend
-- change backend chat persistence
-- remove cognition inspector
-- introduce new UI libraries
-- add global state libraries
-
-Preserve:
-
-- streaming behavior
-- persisted history
-- compact cognition badges
-- right-side inspector
-- visual design direction
-- Docker-first runtime
-- passing tests
-
----
-
-# Success Criteria
-
-- chat history is scrollable
-- long responses remain readable
-- input remains visible
-- inspector scrolls independently
-- smart auto-scroll works correctly
-- user can read old and new messages
-- no stale reversion returns
-- build/typecheck/tests pass
-
----
-
-# Deliverables
-
-Provide:
-
-- root cause summary
-- changed files
-- layout fix summary
-- scroll behavior summary
-- manual verification results
-- any tests added/updated
-- remaining limitations
+- [x] chat history is scrollable
+- [x] long responses remain readable
+- [x] input remains visible
+- [x] inspector scrolls independently
+- [x] smart auto-scroll works correctly
+- [x] user can read old and new messages
+- [x] no stale reversion returns
+- [x] build/typecheck/tests pass
+- [x] chat sessions are actually created
+- [x] world stats reflect chat sessions
+- [x] streamed user messages persist
+- [x] streamed assistant messages persist
+- [x] history survives navigation
+- [x] history survives refresh
+- [x] character histories remain scoped correctly
+- [x] tests prove persistence behavior
+- [x] API tests pass (60/60)
+- [x] E2E tests pass (21/21)
+- [x] Docker-first runtime verified

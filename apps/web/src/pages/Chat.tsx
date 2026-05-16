@@ -293,8 +293,8 @@ export function Chat() {
     }
   }, [selectedCharacterId, selectedWorldId, sessionId, refetchHistory, refreshContextPanels, updateUrlSession]);
 
-  const handleSend = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSend = useCallback(async (e?: React.FormEvent | React.KeyboardEvent) => {
+    e?.preventDefault();
     if (!input.trim() || sending || !selectedWorldId || !selectedCharacterId) return;
 
     const trimmed = input.trim();
@@ -486,7 +486,7 @@ export function Chat() {
                   </div>
                 </div>
               )}
-              {messages.map((msg, i) => (
+              {messages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}

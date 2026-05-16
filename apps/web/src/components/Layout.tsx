@@ -75,7 +75,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="text-tiny text-dust tracking-wider">ARCHIVE</span>
             </div>
           </Link>
-          <button onClick={() => setSidebarOpen(false)} className="text-dust hover:text-parchment lg:hidden transition-colors">
+          <button type="button" onClick={() => setSidebarOpen(false)} className="text-dust hover:text-parchment lg:hidden transition-colors">
             <X className="h-5 w-5" strokeWidth={1.5} />
           </button>
         </div>
@@ -149,6 +149,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Footer */}
         <div className="border-t border-ridge p-3">
           <button
+            type="button"
             onClick={() => setDark(!dark)}
             className="flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-small text-ash transition-all duration-archive hover:text-parchment hover:bg-surface/60"
           >
@@ -161,7 +162,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="flex h-16 items-center gap-3 border-b border-ridge bg-void px-6 lg:hidden">
-          <button onClick={() => setSidebarOpen(true)} className="text-ash hover:text-parchment transition-colors">
+          <button type="button" onClick={() => setSidebarOpen(true)} className="text-ash hover:text-parchment transition-colors">
             <Menu className="h-5 w-5" strokeWidth={1.5} />
           </button>
           <span className="font-serif text-h3 text-parchment">Loreweaver</span>

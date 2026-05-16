@@ -38,6 +38,7 @@ export function GenerateWorldModal({ onClose }: { onClose?: () => void }) {
             Forge Realm
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="rounded-card p-1.5 text-dust hover:text-parchment hover:bg-surface transition-colors"
           >

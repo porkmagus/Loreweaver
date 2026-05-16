@@ -169,6 +169,7 @@ function LoreList() {
                 </div>
               </Link>
               <button
+                type="button"
                 onClick={async () => {
                   if (!confirm('Erase this lore entry?')) return;
                   try { await apiDelete(`/lore/${entry.id}`); refetch(); } catch {}
