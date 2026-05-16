@@ -83,40 +83,60 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Status */}
-        <div className="border-b border-ridge px-5 py-3">
+        <div className="border-b border-ridge px-5 py-3 space-y-2">
           {health ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className={cn(
-                  "relative flex h-2 w-2",
-                  health.aiMode === 'live' ? "" : "opacity-50"
-                )}>
+            <>
+              {/* Row 1: mode badge + infra badges */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
                   <span className={cn(
-                    "absolute inline-flex h-full w-full animate-ping rounded-full opacity-40",
-                    health.aiMode === 'live' ? "bg-gold" : "bg-dust"
-                  )} />
+                    "relative flex h-2 w-2",
+                    health.aiMode === 'live' ? "" : "opacity-50"
+                  )}>
+                    <span className={cn(
+                      "absolute inline-flex h-full w-full animate-ping rounded-full opacity-40",
+                      health.aiMode === 'live' ? "bg-gold" : "bg-dust"
+                    )} />
+                    <span className={cn(
+                      "relative inline-flex h-2 w-2 rounded-full",
+                      health.aiMode === 'live' ? "bg-gold" : "bg-dust"
+                    )} />
+                  </span>
                   <span className={cn(
-                    "relative inline-flex h-2 w-2 rounded-full",
-                    health.aiMode === 'live' ? "bg-gold" : "bg-dust"
-                  )} />
-                </span>
-                <span className={cn(
-                  "text-tiny font-medium tracking-wide",
-                  health.aiMode === 'live' ? "text-gold" : "text-dust"
-                )}>
-                  {health.aiMode === 'live' ? 'LIVE' : 'ARCHIVE'}
+                    "text-tiny font-medium tracking-wide",
+                    health.aiMode === 'live' ? "text-gold" : "text-dust"
+                  )}>
+                    {health.aiMode === 'live' ? 'LIVE' : 'ARCHIVE'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide bg-surface text-dust border border-ridge">DB</span>
+                  {health.qdrantConnected && (
+                    <span className="rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide bg-surface text-dust border border-ridge">QDRANT</span>
+                  )}
+                </div>
+              </div>
+              {/* Row 2: LLM provider/model */}
+              <div className="flex items-center gap-1.5 text-[11px] leading-tight">
+                <span className="shrink-0 text-dust tracking-wide">LLM</span>
+                <span className="truncate text-ash" title={`${health.provider ?? '—'} · ${health.chatModel ?? '—'}`}>
+                  {health.provider ?? '—'}
+                  {health.chatModel && (
+                    <span className="text-dust"> · {health.chatModel.split('/').pop() ?? health.chatModel}</span>
+                  )}
                 </span>
               </div>
-              {health.qdrantConnected && (
-                <span className="text-tiny text-dust tracking-wide">QDRANT</span>
-              )}
-              {health.provider && (
-                <span className="text-tiny text-dust tracking-wide">{health.provider.toUpperCase()}</span>
-              )}
-              {health.chatModel && (
-                <span className="text-tiny text-dust tracking-wide truncate max-w-[5rem]" title={health.chatModel}>{health.chatModel.split('/').pop() ?? health.chatModel}</span>
-              )}
-            </div>
+              {/* Row 3: Image provider/model */}
+              <div className="flex items-center gap-1.5 text-[11px] leading-tight">
+                <span className="shrink-0 text-dust tracking-wide">IMG</span>
+                <span className="truncate text-ash" title={`${health.imageProvider ?? '—'} · ${health.imageModel ?? '—'}`}>
+                  {health.imageProvider ?? '—'}
+                  {health.imageModel && health.imageProvider !== 'disabled' && (
+                    <span className="text-dust"> · {health.imageModel}</span>
+                  )}
+                </span>
+              </div>
+            </>
           ) : healthError ? (
             <div className="flex items-center gap-2 text-fear">
               <WifiOff className="h-3 w-3" strokeWidth={1.5} />

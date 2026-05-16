@@ -1,201 +1,263 @@
+# TASK.md
+
+# Current Objective
+
+Execute a Provider Settings UI Fix and Full Runtime Verification Pass.
+
+The app has provider configuration, image provider settings, and status indicators, but several UI/default-state issues remain.
+
+This is a targeted bugfix + verification pass.
+
+Do not add new features.
+Do not redesign the app.
+Do not rewrite provider architecture.
+
 ---
 
-# 6. Runtime Settings Persistence (Replace env-first behavior)
+# Reported Issues
+
+## 1. OpenAI Image Base URL Default Is Wrong
 
 Current behavior:
 
-- provider settings are primarily env-driven
-- GUI settings may only exist in localStorage/runtime memory
-- backend container restart may lose settings
-- `.env` editing is still implied as part of setup
+- OpenAI image generation settings say:
+  "leave empty to use official endpoint"
+- but the Image Base URL field is prefilled with a localhost URL
 
-This should be improved.
+This is confusing and incorrect.
+
+Required behavior:
+
+- For OpenAI Image provider, Image Base URL should default to empty.
+- Empty value means use official OpenAI endpoint.
+- Localhost/default custom endpoint values should only appear for Custom Image Endpoint mode.
+- Switching provider presets should update defaults correctly.
+
+Expected defaults:
+
+```txt
+OpenAI Image:
+Image Base URL: empty
+Image Model: gpt-image-2 or configured default
+API Key: empty unless persisted/configured
+
+Custom Image Endpoint:
+Image Base URL: user-defined or sensible placeholder only
+Image Model: user-defined
+
+Disabled/Fallback:
+Image Base URL: empty
+Image Model: optional/disabled
+```
+
+Do not silently send localhost as the OpenAI image endpoint.
 
 ---
 
-# Required Architecture Change
+## 2. Side Navigation Provider Status Is Squished
 
-Provider and image settings should persist in application storage/database.
+Current behavior:
 
-Do NOT automatically rewrite `.env` from the GUI.
+- side nav status section shows:
+  - LIVE
+  - database status
+  - LLM provider
+  - image provider
+  - other provider status
+- provider/status names are cut off or visually cramped
 
-`.env` should remain:
+Required behavior:
 
-```txt
-deployment defaults
-server bootstrap defaults
-advanced configuration
-fallback values
-```
+- status section should be readable
+- no text should overflow awkwardly
+- provider/model labels should truncate gracefully
+- full values should be available via title/tooltip
+- layout should preserve visual polish
 
-NOT:
+Acceptable fixes:
 
-```txt
-primary runtime state
-```
-
----
-
-# Required Persistence Model
-
-Preferred hierarchy:
-
-```txt
-database/app settings
-↓
-env defaults
-↓
-simulated fallback
-```
-
-Meaning:
-
-1. If persisted app settings exist, use them.
-2. Otherwise use env defaults.
-3. Otherwise use simulated/fallback mode.
-
-Frontend localStorage alone is insufficient.
-
----
-
-# Required Backend Storage
-
-Add a lightweight persistent settings model.
+- widen sidebar slightly
+- reduce provider/status font size
+- split status into multiple rows
+- use compact badges
+- truncate with ellipsis
+- add title attributes
+- move detailed provider info into hover/title or settings page
 
 Preferred:
 
 ```txt
-app_settings
+LIVE / SIMULATED badge
+DB status badge
+Qdrant status badge
+LLM: provider · model truncated
+IMG: provider · model truncated
 ```
 
-Simple structure acceptable:
-
-```txt
-id
-key
-value
-updatedAt
-```
-
-or equivalent JSON/settings structure.
-
-Keep implementation minimal and pragmatic.
-
-Do not build:
-- user accounts
-- RBAC
-- enterprise secret vaults
-- complex configuration systems
+Do not cram long provider/model names into tiny cells.
 
 ---
 
-# Settings To Persist
+# 3. Provider Settings Consistency Verification
 
-Persist at minimum:
+Verify the previous provider/settings fixes remain correct.
 
-```txt
-ai.provider
-ai.baseUrl
-ai.apiKey
-ai.chatModel
-ai.embeddingModel
-ai.temperature
-ai.maxTokens
+Check:
 
-image.provider
-image.baseUrl
-image.apiKey
-image.model
-image.size
-image.quality
-image.format
-image.enabled
-```
-
-Actual schema can vary if simpler.
+- provider preset buttons match dropdown options
+- Ollama Local appears consistently
+- Ollama Cloud / Remote appears consistently
+- Ollama Cloud / Remote defaults to:
+  https://www.ollama.com/v1
+- Custom OpenAI-Compatible allows custom base URL/model
+- OpenRouter defaults to:
+  https://openrouter.ai/api/v1
+- provider settings save correctly
+- provider settings persist correctly if DB-backed persistence has been implemented
+- no `.env` rewriting occurs
 
 ---
 
-# Runtime Behavior
+# 4. Image Provider Test Verification
 
-On backend startup:
+Verify Test Image Gen behavior.
 
-1. Load persisted settings if present.
-2. Fall back to env defaults if settings absent.
-3. Fall back to simulated mode if neither configured.
+Required behavior:
 
-On GUI save:
-
-1. Persist settings to backend storage/database.
-2. Update runtime provider state immediately.
-3. Do NOT require container restart.
-4. Do NOT rewrite `.env`.
+- Disabled/Fallback mode returns clear disabled/fallback status, not a scary failure
+- OpenAI Image with missing API key returns clear actionable error
+- OpenAI Image with empty base URL uses official endpoint behavior
+- Custom Image Endpoint uses configured base URL
+- Test button does not silently spend credits
+- Test button does not silently fail
 
 ---
 
-# Frontend Behavior
+# 5. Full App Functionality Verification
 
-Settings page and onboarding should:
-
-- load persisted backend settings
-- allow editing/saving
-- survive page refresh
-- survive container restart
-- survive browser restart
-
-localStorage may still cache draft UI state, but canonical runtime settings should come from backend persistence.
-
----
-
-# Important Constraint
-
-Avoid introducing:
-- multiple conflicting sources of truth
-- env rewrite logic
-- runtime/env synchronization hacks
-- restart-required configuration flows
-
-The backend runtime config should derive from:
-```txt
-persisted settings first
-env defaults second
-```
-
----
-
-# Documentation Requirements
-
-Update README.md and MEMORY.md:
-
-- `.env` values are optional defaults
-- provider setup can happen fully through GUI
-- GUI settings persist in app storage/database
-- container restart should preserve GUI settings
-- `.env` rewriting is intentionally not used
-
----
-
-# Verification Requirements
+After fixes, verify current app functionality still works.
 
 Manual verification:
 
-1. Start app with empty AI-related `.env`.
-2. Configure provider through onboarding/settings GUI.
-3. Save settings.
-4. Generate/chat successfully.
-5. Restart backend container.
-6. Reload app.
-7. Confirm provider settings persist.
-8. Confirm `.env` file was NOT modified.
-9. Confirm runtime still uses persisted settings.
+- app starts cleanly
+- onboarding works
+- world generation works
+- provider settings page loads
+- settings save/load correctly
+- chat works
+- streaming works
+- chat history persists after navigation
+- chat history persists after refresh
+- chat scroll works with long responses
+- cognition inspector works
+- lore ingestion/search still works
+- image fallback/generated status displays clearly
+- dashboard/status indicators render cleanly
+
+---
+
+# Required Implementation Work
+
+## Image Base URL Defaults
+
+Fix image provider preset default behavior.
+
+Rules:
+
+- OpenAI Image official endpoint = empty base URL
+- Custom image endpoint = user-entered base URL
+- Disabled image mode = no base URL required
+
+Ensure:
+- UI placeholder may show official endpoint explanation
+- actual value remains empty unless user enters one
+- saved config does not store bogus localhost for OpenAI Image
+
+---
+
+## Sidebar Status Layout
+
+Improve provider status display in Layout/sidebar.
+
+Requirements:
+
+- no clipping
+- no overlapping
+- no unreadable provider names
+- responsive enough for long model names
+- full provider/model info available via title
+
+Avoid:
+- increasing visual noise too much
+- giant sidebar unless necessary
+- raw debug-looking status blocks
+
+---
+
+## Verification Pass
+
+Run and report:
+
+```bash
+npm run typecheck
+npm run build
+npm test --workspace=apps/api
+docker compose up -d --build
+```
+
+If root scripts differ, use equivalent commands and document them.
+
+Manual browser verification required for:
+
+- Settings page defaults
+- OpenAI Image empty base URL
+- Ollama Cloud endpoint default
+- sidebar provider display
+- chat streaming
+- chat persistence
+- lore search
+- world generation
+
+---
+
+# Constraints
+
+Do not:
+
+- add new providers
+- redesign Settings from scratch
+- redesign sidebar from scratch
+- rewrite provider architecture
+- add auth/accounts
+- add billing
+- rewrite image generation system
+- break streaming chat
+- break persistence
+- silently modify `.env`
+
+Preserve:
+
+- custom OpenAI-compatible support
+- Ollama local support
+- Ollama cloud/remote support
+- OpenRouter support
+- image fallback mode
+- Docker-first startup
+- GUI-first provider setup
+- current visual direction
+- passing tests
 
 ---
 
 # Success Criteria
 
-- GUI provider settings persist across container restarts
-- `.env` editing is optional
-- `.env` is not rewritten by the app
-- backend runtime uses persisted settings
-- onboarding works without manual env editing
-- no conflicting runtime/env behavior appears
+- OpenAI Image base URL defaults to empty
+- localhost is not shown/persisted for OpenAI Image official endpoint
+- Custom Image Endpoint still supports custom base URL
+- sidebar status area is readable
+- long provider/model names truncate gracefully
+- provider settings remain coherent
+- image test behavior is predictable
+- app functionality still works after fixes
+- build/typecheck/tests pass
+- Docker runtime starts successfully

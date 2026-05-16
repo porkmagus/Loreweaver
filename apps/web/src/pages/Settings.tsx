@@ -39,7 +39,7 @@ const PRESETS: ProviderPreset[] = [
   {
     label: 'Custom OpenAI-Compatible',
     value: 'custom-openai',
-    baseUrl: 'http://localhost:1234/v1',
+    baseUrl: '',
     chatModel: '',
     embeddingModel: '',
     imageModel: '',
@@ -89,6 +89,7 @@ const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; de
     label: 'OpenAI Image',
     value: 'openai-image',
     defaults: {
+      baseUrl: '',
       model: 'gpt-image-2',
       size: '1536x1024',
       quality: 'low',
@@ -153,7 +154,7 @@ export function Settings() {
 
   const [form, setForm] = useState<Partial<ProviderConfig>>({
     provider: 'custom-openai',
-    baseUrl: 'http://localhost:1234/v1',
+    baseUrl: '',
     apiKey: '',
     chatModel: '',
     embeddingModel: '',
