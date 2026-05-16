@@ -11,21 +11,21 @@ export interface TimelineEvent {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  interaction: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
-  conversation: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
-  discovery: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  alliance: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  betrayal: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
-  conflict: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
-  lore_reveal: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
-  relationship_change: 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
-  memory_created: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+  interaction: 'border-mist/30 text-mist',
+  conversation: 'border-sage/30 text-sage',
+  discovery: 'border-gold/30 text-gold',
+  alliance: 'border-trust/30 text-trust',
+  betrayal: 'border-fear/30 text-fear',
+  conflict: 'border-ember/30 text-ember',
+  lore_reveal: 'border-memory/30 text-memory',
+  relationship_change: 'border-silver/30 text-silver',
+  memory_created: 'border-memory/30 text-memory',
 };
 
 function EventBadge({ type }: { type: string }) {
-  const cls = TYPE_COLORS[type] ?? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+  const cls = TYPE_COLORS[type] ?? 'border-ridge text-dust';
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${cls}`}>
+    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-tiny font-medium uppercase tracking-wider ${cls}`}>
       {type}
     </span>
   );
@@ -35,8 +35,9 @@ export function TimelineCard({ events }: { events: TimelineEvent[] }) {
   if (!events || events.length === 0) {
     return (
       <Card>
-        <CardContent className="py-6 text-center text-sm text-slate-500">
-          No timeline events yet. Meaningful conversations will generate events.
+        <CardContent className="py-6 text-center">
+          <p className="text-small text-dust">No events recorded.</p>
+          <p className="text-tiny text-ghost mt-1">Meaningful dialogue will generate entries.</p>
         </CardContent>
       </Card>
     );
@@ -48,10 +49,10 @@ export function TimelineCard({ events }: { events: TimelineEvent[] }) {
         <Card key={ev.id}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">{ev.title}</CardTitle>
+              <CardTitle className="font-serif text-h3 text-parchment">{ev.title}</CardTitle>
               <EventBadge type={ev.eventType} />
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-tiny text-dust">
               {new Date(ev.happenedAt).toLocaleDateString(undefined, {
                 month: 'short',
                 day: 'numeric',
@@ -62,11 +63,11 @@ export function TimelineCard({ events }: { events: TimelineEvent[] }) {
           </CardHeader>
           <CardContent className="pt-0">
             {ev.description && (
-              <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">{ev.description}</p>
+              <p className="text-small text-ash line-clamp-3 leading-relaxed">{ev.description}</p>
             )}
-            <div className="mt-2 flex items-center gap-1">
+            <div className="mt-3 flex items-center gap-1">
               {Array.from({ length: Math.min(5, Math.max(1, ev.significance)) }).map((_, i) => (
-                <span key={i} className="h-2 w-2 rounded-full bg-rose-500" />
+                <span key={i} className="h-1.5 w-1.5 rounded-full bg-ember" />
               ))}
             </div>
           </CardContent>

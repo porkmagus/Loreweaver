@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { GenerateWorldModal } from '@/components/GenerateWorldModal';
 import {
   Globe, Plus, ChevronLeft, Users, BookOpen, Clock, Pencil, Trash2, Sparkles,
-  MessageSquare, Search, PlusCircle
+  ArrowRight
 } from 'lucide-react';
 import type { World } from '@loreweaver/shared';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -52,48 +52,42 @@ function WorldList() {
   };
 
   return (
-    <div className="space-y-4 max-w-4xl">
+    <div className="space-y-section">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Worlds</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Your story universes</p>
+          <p className="text-label mb-1">REALMS</p>
+          <h1 className="font-serif text-display text-parchment">Worlds</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
           <Button variant="ghost" onClick={() => setModalOpen(true)}>
-            <Sparkles className="mr-2 h-4 w-4" />
+            <Sparkles className="mr-2 h-4 w-4" strokeWidth={1.5} />
             Generate
           </Button>
-          <Button onClick={() => setFormOpen(!formOpen)}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button onClick={() => setFormOpen(!formOpen)} variant="primary">
+            <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
             New World
           </Button>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+        <div className="rounded-card border border-fear/30 bg-fear/5 px-4 py-3 text-small text-fear">
           {error}
         </div>
       )}
 
       {formOpen && (
         <Card>
-          <CardHeader>
-            <CardTitle>Create World</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Forge New Realm</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-3">
               <Input name="name" placeholder="World name" required />
-              <Textarea name="description" placeholder="Description" rows={3} />
+              <Textarea name="description" placeholder="Description…" rows={3} />
               <Input name="genre" placeholder="Genre (e.g., fantasy, sci-fi)" />
-              {formError && <p className="text-sm text-red-600">{formError}</p>}
+              {formError && <p className="text-small text-fear">{formError}</p>}
               <div className="flex gap-2">
-                <Button type="submit" disabled={submitting} variant="primary">
-                  {submitting ? 'Creating…' : 'Create'}
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>
-                  Cancel
-                </Button>
+                <Button type="submit" disabled={submitting} variant="primary">{submitting ? 'Forging…' : 'Forge'}</Button>
+                <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
               </div>
             </form>
           </CardContent>
@@ -106,60 +100,52 @@ function WorldList() {
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-card sm:grid-cols-2 lg:grid-cols-3">
         {worlds?.map((world) => (
-          <div
+          <Link
             key={world.id}
-            className="group relative rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/20"
+            to={`/worlds?id=${world.id}`}
+            className="group rounded-card border border-ridge bg-surface bg-surface-grad p-6 transition-all duration-archive hover:border-gold/20"
           >
-            <div className="flex items-start gap-3">
-              <Link to={`/worlds?id=${world.id}`} className="flex items-start gap-3 flex-1 min-w-0">
-                <div className="rounded-lg bg-emerald-50 p-2 dark:bg-emerald-950/30">
-                  <Globe className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-card border border-gold/20 bg-gold/5">
+                  <Globe className="h-6 w-6 text-gold" strokeWidth={1.5} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <div className="min-w-0">
+                  <h3 className="font-serif text-h2 text-parchment truncate group-hover:text-gold transition-colors">
                     {world.name}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                    {world.description ?? 'No description'}
-                  </p>
                   {world.genre && (
-                    <span className="mt-2 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                      {world.genre}
-                    </span>
+                    <span className="text-tiny text-dust uppercase tracking-wider">{world.genre}</span>
                   )}
                 </div>
-              </Link>
-              <button
-                onClick={async () => {
-                  if (!confirm('Delete this world?')) return;
-                  try { await apiDelete(`/worlds/${world.id}`); refetch(); } catch {}
-                }}
-                className="shrink-0 rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
-                title="Delete"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              </div>
+              {world.description && (
+                <p className="text-small text-ash line-clamp-2 leading-relaxed">
+                  {world.description}
+                </p>
+              )}
+              <div className="flex items-center gap-1.5 text-small text-gold opacity-0 group-hover:opacity-100 transition-opacity">
+                <span>Explore</span>
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+              </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
       {worlds?.length === 0 && !loading && (
-        <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-          <Globe className="h-10 w-10 mb-3 opacity-30" />
-          <p className="text-sm mb-3">No worlds yet. Create your first universe.</p>
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={() => setModalOpen(true)}>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate a World
-            </Button>
-            <Button onClick={() => setFormOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New World
-            </Button>
+        <div className="flex flex-col items-center justify-center py-16 space-y-4 text-dust">
+          <Globe className="h-10 w-10 opacity-20" strokeWidth={1.5} />
+          <div className="text-center space-y-1">
+            <p className="text-body">No realms exist yet.</p>
+            <p className="text-small">Forge or generate your first world.</p>
           </div>
+          <Button onClick={() => setModalOpen(true)} variant="primary">
+            <Sparkles className="mr-2 h-4 w-4" strokeWidth={1.5} />
+            Generate World
+          </Button>
         </div>
       )}
 
@@ -195,27 +181,32 @@ function WorldDetail({ worldId }: { worldId: number }) {
   };
 
   return (
-    <div className="space-y-4 max-w-4xl">
+    <div className="space-y-section">
       <div className="flex items-center gap-3">
         <Link to="/worlds">
           <Button variant="ghost" size="icon">
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">{world?.name ?? 'World'}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {world?.genre ?? 'No genre set'}
-          </p>
+          <p className="text-label">REALM</p>
+          <h1 className="font-serif text-display text-parchment">{world?.name ?? 'World'}</h1>
         </div>
         <Button variant="ghost" size="sm" onClick={() => setEditing(!editing)} disabled={!world}>
-          <Pencil className="mr-1 h-4 w-4" />
+          <Pencil className="mr-1.5 h-4 w-4" strokeWidth={1.5} />
           Edit
+        </Button>
+        <Button variant="destructive" size="sm" onClick={async () => {
+          if (!confirm('Erase this world and all its contents?')) return;
+          try { await apiDelete(`/worlds/${worldId}`); window.location.href = '/worlds'; } catch {}
+        }}>
+          <Trash2 className="mr-1.5 h-4 w-4" strokeWidth={1.5} />
+          Erase
         </Button>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+        <div className="rounded-card border border-fear/30 bg-fear/5 px-4 py-3 text-small text-fear">
           {error}
         </div>
       )}
@@ -228,13 +219,13 @@ function WorldDetail({ worldId }: { worldId: number }) {
 
       {editing && world && (
         <Card>
-          <CardHeader><CardTitle>Edit World</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Edit Realm</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleUpdate} className="space-y-3">
-              <Input name="name" defaultValue={world.name} placeholder="World name" required />
+              <Input name="name" defaultValue={world.name} placeholder="Name" required />
               <Textarea name="description" defaultValue={world.description ?? ''} placeholder="Description" rows={3} />
               <Input name="genre" defaultValue={world.genre ?? ''} placeholder="Genre" />
-              {formError && <p className="text-sm text-red-600">{formError}</p>}
+              {formError && <p className="text-small text-fear">{formError}</p>}
               <div className="flex gap-2">
                 <Button type="submit" disabled={submitting} variant="primary">{submitting ? 'Saving…' : 'Save'}</Button>
                 <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
@@ -245,78 +236,40 @@ function WorldDetail({ worldId }: { worldId: number }) {
       )}
 
       {world && !editing && (
-        <div className="space-y-3">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-slate-700 dark:text-slate-300">
-                {world.description ?? 'No description'}
+        <Card>
+          <CardContent className="p-inner space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center rounded-card border border-gold/20 bg-gold/5">
+                <Globe className="h-7 w-7 text-gold" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="font-serif text-h1 text-parchment">{world.name}</h2>
+                {world.genre && (
+                  <span className="text-tiny text-dust uppercase tracking-wider">{world.genre}</span>
+                )}
+              </div>
+            </div>
+            {world.description && (
+              <p className="text-body text-ash leading-relaxed max-w-2xl">
+                {world.description}
               </p>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Link
-              to={`/characters?worldId=${worldId}`}
-              className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-900"
-            >
-              <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              <div>
-                <p className="text-sm font-semibold">Characters</p>
-                <p className="text-xs text-slate-500">View characters</p>
-              </div>
-            </Link>
-            <Link
-              to={`/lore?worldId=${worldId}`}
-              className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-900"
-            >
-              <BookOpen className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              <div>
-                <p className="text-sm font-semibold">Lore</p>
-                <p className="text-xs text-slate-500">View lore entries</p>
-              </div>
-            </Link>
-            <Link
-              to={`/timeline?worldId=${worldId}`}
-              className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-900"
-            >
-              <Clock className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-              <div>
-                <p className="text-sm font-semibold">Timeline</p>
-                <p className="text-xs text-slate-500">View events</p>
-              </div>
-            </Link>
-            <Link
-              to={`/chat?worldId=${worldId}`}
-              className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-900"
-            >
-              <MessageSquare className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-              <div>
-                <p className="text-sm font-semibold">Chat</p>
-                <p className="text-xs text-slate-500">Talk with characters</p>
-              </div>
-            </Link>
-            <Link
-              to={`/lore?worldId=${worldId}`}
-              className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-900"
-            >
-              <PlusCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              <div>
-                <p className="text-sm font-semibold">Add Lore</p>
-                <p className="text-xs text-slate-500">Create entry for world</p>
-              </div>
-            </Link>
-            <Link
-              to={`/lore?worldId=${worldId}&tab=search`}
-              className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 dark:border-slate-800 dark:bg-slate-900"
-            >
-              <Search className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-              <div>
-                <p className="text-sm font-semibold">Search Lore</p>
-                <p className="text-xs text-slate-500">Semantic retrieval</p>
-              </div>
-            </Link>
-          </div>
-        </div>
+            )}
+            <div className="flex items-center gap-4 pt-2">
+              <Link to={`/characters?worldId=${world.id}`} className="text-small text-gold hover:text-gold-dim transition-colors flex items-center gap-1.5">
+                <Users className="h-4 w-4" strokeWidth={1.5} />
+                Characters
+              </Link>
+              <Link to={`/lore?worldId=${world.id}`} className="text-small text-gold hover:text-gold-dim transition-colors flex items-center gap-1.5">
+                <BookOpen className="h-4 w-4" strokeWidth={1.5} />
+                Lore
+              </Link>
+              <Link to={`/timeline?worldId=${world.id}`} className="text-small text-gold hover:text-gold-dim transition-colors flex items-center gap-1.5">
+                <Clock className="h-4 w-4" strokeWidth={1.5} />
+                Timeline
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

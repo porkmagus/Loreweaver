@@ -30,40 +30,40 @@ export function GenerateWorldModal({ onClose }: { onClose?: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-950">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Globe className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-            Generate World
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+      <div className="w-full max-w-lg rounded-card border border-ridge bg-surface bg-surface-grad p-6 shadow-depth">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="font-serif text-h2 text-parchment flex items-center gap-2">
+            <Globe className="h-5 w-5 text-gold" strokeWidth={1.5} />
+            Forge Realm
           </h2>
           <button
             onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-900"
+            className="rounded-card p-1.5 text-dust hover:text-parchment hover:bg-surface transition-colors"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" strokeWidth={1.5} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="relative">
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe a world and we'll build it for you — characters, lore, timeline, and all..."
+              placeholder="A world of towering spires and ancient pacts, where memory itself is currency…"
               rows={4}
               maxLength={2000}
               disabled={generating}
-              className="w-full resize-none rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              className="w-full resize-none rounded-card border border-ridge bg-depth px-4 py-3 text-body text-parchment placeholder:text-dust focus:border-gold focus:shadow-gold-glow focus:outline-none disabled:opacity-50 transition-all duration-archive"
             />
-            <div className="absolute bottom-2 right-3 text-xs text-slate-400">
+            <div className="absolute bottom-3 right-4 text-tiny text-ghost">
               {prompt.length}/2000
             </div>
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 rounded-md bg-red-50 px-4 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
-              <AlertCircle className="h-4 w-4" />
+            <div className="flex items-center gap-2 rounded-card border border-fear/30 bg-fear/5 px-4 py-3 text-small text-fear">
+              <AlertCircle className="h-4 w-4" strokeWidth={1.5} />
               {error}
             </div>
           )}
@@ -77,11 +77,11 @@ export function GenerateWorldModal({ onClose }: { onClose?: () => void }) {
             {generating ? (
               <span className="flex items-center justify-center gap-2">
                 <Spinner className="h-4 w-4" />
-                Generating world…
+                Weaving realm…
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2">
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-4 w-4" strokeWidth={1.5} />
                 Generate World
               </span>
             )}

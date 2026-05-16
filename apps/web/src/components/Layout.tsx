@@ -11,11 +11,11 @@ import {
   X,
   Moon,
   Sun,
-  Activity,
   WifiOff,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useApi } from '@/hooks/useApi';
+import { Spinner } from '@/components/ui/Spinner';
 import type { HealthResponse } from '@loreweaver/shared';
 
 const navItems = [
@@ -30,7 +30,7 @@ const navItems = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dark, setDark] = useState(() => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined') return true;
     return document.documentElement.classList.contains('dark');
   });
 
@@ -46,11 +46,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { data: health, error: healthError } = useApi<HealthResponse>('/health');
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex h-screen w-full bg-void text-parchment">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -58,44 +58,70 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-60 transform border-r border-slate-200 bg-white transition-transform duration-200 dark:border-slate-800 dark:bg-slate-950 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 w-60 transform border-r border-ridge bg-depth transition-transform duration-300 ease-archive lg:static lg:translate-x-0 flex flex-col",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
-          <Link to="/" className="flex items-center gap-2 font-semibold text-lg">
-            <BookOpen className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-            <span>Loreweaver</span>
+        {/* Header */}
+        <div className="flex h-16 items-center justify-between border-b border-ridge px-5">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="flex h-8 w-8 items-center justify-center rounded-card border border-gold/30 bg-gold/5">
+              <BookOpen className="h-4 w-4 text-gold" strokeWidth={1.5} />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-serif text-h3 font-medium leading-none text-parchment group-hover:text-gold transition-colors duration-archive">Loreweaver</span>
+              <span className="text-tiny text-dust tracking-wider">ARCHIVE</span>
+            </div>
           </Link>
-          <div className="flex items-center gap-2">
-            {health ? (
-              <div className="flex items-center gap-1.5">
-                <div className={cn(
-                  "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                  health.aiMode === 'live'
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
-                    : "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
-                )}>
-                  <Activity className="h-3 w-3" />
-                  {health.aiMode === 'live' ? 'Live' : 'Simulated'}
-                </div>
-                {health.qdrantConnected && (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">Qdrant</span>
-                )}
-              </div>
-            ) : healthError ? (
-              <div className="flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-950/30 dark:text-red-300">
-                <WifiOff className="h-3 w-3" />
-                Offline
-              </div>
-            ) : null}
-            <button onClick={() => setSidebarOpen(false)} className="lg:hidden">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+          <button onClick={() => setSidebarOpen(false)} className="text-dust hover:text-parchment lg:hidden transition-colors">
+            <X className="h-5 w-5" strokeWidth={1.5} />
+          </button>
         </div>
 
-        <nav className="flex flex-col gap-1 p-3">
+        {/* Status */}
+        <div className="border-b border-ridge px-5 py-3">
+          {health ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  "relative flex h-2 w-2",
+                  health.aiMode === 'live' ? "" : "opacity-50"
+                )}>
+                  <span className={cn(
+                    "absolute inline-flex h-full w-full animate-ping rounded-full opacity-40",
+                    health.aiMode === 'live' ? "bg-gold" : "bg-dust"
+                  )} />
+                  <span className={cn(
+                    "relative inline-flex h-2 w-2 rounded-full",
+                    health.aiMode === 'live' ? "bg-gold" : "bg-dust"
+                  )} />
+                </span>
+                <span className={cn(
+                  "text-tiny font-medium tracking-wide",
+                  health.aiMode === 'live' ? "text-gold" : "text-dust"
+                )}>
+                  {health.aiMode === 'live' ? 'LIVE' : 'ARCHIVE'}
+                </span>
+              </div>
+              {health.qdrantConnected && (
+                <span className="text-tiny text-dust tracking-wide">QDRANT</span>
+              )}
+            </div>
+          ) : healthError ? (
+            <div className="flex items-center gap-2 text-fear">
+              <WifiOff className="h-3 w-3" strokeWidth={1.5} />
+              <span className="text-tiny tracking-wide">OFFLINE</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Spinner className="h-3 w-3" />
+              <span className="text-tiny text-dust tracking-wide">CONNECTING</span>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 flex flex-col gap-1 p-3">
           {navItems.map((item) => {
             const active = location.pathname === item.to;
             const Icon = item.icon;
@@ -105,41 +131,44 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 to={item.to}
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  "group flex items-center gap-3 rounded-card px-3 py-2.5 text-small font-medium transition-all duration-archive",
                   active
-                    ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300"
-                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
+                    ? "border-l-2 border-gold bg-gold/5 text-gold"
+                    : "border-l-2 border-transparent text-ash hover:text-parchment hover:bg-surface/60"
                 )}
               >
-                <Icon className="h-4 w-4" />
-                {item.label}
+                <Icon className="h-4 w-4" strokeWidth={1.5} />
+                <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 p-3 dark:border-slate-800">
+        {/* Footer */}
+        <div className="border-t border-ridge p-3">
           <button
             onClick={() => setDark(!dark)}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
+            className="flex w-full items-center gap-3 rounded-card px-3 py-2.5 text-small text-ash transition-all duration-archive hover:text-parchment hover:bg-surface/60"
           >
-            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            {dark ? 'Light mode' : 'Dark mode'}
+            {dark ? <Sun className="h-4 w-4" strokeWidth={1.5} /> : <Moon className="h-4 w-4" strokeWidth={1.5} />}
+            <span>{dark ? 'Light Archive' : 'Dark Archive'}</span>
           </button>
         </div>
       </aside>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950 lg:hidden">
-          <button onClick={() => setSidebarOpen(true)}>
-            <Menu className="h-5 w-5" />
+        <header className="flex h-16 items-center gap-3 border-b border-ridge bg-void px-6 lg:hidden">
+          <button onClick={() => setSidebarOpen(true)} className="text-ash hover:text-parchment transition-colors">
+            <Menu className="h-5 w-5" strokeWidth={1.5} />
           </button>
-          <span className="font-semibold">Loreweaver</span>
+          <span className="font-serif text-h3 text-parchment">Loreweaver</span>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 lg:p-6">
-          {children}
+        <div className="flex-1 overflow-auto p-6 lg:p-8">
+          <div className="mx-auto max-w-5xl">
+            {children}
+          </div>
         </div>
       </main>
     </div>

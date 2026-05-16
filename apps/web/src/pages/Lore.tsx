@@ -55,38 +55,39 @@ function LoreList() {
   };
 
   return (
-    <div className="space-y-4 max-w-4xl">
+    <div className="space-y-section max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Lore</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {worldId ? 'Lore for this world' : 'All lore entries'}
-          </p>
+          <p className="text-label mb-1">CODEX</p>
+          <h1 className="font-serif text-display text-parchment">Lore</h1>
         </div>
-        <Button onClick={() => setFormOpen(!formOpen)} disabled={!worldId}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button onClick={() => setFormOpen(!formOpen)} disabled={!worldId} variant="primary">
+          <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
           New Entry
         </Button>
       </div>
 
       {!worldId && (
         <Card>
-          <CardContent className="p-4">
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+          <CardContent className="p-inner">
+            <label className="block text-small font-medium text-ash mb-2">
               Filter by World
             </label>
-            <select
-              value={selectedWorld}
-              onChange={(e) => setSelectedWorld(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm dark:border-slate-700"
-            >
-              <option value="">All worlds</option>
-              {worlds?.map((w) => (
-                <option key={w.id} value={String(w.id)}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={selectedWorld}
+                onChange={(e) => setSelectedWorld(e.target.value)}
+                className="h-10 w-full appearance-none rounded-card border border-ridge bg-surface px-4 pr-10 text-small text-parchment focus:border-gold focus:shadow-gold-glow focus:outline-none"
+              >
+                <option value="" className="bg-depth">All worlds</option>
+                {worlds?.map((w) => (
+                  <option key={w.id} value={String(w.id)} className="bg-depth">{w.name}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                <svg className="h-4 w-4 text-dust" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
+              </div>
+            </div>
             {selectedWorld && (
               <Link to={`/lore?worldId=${selectedWorld}`} className="mt-3 inline-block">
                 <Button variant="primary" size="sm">Apply Filter</Button>
@@ -97,7 +98,7 @@ function LoreList() {
       )}
 
       {error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+        <div className="rounded-card border border-fear/30 bg-fear/5 px-4 py-3 text-small text-fear">
           {error}
         </div>
       )}
@@ -105,19 +106,19 @@ function LoreList() {
       {formOpen && worldId && (
         <Card>
           <CardHeader>
-            <CardTitle>Create Lore Entry</CardTitle>
+            <CardTitle>Inscribe New Entry</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-3">
               <input type="hidden" name="worldId" value={worldId} />
               <Input name="title" placeholder="Entry title" required />
-              <Textarea name="content" placeholder="Content" rows={4} required />
+              <Textarea name="content" placeholder="Content of the lore entry…" rows={4} required />
               <Input name="category" placeholder="Category (e.g., history, magic)" />
               <Input name="tags" placeholder="Tags (comma-separated)" />
-              {formError && <p className="text-sm text-red-600">{formError}</p>}
+              {formError && <p className="text-small text-fear">{formError}</p>}
               <div className="flex gap-2">
                 <Button type="submit" disabled={submitting} variant="primary">
-                  {submitting ? 'Creating…' : 'Create'}
+                  {submitting ? 'Inscribing…' : 'Inscribe'}
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>
                   Cancel
@@ -138,29 +139,29 @@ function LoreList() {
         {entries?.map((entry) => (
           <div
             key={entry.id}
-            className="group relative rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/20"
+            className="group relative rounded-card border border-ridge bg-surface bg-surface-grad p-5 transition-all duration-archive hover:border-gold/20"
           >
-            <div className="flex items-start gap-3">
-              <Link to={`/lore?id=${entry.id}`} className="flex items-start gap-3 flex-1 min-w-0">
-                <div className="rounded-lg bg-amber-50 p-2 dark:bg-amber-950/30">
-                  <BookOpen className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <div className="flex items-start gap-4">
+              <Link to={`/lore?id=${entry.id}`} className="flex items-start gap-4 flex-1 min-w-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card border border-gold/20 bg-gold/5">
+                  <BookOpen className="h-5 w-5 text-gold" strokeWidth={1.5} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <div className="flex-1 min-w-0 space-y-1">
+                  <h3 className="font-serif text-h3 text-parchment truncate group-hover:text-gold transition-colors">
                     {entry.title}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                  <p className="text-small text-ash line-clamp-2 leading-relaxed">
                     {entry.content}
                   </p>
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="flex items-center gap-2 pt-1">
                     {entry.category && (
-                      <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                      <span className="inline-block rounded-full border border-ridge bg-depth px-2.5 py-0.5 text-tiny text-dust uppercase tracking-wider">
                         {entry.category}
                       </span>
                     )}
                     {entry.tags && (
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                        <Tag className="h-3 w-3" />
+                      <span className="inline-flex items-center gap-1 text-tiny text-dust">
+                        <Tag className="h-3 w-3" strokeWidth={1.5} />
                         {entry.tags}
                       </span>
                     )}
@@ -169,13 +170,13 @@ function LoreList() {
               </Link>
               <button
                 onClick={async () => {
-                  if (!confirm('Delete this lore entry?')) return;
+                  if (!confirm('Erase this lore entry?')) return;
                   try { await apiDelete(`/lore/${entry.id}`); refetch(); } catch {}
                 }}
-                className="shrink-0 rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                className="shrink-0 rounded-card p-2 text-dust hover:bg-fear/10 hover:text-fear transition-colors"
                 title="Delete"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
           </div>
@@ -183,13 +184,18 @@ function LoreList() {
       </div>
 
       {entries?.length === 0 && !loading && (
-        <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-          <BookOpen className="h-10 w-10 mb-3 opacity-30" />
-          <p className="text-sm mb-3">No lore entries yet.</p>
-          <Button onClick={() => setFormOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Lore Entry
-          </Button>
+        <div className="flex flex-col items-center justify-center py-16 space-y-4 text-dust">
+          <BookOpen className="h-10 w-10 opacity-20" strokeWidth={1.5} />
+          <div className="text-center space-y-1">
+            <p className="text-body">The codex is empty.</p>
+            <p className="text-small">Begin inscribing lore for this world.</p>
+          </div>
+          {worldId && (
+            <Button onClick={() => setFormOpen(true)} variant="outline">
+              <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
+              First Entry
+            </Button>
+          )}
         </div>
       )}
     </div>
@@ -219,9 +225,9 @@ function LoreDetail({ loreId }: { loreId: number }) {
     setIngestResult(null);
     try {
       const res = await apiPost<{ entryId: number; chunks: number }>(`/lore/${loreId}/ingest`, {});
-      setIngestResult(`Ingested ${res.chunks} chunk(s)`);
+      setIngestResult(`Indexed ${res.chunks} fragment${res.chunks === 1 ? '' : 's'}`);
     } catch (err) {
-      setIngestResult(err instanceof Error ? err.message : 'Ingest failed');
+      setIngestResult(err instanceof Error ? err.message : 'Indexing failed');
     } finally {
       setIngesting(false);
     }
@@ -270,37 +276,35 @@ function LoreDetail({ loreId }: { loreId: number }) {
   };
 
   return (
-    <div className="space-y-4 max-w-4xl">
+    <div className="space-y-section max-w-4xl">
       <div className="flex items-center gap-3">
         <Link to="/lore">
           <Button variant="ghost" size="icon">
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">{entry?.title ?? 'Lore Entry'}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {entry?.category ?? 'No category'}
-          </p>
+          <p className="text-label">CODEX ENTRY</p>
+          <h1 className="font-serif text-display text-parchment">{entry?.title ?? 'Lore'}</h1>
         </div>
         <Button variant="ghost" size="sm" onClick={() => setEditing(!editing)} disabled={!entry}>
-          <Pencil className="mr-1 h-4 w-4" />
+          <Pencil className="mr-1.5 h-4 w-4" strokeWidth={1.5} />
           Edit
         </Button>
         <Button variant="outline" size="sm" onClick={handleIngest} disabled={ingesting || !entry}>
-          <Upload className="mr-2 h-4 w-4" />
-          {ingesting ? 'Ingesting…' : 'Ingest'}
+          <Upload className="mr-2 h-4 w-4" strokeWidth={1.5} />
+          {ingesting ? 'Indexing…' : 'Index'}
         </Button>
       </div>
 
       {ingestResult && (
-        <div className={`rounded-md px-4 py-3 text-sm ${ingestResult.startsWith('Ingested') ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-300' : 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300'}`}>
+        <div className={`rounded-card px-4 py-3 text-small border ${ingestResult.startsWith('Indexed') ? 'border-sage/30 bg-sage/5 text-sage' : 'border-fear/30 bg-fear/5 text-fear'}`}>
           {ingestResult}
         </div>
       )}
 
       {error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+        <div className="rounded-card border border-fear/30 bg-fear/5 px-4 py-3 text-small text-fear">
           {error}
         </div>
       )}
@@ -313,14 +317,14 @@ function LoreDetail({ loreId }: { loreId: number }) {
 
       {editing && entry && (
         <Card>
-          <CardHeader><CardTitle>Edit Lore Entry</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Edit Entry</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleUpdate} className="space-y-3">
               <Input name="title" defaultValue={entry.title} placeholder="Title" required />
               <Textarea name="content" defaultValue={entry.content} placeholder="Content" rows={5} required />
               <Input name="category" defaultValue={entry.category ?? ''} placeholder="Category" />
               <Input name="tags" defaultValue={entry.tags ?? ''} placeholder="Tags (comma-separated)" />
-              {formError && <p className="text-sm text-red-600">{formError}</p>}
+              {formError && <p className="text-small text-fear">{formError}</p>}
               <div className="flex gap-2">
                 <Button type="submit" disabled={submitting} variant="primary">{submitting ? 'Saving…' : 'Save'}</Button>
                 <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
@@ -332,13 +336,13 @@ function LoreDetail({ loreId }: { loreId: number }) {
 
       {entry && !editing && (
         <Card>
-          <CardContent className="p-4 space-y-3">
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+          <CardContent className="p-inner space-y-4">
+            <p className="text-body text-ash leading-relaxed">
               {entry.content}
             </p>
             {entry.tags && (
-              <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                <Tag className="h-3 w-3" />
+              <div className="flex items-center gap-1 text-small text-dust">
+                <Tag className="h-3.5 w-3.5" strokeWidth={1.5} />
                 {entry.tags}
               </div>
             )}
@@ -351,35 +355,36 @@ function LoreDetail({ loreId }: { loreId: number }) {
           <CardHeader>
             <CardTitle>Semantic Search</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex gap-2">
+          <CardContent className="space-y-4">
+            <div className="flex gap-3">
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search lore by meaning..."
+                placeholder="Search by meaning…"
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1"
               />
               <Button variant="primary" onClick={handleSearch} disabled={searching || !searchQuery.trim()}>
-                <Search className="mr-2 h-4 w-4" />
+                <Search className="mr-2 h-4 w-4" strokeWidth={1.5} />
                 {searching ? 'Searching…' : 'Search'}
               </Button>
             </div>
 
             {searchResults && searchResults.length === 0 && (
-              <p className="text-sm text-slate-500">No results found.</p>
+              <p className="text-small text-dust">No resonance found.</p>
             )}
 
             {searchResults && searchResults.length > 0 && (
               <div className="space-y-3">
                 {searchResults.map((r, i) => (
-                  <div key={i} className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                        {r.title} — chunk {r.chunkIndex}
+                  <div key={i} className="rounded-card border border-ridge bg-depth p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-small font-medium text-ash">
+                        {r.title} — fragment {r.chunkIndex}
                       </span>
-                      <span className="text-xs text-slate-500">score {r.score.toFixed(3)}</span>
+                      <span className="text-tiny text-dust font-mono">score {r.score.toFixed(3)}</span>
                     </div>
-                    <p className="mt-1 text-sm text-slate-700 dark:text-slate-300 line-clamp-3">
+                    <p className="text-small text-ash line-clamp-3 leading-relaxed">
                       {r.chunkText}
                     </p>
                   </div>

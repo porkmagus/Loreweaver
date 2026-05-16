@@ -3,21 +3,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center font-sans text-body font-medium transition-all duration-archive ease-archive focus-visible:outline-none focus-visible:shadow-gold-glow disabled:pointer-events-none disabled:opacity-40 disabled:text-ghost",
   {
     variants: {
       variant: {
-        default: "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700",
-        primary: "bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600",
-        destructive: "bg-red-600 text-white hover:bg-red-700",
-        outline: "border border-slate-300 bg-transparent hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800",
-        ghost: "hover:bg-slate-100 dark:hover:bg-slate-800",
+        default: "bg-depth border border-ridge text-parchment hover:border-shingle hover:bg-surface",
+        primary: "bg-depth border border-gold text-gold hover:bg-gold/10 hover:border-gold-dim",
+        destructive: "bg-depth border border-fear text-fear hover:bg-fear/10",
+        outline: "bg-transparent border border-ridge text-ash hover:border-shingle hover:text-parchment",
+        ghost: "bg-transparent text-ash hover:text-parchment hover:bg-surface/50",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 px-3 text-xs",
-        lg: "h-10 px-6",
-        icon: "h-9 w-9",
+        default: "h-10 px-5 py-2 rounded-card",
+        sm: "h-8 px-3 text-small rounded-card",
+        lg: "h-11 px-6 rounded-card",
+        icon: "h-10 w-10 rounded-card",
       },
     },
     defaultVariants: {

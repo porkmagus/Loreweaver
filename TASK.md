@@ -2,402 +2,397 @@
 
 # Current Objective
 
-Execute the Final Mega Pass for Loreweaver v0.1.0 Portfolio MVP.
+Execute a Visual Identity Overhaul for Loreweaver.
 
-This is the final cleanup, polish, onboarding, verification, release-readiness, and operational sanity pass.
+The infrastructure, onboarding, retrieval pipeline, persistence systems, and MVP functionality are now established.
 
-The goal is to leave the repository in a state where:
+The app no longer needs major backend systems.
 
-```txt
-Fresh clone → docker compose up -d --build → usable polished app
-```
-
-This is NOT a feature expansion phase.
-
-Do not add major new systems.
-
-Do not redesign the architecture.
-
-Focus on:
-- stability
+It now needs:
+- visual identity
+- atmosphere
+- hierarchy
+- immersion
+- cohesion
 - polish
-- onboarding
-- operational maturity
-- portfolio presentation quality
-- release confidence
 
----
+The current UI is functional but visually generic.
 
-# Primary Goals
-
-The repository should now feel:
-
-- polished
-- understandable
-- reliable
-- deployable
-- demo-ready
-- recruiter-friendly
-- engineer-friendly
-
-The app should feel like:
-- a real product MVP
-- not an experimental prototype
-- not an abandoned AI sandbox
-
----
-
-# Scope
-
-Perform a comprehensive cleanup and release verification pass covering:
-
-- onboarding flow
-- Docker runtime
-- startup simplicity
-- UI polish
-- empty/loading/error states
-- API sanity
-- test reliability
-- documentation quality
-- deployment readiness
-- repo cleanliness
-- developer ergonomics
-- final smoke verification
-
----
-
-# DOCKER & STARTUP REQUIREMENTS
-
-Perform a TRUE clean-room verification.
-
-Required verification flow:
-
-```bash
-docker compose down -v
-docker compose up -d --build
+This phase focuses on transforming Loreweaver from:
+```txt
+generic AI dashboard
 ```
 
-Confirm:
-- frontend healthy
-- backend healthy
-- postgres healthy
-- qdrant healthy
-- migrations applied
-- demo or generated data available
-- onboarding functional
-- generated worlds functional
-- lore ingestion functional
-- retrieval functional
-- chat functional
-- memory persistence functional
-- relationship updates functional
-- timeline events functional
+into:
+```txt
+living narrative archive
+```
+
+This is NOT a complete product rewrite.
+
+This is a focused visual design and frontend polish phase.
 
 ---
 
-# STARTUP UX REQUIREMENTS
+# Core Visual Direction
 
-The primary onboarding flow should remain:
-
-```bash
-git clone https://github.com/porkmagus/loreweaver.git
-cd loreweaver
-cp .env.example .env
-docker compose up -d --build
-```
-
-Then:
+Target aesthetic:
 
 ```txt
-Open:
-http://localhost:5173
+Dark scholarly sci-fi fantasy
++
+living codex
++
+occult archive
++
+high-end developer tool
 ```
 
-The README must clearly communicate this.
+Inspirations:
+- Obsidian
+- Disco Elysium UI
+- illuminated manuscripts
+- SCP archive aesthetics
+- premium terminal/devtool interfaces
+- dark archival systems
 
 Avoid:
-- excessive setup instructions
-- unnecessary commands before first launch
-- hidden onboarding requirements
+- generic SaaS dashboards
+- Tailwind starter aesthetics
+- bright startup gradients
+- excessive glassmorphism
+- gamer MMO UI
+- neon cyberpunk overload
+- over-animated interfaces
+
+Atmosphere should feel:
+- intelligent
+- immersive
+- mysterious
+- restrained
+- readable
+- premium
 
 ---
 
-# README FINAL PASS
+# Required Work
 
-Perform a final README polish pass.
+## 1. Create VISUAL_DIRECTION.md
 
-Ensure README contains:
+Create:
 
-- concise project summary
-- screenshots section
-- feature overview
-- architecture overview
-- stack overview
-- quickstart
-- AI mode explanation
-- onboarding explanation
-- environment variables
-- Docker usage
-- testing commands
-- deployment overview
-- known limitations
-- roadmap summary
-- portfolio/resume bullet
+```txt
+VISUAL_DIRECTION.md
+```
 
-README should feel:
-- concise
-- modern
-- easy to skim
-- technically credible
+Document:
+- design philosophy
+- typography rules
+- spacing rules
+- color palette
+- component philosophy
+- animation philosophy
+- layout philosophy
+- visual hierarchy rules
+- icon usage rules
+- inspirations
+- anti-inspirations
+
+This becomes the permanent visual doctrine file.
 
 ---
 
-# SCREENSHOT REQUIREMENTS
+# 2. Typography Overhaul
 
-Add or verify screenshot support.
+Improve typography hierarchy across the app.
 
-Preferred:
-- actual screenshots committed to repo
+Goals:
+- larger headings
+- stronger visual hierarchy
+- more breathing room
+- less tiny text
+- better readability
+- stronger section separation
 
-Minimum:
-- screenshot placeholders
-- screenshot instructions
+Preferred font direction:
+- Inter
+- Geist
+- IBM Plex Sans
 
-Recommended screenshots:
+Optional display/accent font:
+- Cormorant Garamond
+- similar restrained serif
 
-- onboarding screen
+Do not use novelty fantasy fonts.
+
+---
+
+# 3. Color System Overhaul
+
+Replace generic Tailwind-looking colors with a cohesive palette.
+
+Preferred palette direction:
+
+Base:
+- deep charcoal
+- warm slate
+- near-black archival tones
+
+Accents:
+- muted gold
+- dim cyan
+- faded ember/crimson
+- subtle silver
+
+Avoid:
+- oversaturated colors
+- bright Tailwind defaults
+- rainbow accents
+- excessive gradients
+
+Document palette in VISUAL_DIRECTION.md.
+
+---
+
+# 4. Layout & Spacing Overhaul
+
+Reduce:
+- card spam
+- cramped layouts
+- repetitive panels
+
+Improve:
+- spacing rhythm
+- hierarchy
+- asymmetry where appropriate
+- visual flow
+- readability
+
+Pages should feel:
+- intentional
+- atmospheric
+- calm
+- navigable
+
+Not:
+```txt
+analytics dashboard soup
+```
+
+---
+
+# 5. Dashboard Redesign
+
+Rework dashboard to feel:
+- world-centric
+- narrative-centric
+- atmospheric
+
+Reduce:
+- generic stat tile energy
+
+Increase:
+- world identity
+- visual hierarchy
+- meaningful focal points
+
+Dashboard should emphasize:
+- worlds
+- characters
+- memories
+- lore
+- timeline activity
+
+---
+
+# 6. Sidebar & Navigation Polish
+
+Improve:
+- navigation hierarchy
+- icon consistency
+- spacing
+- hover states
+- active states
+
+Navigation should feel:
+- elegant
+- restrained
+- premium
+
+Avoid:
+- loud hover effects
+- giant colored pills
+- generic admin panel styling
+
+---
+
+# 7. Chat Interface Overhaul
+
+The chat UI is one of the most important visual surfaces.
+
+Improve:
+- message readability
+- spacing
+- typography
+- character identity
+- contextual sidebar styling
+- memory/timeline panel cohesion
+
+Desired feeling:
+```txt
+conversation inside a living archive
+```
+
+Not:
+```txt
+Discord clone
+```
+
+---
+
+# 8. World & Lore Pages
+
+These should become:
+- immersive
+- archival
+- codex-like
+
+Improve:
+- lore readability
+- section hierarchy
+- content density
+- search presentation
+- timeline readability
+
+---
+
+# 9. Motion & Atmosphere
+
+Add restrained atmospheric polish.
+
+Allowed:
+- subtle fades
+- subtle hover transitions
+- soft glows
+- restrained motion
+- elegant loading states
+
+Avoid:
+- excessive animation
+- motion sickness
+- glowing neon effects
+- large parallax systems
+- over-engineered animation frameworks
+
+Subtlety > spectacle.
+
+---
+
+# 10. Empty State & Status Polish
+
+All empty states should feel intentional.
+
+Improve:
+- copywriting
+- spacing
+- icon treatment
+- atmospheric consistency
+
+Health/status indicators should feel integrated into the visual language.
+
+---
+
+# 11. Accessibility & Readability
+
+Preserve:
+- readable contrast
+- accessible font sizing
+- usable spacing
+- keyboard usability
+
+Do not sacrifice usability for atmosphere.
+
+---
+
+# 12. Screenshot Worthiness
+
+Every major page should now look:
+- screenshot-worthy
+- portfolio-worthy
+- memorable
+
+Priority pages:
+- onboarding
 - dashboard
 - world overview
 - lore search
 - character chat
 - relationship/timeline sidebar
-- generated world flow
 
 ---
 
-# UI POLISH REQUIREMENTS
+# Constraints
 
-Perform a final UI consistency pass.
-
-Review:
-
-- spacing
-- empty states
-- loading states
-- error states
-- status indicators
-- button consistency
-- icon consistency
-- card consistency
-- typography consistency
-
-Do not redesign the app.
-
-Apply targeted polish only.
-
----
-
-# HEALTH & STATUS REQUIREMENTS
-
-Verify or improve:
-
-- /health endpoint
-- /api/health endpoint
-- frontend status indicators
-- simulated/live AI mode indicators
-- Qdrant connection indicator
-
-Health responses should remain lightweight and deterministic.
-
----
-
-# TESTING REQUIREMENTS
-
-Perform final testing verification.
-
-Required:
-- unit tests
-- integration tests
-- E2E smoke tests if environment allows
-- build verification
-- typecheck verification
-
-Run and report:
-
-```bash
-npm test
-npm run build
-npm run typecheck
-npm run verify
-```
-
-Adjust commands to actual repo scripts.
-
-If Playwright browser install issues exist on Ubuntu 26:
-- document limitation clearly
-- preserve test structure
-- do not over-engineer workaround infrastructure
-
----
-
-# ROOT SCRIPT REQUIREMENTS
-
-Verify ergonomic root scripts exist.
-
-Preferred examples:
-
-```json
-{
-  "scripts": {
-    "verify": "...",
-    "logs": "...",
-    "down": "...",
-    "seed": "...",
-    "reset": "..."
-  }
-}
-```
-
-Do not break existing workflows.
-
----
-
-# CLEANUP REQUIREMENTS
-
-Perform a final cleanup pass.
-
-Review for:
-
-- dead exports
-- stale comments
-- unused imports
-- duplicated code
-- mismatched types
-- inconsistent naming
-- broken links
-- stale docs
-- stale TODOs
-- noisy console logs
-- accidental debug output
-
-Perform only safe targeted cleanup.
-
----
-
-# DOCUMENTATION REQUIREMENTS
-
-Verify or improve:
-
-- docs/deployment.md
-- docs/demo-script.md
-- docs/roadmap.md
-- MEMORY.md
-- .env.example
-
-Deployment docs should include:
-- VPS deployment
-- Docker Compose usage
-- persistence notes
-- backup notes
-- troubleshooting notes
-
----
-
-# KNOWN LIMITATIONS REQUIREMENTS
-
-Document all remaining important MVP limitations clearly.
-
-Examples:
-- delayed sidebar refetch after chat
-- simulated AI fallback behavior
-- Playwright Ubuntu limitation if unresolved
-- lack of auth/multi-user isolation
-- lack of advanced memory pruning
-
-Do not hide limitations.
-
-Transparent engineering presentation is preferred.
-
----
-
-# CONSTRAINTS
-
-Do not implement:
-
-- auth
-- billing
-- multiplayer
-- voice
-- autonomous agents
-- background jobs
-- Kubernetes
-- major architecture rewrites
-- advanced emotional simulation
-- complex reranking
-- massive provider abstraction systems
+Do not:
+- rewrite backend architecture
+- add major new systems
+- add auth
+- add billing
+- add multiplayer
+- add voice
+- add heavy animation libraries
+- redesign routing/data flow
+- replace core frontend stack
 
 Preserve:
-- Docker-first runtime
-- current architecture
-- current retrieval pipeline
-- current onboarding flow
-- current chat flow
-- passing tests
-- type safety
-
----
-
-# FINAL VERIFICATION REQUIREMENTS
-
-Perform and report final verification for:
-
-- clean-room Docker startup
+- current functionality
 - onboarding flow
-- generated world flow
-- lore ingestion
-- retrieval search
-- character chat
-- relationship updates
-- timeline updates
-- memory persistence
-- UI usability
-- tests/build/typecheck
+- retrieval pipeline
+- chat flow
+- passing tests
+- Docker-first runtime
 
 ---
 
-# SUCCESS CRITERIA
+# Verification Requirements
 
-- fresh clone startup works
-- onboarding feels polished
-- generated worlds work
-- retrieval works
-- chat works
-- persistence works
-- README is portfolio-quality
-- UI feels cohesive
-- startup friction minimized
-- repo feels operationally mature
-- all tests/builds pass
-- no obvious MVP usability gaps remain
+Run and report:
+- npm run build
+- npm run typecheck
+- npm test
+
+Verify:
+- onboarding still works
+- world generation still works
+- lore ingestion still works
+- chat still works
+- sidebar updates still work
+- layout responsive behavior still works
 
 ---
 
-# FINAL DELIVERABLES
+# Success Criteria
+
+- app has clear visual identity
+- UI no longer feels generic
+- typography feels premium
+- layouts feel intentional
+- dashboard feels narrative-centric
+- chat feels immersive
+- lore pages feel archival
+- screenshots feel portfolio-worthy
+- atmosphere improved without sacrificing usability
+- functionality preserved
+- tests/builds remain green
+
+---
+
+# Final Deliverables
 
 Provide:
-
-- final release summary
-- changed files
-- onboarding flow summary
-- verification command results
-- test/build results
-- deployment readiness notes
-- remaining known limitations
-- recommended GitHub release notes summary
-- recommended final git tag command
-
-Recommended tag:
-
-```bash
-git tag v0.1.0-portfolio-mvp
-```
+- VISUAL_DIRECTION.md
+- changed files summary
+- before/after design summary
+- screenshots or screenshot checklist
+- remaining visual weaknesses
+- recommendations for future polish phases

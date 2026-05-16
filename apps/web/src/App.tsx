@@ -63,7 +63,7 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="flex h-screen w-full items-center justify-center bg-void">
         <Spinner />
       </div>
     );

@@ -27,12 +27,13 @@ function TimelineList() {
 
   let url = '/timeline';
   if (characterId) url = `/characters/${characterId}/timeline`;
+  else if (worldId) url = `/worlds/${worldId}/timeline`;
 
   const { data: events, loading, error, refetch } = useApi<TimelineEvent[]>(url);
+  const { data: characters } = useApi<Character[]>('/characters');
   const { data: worlds } = useApi<World[]>('/worlds');
-  const { data: characters } = useApi<Character[]>('/worlds/1/characters');
+  const [selectedCharacter, setSelectedCharacter] = useState<string>(characterId ?? '');
   const [selectedWorld, setSelectedWorld] = useState<string>(worldId ?? '');
-  const [selectedChar, setSelectedChar] = useState<string>(characterId ?? '');
 
   const [formOpen, setFormOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -45,12 +46,12 @@ function TimelineList() {
     setFormError(null);
     try {
       await apiPost<TimelineEvent>('/timeline', {
-        characterId: fd.get('characterId') ? Number(fd.get('characterId')) : null,
+        characterId: Number(fd.get('characterId')),
         title: fd.get('title'),
         description: fd.get('description') || undefined,
-        eventType: fd.get('eventType'),
-        happenedAt: fd.get('happenedAt'),
-        significance: fd.get('significance') ? Number(fd.get('significance')) : null,
+        eventType: fd.get('eventType') || 'milestone',
+        significance: Number(fd.get('significance') || 1),
+        happenedAt: fd.get('happenedAt') ? new Date(fd.get('happenedAt') as string).toISOString() : new Date().toISOString(),
       });
       setFormOpen(false);
       refetch();
@@ -62,100 +63,87 @@ function TimelineList() {
   };
 
   return (
-    <div className="space-y-4 max-w-4xl">
+    <div className="space-y-section">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Timeline</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {characterId ? 'Character timeline' : worldId ? 'World timeline' : 'All events'}
-          </p>
+          <p className="text-label mb-1">CHRONICLE</p>
+          <h1 className="font-serif text-display text-parchment">Timeline</h1>
         </div>
-        <Button onClick={() => setFormOpen(!formOpen)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Event
+        <Button onClick={() => setFormOpen(!formOpen)} variant="primary">
+          <Plus className="mr-2 h-4 w-4" strokeWidth={1.5} />
+          Record Event
         </Button>
       </div>
 
-      {!characterId && (
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Filter by World
-              </label>
-              <select
-                value={selectedWorld}
-                onChange={(e) => setSelectedWorld(e.target.value)}
-                className="w-full rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm dark:border-slate-700"
-              >
-                <option value="">All worlds</option>
-                {worlds?.map((w) => (
-                  <option key={w.id} value={String(w.id)}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Filter by Character
-              </label>
-              <select
-                value={selectedChar}
-                onChange={(e) => setSelectedChar(e.target.value)}
-                className="w-full rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm dark:border-slate-700"
-              >
-                <option value="">All characters</option>
-                {characters?.map((c) => (
-                  <option key={c.id} value={String(c.id)}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex gap-2">
-              {selectedWorld && (
-                <Link to={`/timeline?worldId=${selectedWorld}`}>
-                  <Button variant="primary" size="sm">Apply</Button>
-                </Link>
-              )}
-              {selectedChar && (
-                <Link to={`/timeline?characterId=${selectedChar}`}>
-                  <Button variant="primary" size="sm">Apply Char</Button>
-                </Link>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <div className="flex flex-wrap gap-3">
+        <div className="relative">
+          <select
+            value={selectedWorld}
+            onChange={(e) => setSelectedWorld(e.target.value)}
+            className="h-10 appearance-none rounded-card border border-ridge bg-surface px-4 pr-10 text-small text-parchment focus:border-gold focus:shadow-gold-glow focus:outline-none"
+          >
+            <option value="" className="bg-depth">All worlds</option>
+            {worlds?.map((w) => (
+              <option key={w.id} value={String(w.id)} className="bg-depth">{w.name}</option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+            <svg className="h-4 w-4 text-dust" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        </div>
+        <div className="relative">
+          <select
+            value={selectedCharacter}
+            onChange={(e) => setSelectedCharacter(e.target.value)}
+            className="h-10 appearance-none rounded-card border border-ridge bg-surface px-4 pr-10 text-small text-parchment focus:border-gold focus:shadow-gold-glow focus:outline-none"
+          >
+            <option value="" className="bg-depth">All characters</option>
+            {characters?.map((c) => (
+              <option key={c.id} value={String(c.id)} className="bg-depth">{c.name}</option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+            <svg className="h-4 w-4 text-dust" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
+          </div>
+        </div>
+        {(selectedWorld || selectedCharacter) && (
+          <Link to={`/timeline?${selectedWorld ? `worldId=${selectedWorld}` : ''}${selectedCharacter ? `characterId=${selectedCharacter}` : ''}`}>
+            <Button variant="primary" size="sm">Apply</Button>
+          </Link>
+        )}
+      </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+        <div className="rounded-card border border-fear/30 bg-fear/5 px-4 py-3 text-small text-fear">
           {error}
         </div>
       )}
 
       {formOpen && (
         <Card>
-          <CardHeader>
-            <CardTitle>Create Timeline Event</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Record Chronicle Entry</CardTitle></CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-3">
+              <div className="relative">
+                <select name="characterId" required className="h-10 w-full appearance-none rounded-card border border-ridge bg-surface px-4 pr-10 text-small text-parchment focus:border-gold focus:shadow-gold-glow focus:outline-none">
+                  <option value="" className="bg-depth">Select character</option>
+                  {characters?.map((c) => (
+                    <option key={c.id} value={c.id} className="bg-depth">{c.name}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                  <svg className="h-4 w-4 text-dust" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
               <Input name="title" placeholder="Event title" required />
-              <Textarea name="description" placeholder="Description" rows={2} />
-              <Input name="characterId" placeholder="Character ID" required />
-              <Input name="eventType" placeholder="Event type (e.g. battle, meeting)" required />
-              <Input name="happenedAt" type="datetime-local" required />
-              <Input name="significance" type="number" placeholder="Significance (1-10)" min={1} max={10} />
-              {formError && <p className="text-sm text-red-600">{formError}</p>}
+              <Textarea name="description" placeholder="Description…" rows={2} />
+              <Input name="eventType" placeholder="Type (e.g., milestone, battle)" />
+              <Input name="significance" type="number" placeholder="Significance (1-5)" min={1} max={5} />
+              <Input name="happenedAt" type="datetime-local" />
+              {formError && <p className="text-small text-fear">{formError}</p>}
               <div className="flex gap-2">
-                <Button type="submit" disabled={submitting} variant="primary">
-                  {submitting ? 'Creating…' : 'Create'}
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>
-                  Cancel
-                </Button>
+                <Button type="submit" disabled={submitting} variant="primary">{submitting ? 'Recording…' : 'Record'}</Button>
+                <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
               </div>
             </form>
           </CardContent>
@@ -170,47 +158,42 @@ function TimelineList() {
 
       <div className="space-y-3">
         {events?.map((ev) => (
-          <div
-            key={ev.id}
-            className="flex items-start gap-4 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
-          >
-            <div className="flex flex-col items-center gap-1 pt-1">
-              <CalendarDays className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                {new Date(ev.happenedAt).getFullYear()}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-                {ev.title}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {new Date(ev.happenedAt).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
-              {ev.description && (
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">
-                  {ev.description}
-                </p>
-              )}
-              {ev.significance > 0 && (
-                <span className="mt-2 inline-block rounded bg-rose-50 px-2 py-0.5 text-xs text-rose-600 dark:bg-rose-950/30 dark:text-rose-400">
-                  Significance {ev.significance}
-                </span>
-              )}
+          <div key={ev.id} className="rounded-card border border-ridge bg-surface bg-surface-grad p-5 transition-all duration-archive hover:border-gold/10">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card border border-ridge bg-depth">
+                <Clock className="h-4 w-4 text-ash" strokeWidth={1.5} />
+              </div>
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-serif text-h3 text-parchment">{ev.title}</h3>
+                  <span className="text-tiny text-dust">{new Date(ev.happenedAt).toLocaleDateString()}</span>
+                </div>
+                {ev.description && (
+                  <p className="text-small text-ash leading-relaxed">{ev.description}</p>
+                )}
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full border border-ridge bg-depth px-2.5 py-0.5 text-tiny text-dust uppercase tracking-wider">
+                    {ev.eventType}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, Math.max(1, ev.significance)) }).map((_, i) => (
+                      <span key={i} className="h-1.5 w-1.5 rounded-full bg-ember" />
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       {events?.length === 0 && !loading && (
-        <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-          <Clock className="h-10 w-10 mb-3 opacity-30" />
-          <p className="text-sm">No timeline events yet.</p>
+        <div className="flex flex-col items-center justify-center py-16 space-y-4 text-dust">
+          <Clock className="h-10 w-10 opacity-20" strokeWidth={1.5} />
+          <div className="text-center space-y-1">
+            <p className="text-body">The chronicle is blank.</p>
+            <p className="text-small">Events arise from dialogue and discovery.</p>
+          </div>
         </div>
       )}
     </div>
@@ -218,26 +201,62 @@ function TimelineList() {
 }
 
 function TimelineDetail({ eventId }: { eventId: number }) {
+  const { data: event, loading, error } = useApi<TimelineEvent>(`/timeline/${eventId}`);
+
   return (
-    <div className="space-y-4 max-w-4xl">
+    <div className="space-y-section">
       <div className="flex items-center gap-3">
         <Link to="/timeline">
           <Button variant="ghost" size="icon">
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
           </Button>
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Event Detail</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">ID: {eventId}</p>
+        <div className="flex-1">
+          <p className="text-label">CHRONICLE ENTRY</p>
+          <h1 className="font-serif text-display text-parchment">{event?.title ?? 'Event'}</h1>
         </div>
       </div>
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Event detail view not yet implemented.
-          </p>
-        </CardContent>
-      </Card>
+
+      {error && (
+        <div className="rounded-card border border-fear/30 bg-fear/5 px-4 py-3 text-small text-fear">
+          {error}
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex h-32 items-center justify-center">
+          <Spinner />
+        </div>
+      )}
+
+      {event && (
+        <Card>
+          <CardContent className="p-inner space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-card border border-ridge bg-depth">
+                <CalendarDays className="h-4 w-4 text-ash" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="font-serif text-h2 text-parchment">{event.title}</h2>
+                <p className="text-small text-dust">{new Date(event.happenedAt).toLocaleString()}</p>
+              </div>
+            </div>
+            {event.description && (
+              <p className="text-body text-ash leading-relaxed">{event.description}</p>
+            )}
+            <div className="flex items-center gap-3">
+              <span className="rounded-full border border-ridge bg-depth px-3 py-1 text-tiny text-dust uppercase tracking-wider">
+                {event.eventType}
+              </span>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, Math.max(1, event.significance)) }).map((_, i) => (
+                  <span key={i} className="h-2 w-2 rounded-full bg-ember" />
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
