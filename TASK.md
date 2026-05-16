@@ -2,199 +2,345 @@
 
 # Current Objective
 
-Execute a Provider Settings UI Fix and Full Runtime Verification Pass.
+Execute a Settings Architecture Rework and Provider Pipeline Coherence Pass.
 
-The app has provider configuration, image provider settings, and status indicators, but several UI/default-state issues remain.
+The current settings page has accumulated conceptual inconsistencies and provider/UI leakage from rapid feature iteration.
 
-This is a targeted bugfix + verification pass.
+The issue is no longer isolated bugs.
 
-Do not add new features.
-Do not redesign the app.
-Do not rewrite provider architecture.
+The issue is:
+- unclear provider responsibility boundaries
+- duplicated controls
+- contradictory defaults
+- irrelevant fields shown for providers that do not use them
+- settings sections that do not reflect actual runtime architecture
+
+This pass is focused on:
+- conceptual coherence
+- provider pipeline clarity
+- removing misleading controls
+- restructuring settings around real runtime responsibilities
+
+This is a UX architecture and settings coherence pass.
+
+Not a full application redesign.
+
+---
+
+# Core Architectural Principle
+
+Loreweaver should have three explicit AI pipelines:
+
+```txt
+Text Generation Provider
+Image Generation Provider
+Embedding Provider
+```
+
+These are separate systems.
+
+They should not be mixed together in confusing ways.
+
+Each pipeline should:
+- have its own provider preset buttons
+- have its own relevant fields
+- have its own defaults
+- have its own validation/test logic
+- expose only settings that actually matter
+
+---
+
+# Primary Goal
+
+The settings page should feel:
+
+```txt
+intentional
+coherent
+understandable
+trustworthy
+```
+
+NOT:
+
+```txt
+generic AI config soup
+```
+
+A user should immediately understand:
+- what each provider section controls
+- why a field exists
+- which settings apply to which provider
+- which fields are optional
+- which defaults are actually meaningful
 
 ---
 
 # Reported Issues
 
-## 1. OpenAI Image Base URL Default Is Wrong
+## 1. Provider Type Dropdowns Should Not Exist
 
 Current behavior:
 
-- OpenAI image generation settings say:
-  "leave empty to use official endpoint"
-- but the Image Base URL field is prefilled with a localhost URL
-
-This is confusing and incorrect.
+- provider preset buttons exist
+- provider dropdown selectors ALSO exist
+- these duplicate responsibility and create confusion
 
 Required behavior:
 
-- For OpenAI Image provider, Image Base URL should default to empty.
-- Empty value means use official OpenAI endpoint.
-- Localhost/default custom endpoint values should only appear for Custom Image Endpoint mode.
-- Switching provider presets should update defaults correctly.
+- remove provider type dropdown selectors entirely
+- provider preset buttons are the source of truth
+- clicking a preset configures the section
 
-Expected defaults:
+Example:
 
 ```txt
-OpenAI Image:
-Image Base URL: empty
-Image Model: gpt-image-2 or configured default
-API Key: empty unless persisted/configured
-
-Custom Image Endpoint:
-Image Base URL: user-defined or sensible placeholder only
-Image Model: user-defined
-
-Disabled/Fallback:
-Image Base URL: empty
-Image Model: optional/disabled
+[ OpenAI-Compatible ]
+[ Ollama Local ]
+[ Ollama Cloud ]
+[ OpenRouter ]
 ```
 
-Do not silently send localhost as the OpenAI image endpoint.
+No additional provider dropdown below.
 
 ---
 
-## 2. Side Navigation Provider Status Is Squished
+# 2. Ollama Local API Key Field Is Wrong
 
 Current behavior:
 
-- side nav status section shows:
-  - LIVE
-  - database status
-  - LLM provider
-  - image provider
-  - other provider status
-- provider/status names are cut off or visually cramped
+- Ollama Local says:
+  "leave empty for local or unauthenticated endpoints"
+- but a full API key is prefilled
+
+This is conceptually incorrect.
 
 Required behavior:
 
-- status section should be readable
-- no text should overflow awkwardly
-- provider/model labels should truncate gracefully
-- full values should be available via title/tooltip
-- layout should preserve visual polish
+For Ollama Local:
+- API key field should default empty
+- API key field should likely be hidden entirely unless advanced mode is enabled
+- no fake/default API key values
+- local Ollama should visually feel local
 
-Acceptable fixes:
+---
 
-- widen sidebar slightly
-- reduce provider/status font size
-- split status into multiple rows
-- use compact badges
-- truncate with ellipsis
-- add title attributes
-- move detailed provider info into hover/title or settings page
+# 3. Embedding Model Fields Are Conceptually Unclear
 
-Preferred:
+Current behavior:
+
+- embedding model fields exist
+- values do not change when providers change
+- unclear where embeddings are coming from
+- unclear which provider owns embeddings
+
+Required behavior:
+
+Embedding provider must become its own explicit section.
+
+Example:
 
 ```txt
-LIVE / SIMULATED badge
-DB status badge
-Qdrant status badge
-LLM: provider · model truncated
-IMG: provider · model truncated
+Embeddings Provider
 ```
 
-Do not cram long provider/model names into tiny cells.
+Possible presets:
+
+```txt
+OpenAI-Compatible
+Ollama
+Disabled
+```
+
+Embedding settings should ONLY exist there.
+
+Text provider settings should not contain embedding settings.
 
 ---
 
-# 3. Provider Settings Consistency Verification
+# 4. Image Model Field Duplication
 
-Verify the previous provider/settings fixes remain correct.
+Current behavior:
 
-Check:
+- Image Model exists in:
+  - text provider section
+  - image generation section
 
-- provider preset buttons match dropdown options
-- Ollama Local appears consistently
-- Ollama Cloud / Remote appears consistently
-- Ollama Cloud / Remote defaults to:
-  https://www.ollama.com/v1
-- Custom OpenAI-Compatible allows custom base URL/model
-- OpenRouter defaults to:
-  https://openrouter.ai/api/v1
-- provider settings save correctly
-- provider settings persist correctly if DB-backed persistence has been implemented
-- no `.env` rewriting occurs
-
----
-
-# 4. Image Provider Test Verification
-
-Verify Test Image Gen behavior.
+This is architecturally wrong.
 
 Required behavior:
 
-- Disabled/Fallback mode returns clear disabled/fallback status, not a scary failure
-- OpenAI Image with missing API key returns clear actionable error
-- OpenAI Image with empty base URL uses official endpoint behavior
-- Custom Image Endpoint uses configured base URL
-- Test button does not silently spend credits
-- Test button does not silently fail
+Image model fields belong ONLY in:
+
+```txt
+Image Generation Provider
+```
+
+Remove image-model-related fields from text provider settings.
 
 ---
 
-# 5. Full App Functionality Verification
+# 5. OpenAI/OpenAI-Compatible Base URL Defaults Are Wrong
 
-After fixes, verify current app functionality still works.
+Current behavior:
 
-Manual verification:
+- localhost defaults/placeholders appear for OpenAI/OpenAI-compatible fields
+- this implies local inference defaults for providers that are cloud-first
 
-- app starts cleanly
-- onboarding works
-- world generation works
-- provider settings page loads
-- settings save/load correctly
-- chat works
-- streaming works
-- chat history persists after navigation
-- chat history persists after refresh
-- chat scroll works with long responses
-- cognition inspector works
-- lore ingestion/search still works
-- image fallback/generated status displays clearly
-- dashboard/status indicators render cleanly
+Required behavior:
 
----
+Defaults/placeholders must match provider intent.
 
-# Required Implementation Work
+Examples:
 
-## Image Base URL Defaults
+## OpenAI-Compatible
 
-Fix image provider preset default behavior.
+Placeholder:
 
-Rules:
+```txt
+https://api.openai.com/v1
+```
 
-- OpenAI Image official endpoint = empty base URL
-- Custom image endpoint = user-entered base URL
-- Disabled image mode = no base URL required
+or:
+```txt
+Enter custom OpenAI-compatible endpoint
+```
 
-Ensure:
-- UI placeholder may show official endpoint explanation
-- actual value remains empty unless user enters one
-- saved config does not store bogus localhost for OpenAI Image
+NOT localhost by default.
 
----
+## OpenRouter
 
-## Sidebar Status Layout
+```txt
+https://openrouter.ai/api/v1
+```
 
-Improve provider status display in Layout/sidebar.
+## Ollama Local
 
-Requirements:
+```txt
+http://localhost:11434
+```
 
-- no clipping
-- no overlapping
-- no unreadable provider names
-- responsive enough for long model names
-- full provider/model info available via title
+## Ollama Cloud
 
-Avoid:
-- increasing visual noise too much
-- giant sidebar unless necessary
-- raw debug-looking status blocks
+```txt
+https://www.ollama.com/v1
+```
+
+Provider defaults must reflect actual expected deployment patterns.
 
 ---
 
-## Verification Pass
+# 6. Provider Sections Need Strong Separation
+
+Required structure:
+
+# Text Generation Provider
+
+Controls:
+- chat/world generation
+- text model
+- temperature
+- max tokens
+- base URL
+- API key
+
+---
+
+# Image Generation Provider
+
+Controls:
+- portrait/banner generation
+- image model
+- image quality
+- image size
+- image format
+- image provider endpoint
+
+---
+
+# Embedding Provider
+
+Controls:
+- vector embedding generation
+- embedding model
+- embedding endpoint
+- embedding enable/disable
+
+---
+
+# 7. Contextual Fields
+
+Fields should appear only when relevant.
+
+Examples:
+
+## Ollama Local
+
+Hide:
+- API key field unless advanced mode enabled
+
+## Disabled Provider
+
+Hide:
+- irrelevant endpoint/model fields
+
+## OpenRouter
+
+Show:
+- API key
+- model
+- endpoint
+
+The settings page should not look like:
+```txt
+every possible field for every provider at all times
+```
+
+---
+
+# 8. Settings UX Philosophy
+
+The settings page should prioritize:
+
+```txt
+clarity
+mental model consistency
+relevance
+trustworthiness
+```
+
+NOT:
+```txt
+maximum configurability visible simultaneously
+```
+
+Advanced settings may be collapsible.
+
+---
+
+# 9. Verification Pass
+
+After rework, verify:
+
+- no duplicate provider selectors remain
+- no duplicated model fields remain
+- provider defaults make sense
+- Ollama Local visually feels local
+- OpenAI/OpenRouter visually feel remote/cloud
+- embedding provider responsibilities are explicit
+- image provider responsibilities are explicit
+- text provider responsibilities are explicit
+- settings persistence still works
+- onboarding still works
+- provider tests still work
+- chat still works
+- world generation still works
+- image generation fallback still works
+- embedding pipeline still works
+
+---
+
+# Required Runtime Verification
 
 Run and report:
 
@@ -205,18 +351,7 @@ npm test --workspace=apps/api
 docker compose up -d --build
 ```
 
-If root scripts differ, use equivalent commands and document them.
-
-Manual browser verification required for:
-
-- Settings page defaults
-- OpenAI Image empty base URL
-- Ollama Cloud endpoint default
-- sidebar provider display
-- chat streaming
-- chat persistence
-- lore search
-- world generation
+Manual verification required.
 
 ---
 
@@ -224,40 +359,37 @@ Manual browser verification required for:
 
 Do not:
 
+- redesign the entire app
+- rewrite provider adapters
 - add new providers
-- redesign Settings from scratch
-- redesign sidebar from scratch
-- rewrite provider architecture
 - add auth/accounts
-- add billing
-- rewrite image generation system
+- add giant enterprise settings systems
+- add plugin systems
 - break streaming chat
 - break persistence
-- silently modify `.env`
+- break onboarding
 
 Preserve:
 
+- GUI-first onboarding
+- provider flexibility
 - custom OpenAI-compatible support
-- Ollama local support
-- Ollama cloud/remote support
+- Ollama support
 - OpenRouter support
-- image fallback mode
-- Docker-first startup
-- GUI-first provider setup
-- current visual direction
-- passing tests
+- image provider support
+- fallback/simulated mode
+- current visual design direction
 
 ---
 
 # Success Criteria
 
-- OpenAI Image base URL defaults to empty
-- localhost is not shown/persisted for OpenAI Image official endpoint
-- Custom Image Endpoint still supports custom base URL
-- sidebar status area is readable
-- long provider/model names truncate gracefully
-- provider settings remain coherent
-- image test behavior is predictable
-- app functionality still works after fixes
-- build/typecheck/tests pass
-- Docker runtime starts successfully
+- settings page has a coherent mental model
+- provider responsibilities are clearly separated
+- irrelevant fields are hidden
+- duplicate controls are removed
+- defaults match provider intent
+- localhost defaults only appear where appropriate
+- no contradictory settings remain
+- onboarding/settings feel trustworthy
+- builds/tests/runtime verification pass

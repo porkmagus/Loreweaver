@@ -19,11 +19,10 @@ import type { ImageProviderConfig } from '@loreweaver/shared';
 
 const SetProviderSchema = z.object({
   provider: ProviderConfigSchema.shape.provider,
-  baseUrl: z.string().min(1),
+  baseUrl: z.string(),
   apiKey: z.string().optional(),
   chatModel: z.string().min(1),
   embeddingModel: z.string().optional(),
-  imageModel: z.string().optional(),
   temperature: z.number().min(0).max(2).optional(),
   maxTokens: z.number().int().positive().optional(),
 });

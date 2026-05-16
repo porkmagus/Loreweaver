@@ -86,7 +86,7 @@ function getOpenAIClient(config: ProviderConfig): OpenAI | null {
   const apiKey = config.apiKey || 'dummy';
   return new OpenAI({
     apiKey,
-    baseURL: config.baseUrl,
+    baseURL: config.baseUrl || undefined,
     dangerouslyAllowBrowser: false,
   });
 }

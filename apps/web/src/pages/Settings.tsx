@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
-import { apiPost, useApi, API_BASE } from '@/hooks/useApi';
+import { apiPost, useApi } from '@/hooks/useApi';
 import { cn } from '@/lib/utils';
 import {
   Server,
@@ -25,24 +25,22 @@ import type { ProviderConfig, ProviderStatus, ImageProviderConfig, ImageProvider
 const STORAGE_KEY = 'loreweaver-provider-config-draft';
 const IMAGE_STORAGE_KEY = 'loreweaver-image-provider-config-draft';
 
-// ── Provider presets ────────────────────────────────────────────
-export interface ProviderPreset {
+// ── Text Provider presets ───────────────────────────────────────
+interface TextPreset {
   label: string;
   value: ProviderConfig['provider'];
   baseUrl: string;
   chatModel: string;
   embeddingModel: string;
-  imageModel: string;
 }
 
-const PRESETS: ProviderPreset[] = [
+const TEXT_PRESETS: TextPreset[] = [
   {
     label: 'Custom OpenAI-Compatible',
     value: 'custom-openai',
     baseUrl: '',
     chatModel: '',
     embeddingModel: '',
-    imageModel: '',
   },
   {
     label: 'Ollama Local',
@@ -50,7 +48,6 @@ const PRESETS: ProviderPreset[] = [
     baseUrl: 'http://localhost:11434',
     chatModel: '',
     embeddingModel: '',
-    imageModel: '',
   },
   {
     label: 'Ollama Cloud / Remote',
@@ -58,7 +55,6 @@ const PRESETS: ProviderPreset[] = [
     baseUrl: 'https://www.ollama.com/v1',
     chatModel: '',
     embeddingModel: '',
-    imageModel: '',
   },
   {
     label: 'OpenRouter',
@@ -66,22 +62,45 @@ const PRESETS: ProviderPreset[] = [
     baseUrl: 'https://openrouter.ai/api/v1',
     chatModel: '',
     embeddingModel: '',
-    imageModel: '',
   },
 ];
 
-function matchPreset(form: Partial<ProviderConfig>): ProviderPreset | undefined {
-  return PRESETS.find((p) => {
+function matchTextPreset(form: Partial<ProviderConfig>): TextPreset | undefined {
+  return TEXT_PRESETS.find((p) => {
     if (form.provider !== p.value) return false;
     const url = (form.baseUrl ?? '').toLowerCase().replace(/\/$/, '');
     const pUrl = p.baseUrl.toLowerCase().replace(/\/$/, '');
     if (p.value === 'ollama') {
-      // Ollama presets must match baseUrl to disambiguate local vs remote
       return url === pUrl || (url === '' && pUrl === 'https://www.ollama.com/v1');
     }
     return url === pUrl || url.startsWith(pUrl);
   });
 }
+
+// ── Embedding Provider presets ────────────────────────────────────
+const EMBEDDING_PRESETS: TextPreset[] = [
+  {
+    label: 'Same as Text Provider',
+    value: 'custom-openai',
+    baseUrl: '',
+    chatModel: '',
+    embeddingModel: '',
+  },
+  {
+    label: 'Custom OpenAI-Compatible',
+    value: 'custom-openai',
+    baseUrl: '',
+    chatModel: '',
+    embeddingModel: '',
+  },
+  {
+    label: 'Ollama Local',
+    value: 'ollama',
+    baseUrl: 'http://localhost:11434',
+    chatModel: '',
+    embeddingModel: '',
+  },
+];
 
 // ── Image presets ───────────────────────────────────────────────
 const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; defaults: Partial<ImageProviderConfig> }[] = [
@@ -101,7 +120,7 @@ const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; de
     label: 'Custom Image Endpoint',
     value: 'custom-image-endpoint',
     defaults: {
-      baseUrl: 'http://localhost:1234/v1',
+      baseUrl: '',
       model: '',
       size: '1536x1024',
       quality: 'low',
@@ -122,7 +141,7 @@ const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; de
   },
 ];
 
-// ── Draft caching (optional UI comfort) ─────────────────────────
+// ── Draft caching ───────────────────────────────────────────────
 function loadDraft(): Partial<ProviderConfig> | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -158,7 +177,6 @@ export function Settings() {
     apiKey: '',
     chatModel: '',
     embeddingModel: '',
-    imageModel: '',
     temperature: 0.8,
     maxTokens: 800,
   });
@@ -191,7 +209,6 @@ export function Settings() {
       setForm((prev) => ({
         ...prev,
         ...serverConfig,
-        // Preserve any draft fields not yet saved on server
         apiKey: serverConfig.apiKey ?? prev.apiKey,
       }));
     }
@@ -207,16 +224,15 @@ export function Settings() {
     }
   }, [serverImageConfig]);
 
-  const activePreset = matchPreset(form);
+  const activePreset = matchTextPreset(form);
 
-  const applyPreset = (preset: ProviderPreset) => {
+  const applyPreset = (preset: TextPreset) => {
     setForm((prev: Partial<ProviderConfig>) => ({
       ...prev,
       provider: preset.value,
       baseUrl: preset.baseUrl,
       chatModel: preset.chatModel || prev.chatModel || '',
       embeddingModel: preset.embeddingModel || prev.embeddingModel || '',
-      imageModel: preset.imageModel || prev.imageModel || '',
     }));
     setSaved(false);
     setTestResult(null);
@@ -250,17 +266,17 @@ export function Settings() {
   };
 
   const handleSave = async () => {
-    if (!form.baseUrl || !form.chatModel) return;
+    if (!form.chatModel) return;
+    if (form.provider !== 'custom-openai' && !form.baseUrl) return;
     setSaving(true);
     try {
       saveDraft(form);
       const payload: ProviderConfig = {
         provider: form.provider ?? 'custom-openai',
-        baseUrl: form.baseUrl,
+        baseUrl: form.baseUrl ?? '',
         apiKey: form.apiKey,
         chatModel: form.chatModel,
         embeddingModel: form.embeddingModel,
-        imageModel: form.imageModel,
         temperature: form.temperature ?? 0.8,
         maxTokens: form.maxTokens ?? 800,
       };
@@ -275,22 +291,22 @@ export function Settings() {
   };
 
   const handleTest = async () => {
-    if (!form.baseUrl || !form.chatModel) return;
+    if (!form.chatModel) return;
+    if (form.provider !== 'custom-openai' && !form.baseUrl) return;
     setTesting(true);
     setTestResult(null);
     try {
       const payload: ProviderConfig = {
         provider: form.provider ?? 'custom-openai',
-        baseUrl: form.baseUrl,
+        baseUrl: form.baseUrl ?? '',
         apiKey: form.apiKey,
         chatModel: form.chatModel,
         embeddingModel: form.embeddingModel,
-        imageModel: form.imageModel,
         temperature: form.temperature ?? 0.8,
         maxTokens: form.maxTokens ?? 800,
       };
-      const res = await apiPost<{ data: ProviderStatus }>('/settings/provider/test', payload);
-      setTestResult(res.data);
+      const res = await apiPost<ProviderStatus>('/settings/provider/test', payload);
+      setTestResult(res);
     } catch (err) {
       setTestResult({
         ok: false,
@@ -304,12 +320,13 @@ export function Settings() {
   };
 
   const handleImageSave = async () => {
+    if (imageForm.provider !== 'disabled' && !imageForm.model) return;
     setImageSaving(true);
     try {
       saveImageDraft(imageForm);
       const payload: ImageProviderConfig = {
         provider: imageForm.provider ?? 'disabled',
-        baseUrl: imageForm.baseUrl,
+        baseUrl: imageForm.baseUrl ?? '',
         apiKey: imageForm.apiKey,
         model: imageForm.model,
         size: imageForm.size,
@@ -327,27 +344,27 @@ export function Settings() {
     }
   };
 
+  const isTextFormValid = Boolean(
+    form.chatModel && (form.provider === 'custom-openai' || form.baseUrl)
+  );
+
   const handleImageTest = async () => {
-    // Predictable disabled behavior
     if ((imageForm.provider ?? 'disabled') === 'disabled' || !imageForm.enabled) {
       setImageTestResult({ ok: true, provider: 'disabled', warning: 'Image generation is disabled. Fallback assets will be used.' });
       setShowCostWarning(false);
       return;
     }
 
-    // Predictable missing-API-key behavior for OpenAI Image
     if (imageForm.provider === 'openai-image' && !imageForm.apiKey) {
       setImageTestResult({ ok: false, provider: 'openai-image', error: 'Missing API key. Enter your OpenAI API key or set OPENAI_API_KEY in environment.' });
       return;
     }
 
-    // Predictable missing-model behavior
     if (!imageForm.model && imageForm.provider !== 'disabled') {
       setImageTestResult({ ok: false, provider: imageForm.provider ?? 'unknown', error: 'Missing image model. Enter a model name (e.g., gpt-image-2).' });
       return;
     }
 
-    // Cost-safe gate for non-disabled providers
     if (!showCostWarning) {
       setShowCostWarning(true);
       return;
@@ -380,8 +397,6 @@ export function Settings() {
     }
   };
 
-  const isTextFormValid = Boolean(form.baseUrl && form.chatModel);
-
   return (
     <div className="space-y-8">
       <div>
@@ -397,7 +412,7 @@ export function Settings() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {PRESETS.map((preset) => {
+          {TEXT_PRESETS.map((preset) => {
             const isActive = activePreset?.label === preset.label;
             return (
               <button
@@ -426,26 +441,22 @@ export function Settings() {
 
         <Card>
           <CardContent className="space-y-5 p-5">
-            <FieldRow icon={Plug} label="Provider">
-              <select
-                aria-label="Provider type"
-                value={form.provider ?? 'custom-openai'}
-                onChange={(e) => updateField('provider', e.target.value as ProviderConfig['provider'])}
-                className="h-10 w-full appearance-none rounded-card border border-ridge bg-surface px-4 text-small text-parchment focus:border-gold focus:shadow-gold-glow focus:outline-none"
-              >
-                <option value="custom-openai">Custom OpenAI-Compatible</option>
-                <option value="ollama">Ollama</option>
-                <option value="openrouter">OpenRouter</option>
-              </select>
-            </FieldRow>
-
             <FieldRow icon={Server} label="Base URL">
               <Input
                 value={form.baseUrl ?? ''}
                 onChange={(e) => updateField('baseUrl', e.target.value)}
-                placeholder="http://localhost:1234/v1"
+                placeholder={form.provider === 'custom-openai' ? 'Leave empty for official OpenAI endpoint' : 'http://localhost:11434'}
                 className="bg-depth"
               />
+              {form.provider === 'custom-openai' && (
+                <p className="text-tiny text-dust">Leave empty to use the official OpenAI endpoint (api.openai.com).</p>
+              )}
+              {form.provider === 'ollama' && (
+                <p className="text-tiny text-dust">Ollama server address. Default: http://localhost:11434</p>
+              )}
+              {form.provider === 'openrouter' && (
+                <p className="text-tiny text-dust">OpenRouter endpoint. Default: https://openrouter.ai/api/v1</p>
+              )}
             </FieldRow>
 
             <FieldRow icon={Key} label="API Key">
@@ -467,24 +478,6 @@ export function Settings() {
                 className="bg-depth"
               />
               <p className="text-tiny text-dust">Free-form model name. No hardcoded list.</p>
-            </FieldRow>
-
-            <FieldRow icon={Layers} label="Embedding Model">
-              <Input
-                value={form.embeddingModel ?? ''}
-                onChange={(e) => updateField('embeddingModel', e.target.value)}
-                placeholder="text-embedding-3-small (optional)"
-                className="bg-depth"
-              />
-            </FieldRow>
-
-            <FieldRow icon={Image} label="Image Model (text provider)">
-              <Input
-                value={form.imageModel ?? ''}
-                onChange={(e) => updateField('imageModel', e.target.value)}
-                placeholder="Optional"
-                className="bg-depth"
-              />
             </FieldRow>
 
             <div className="grid grid-cols-2 gap-4">
@@ -559,9 +552,66 @@ export function Settings() {
                 <span className="text-ash">{form.chatModel || '—'}</span>
                 <span>API Key:</span>
                 <span className="text-ash">{form.apiKey ? '••••••••' : 'none'}</span>
-                <span>Embeddings:</span>
-                <span className="text-ash">{form.embeddingModel || 'default'}</span>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Embedding Provider Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Layers className="h-5 w-5 text-gold" strokeWidth={1.5} />
+          <h2 className="font-serif text-xl text-parchment">Embedding Provider</h2>
+        </div>
+        <p className="text-small text-dust">Uses the same endpoint and API key as your Text Provider by default. Change only if you run embeddings on a separate server.</p>
+
+        <div className="flex flex-wrap gap-3">
+          {EMBEDDING_PRESETS.map((preset) => {
+            const isActive = (form.embeddingModel === '' && preset.label === 'Same as Text Provider') ||
+              (form.provider === preset.value && form.embeddingModel !== '');
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => {
+                  if (preset.label === 'Same as Text Provider') {
+                    setForm((prev) => ({ ...prev, embeddingModel: '' }));
+                  } else {
+                    applyPreset(preset);
+                  }
+                  setSaved(false);
+                }}
+                className={cn(
+                  'rounded-card border px-4 py-2 text-small transition-all duration-archive',
+                  isActive
+                    ? 'border-gold bg-gold/10 text-gold'
+                    : 'border-ridge bg-surface text-ash hover:text-parchment hover:bg-surface/60'
+                )}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <Card>
+          <CardContent className="space-y-5 p-5">
+            <FieldRow icon={Layers} label="Embedding Model">
+              <Input
+                value={form.embeddingModel ?? ''}
+                onChange={(e) => updateField('embeddingModel', e.target.value)}
+                placeholder="text-embedding-3-small (leave empty to use Text Provider)"
+                className="bg-depth"
+              />
+              <p className="text-tiny text-dust">Leave empty to use the same endpoint as your Text Provider.</p>
+            </FieldRow>
+
+            <div className="flex items-center gap-3 pt-2">
+              <Button onClick={handleSave} disabled={saving || !isTextFormValid} variant="primary">
+                {saving ? <Spinner className="mr-2 h-4 w-4" /> : saved ? <CheckCircle2 className="mr-2 h-4 w-4" /> : null}
+                {saved ? 'Saved' : 'Save Settings'}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -649,11 +699,16 @@ export function Settings() {
               <Input
                 value={imageForm.baseUrl ?? ''}
                 onChange={(e) => updateImageField('baseUrl', e.target.value)}
-                placeholder="https://api.openai.com/v1 (leave empty for official endpoint)"
+                placeholder="Leave empty for official OpenAI endpoint"
                 disabled={!imageForm.enabled || imageForm.provider === 'disabled'}
                 className="bg-depth"
               />
-              <p className="text-tiny text-dust">Leave empty to use the official OpenAI endpoint.</p>
+              {imageForm.provider === 'openai-image' && (
+                <p className="text-tiny text-dust">Leave empty to use the official OpenAI endpoint. Only set this if you use a proxy or custom base URL.</p>
+              )}
+              {imageForm.provider === 'custom-image-endpoint' && (
+                <p className="text-tiny text-dust">Required: the full base URL of your custom image endpoint.</p>
+              )}
             </FieldRow>
 
             <FieldRow icon={Key} label="Image API Key">
@@ -675,7 +730,7 @@ export function Settings() {
                 disabled={!imageForm.enabled || imageForm.provider === 'disabled'}
                 className="bg-depth"
               />
-              <p className="text-tiny text-dust">Free-form model name. Examples: gpt-image-2, gpt-image-1.5, gpt-image-1-mini.</p>
+              <p className="text-tiny text-dust">Required when enabled. Examples: gpt-image-2, gpt-image-1.5, gpt-image-1-mini.</p>
             </FieldRow>
 
             <div className="grid grid-cols-3 gap-4">
@@ -712,7 +767,7 @@ export function Settings() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Button onClick={handleImageSave} disabled={imageSaving} variant="primary">
+              <Button onClick={handleImageSave} disabled={imageSaving || (!!imageForm.provider && imageForm.provider !== 'disabled' && !imageForm.model)} variant="primary">
                 {imageSaving ? <Spinner className="mr-2 h-4 w-4" /> : imageSaved ? <CheckCircle2 className="mr-2 h-4 w-4" /> : null}
                 {imageSaved ? 'Saved' : 'Save Image Settings'}
               </Button>
