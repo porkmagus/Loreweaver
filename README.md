@@ -37,6 +37,8 @@ Drop lore into the system. Characters will reference it naturally in conversatio
 | Feature | Description |
 |---------|-------------|
 | **RAG-Powered Chat** | Characters answer questions grounded in your lore via semantic retrieval |
+| **Streaming Dialogue** | Chat responses stream through Server-Sent Events with a standard response fallback |
+| **Cognition Inspector** | See retrieved lore, recalled memories, prompt context, relationship state, and timeline context |
 | **Persistent Memory** | Every conversation stored and recalled across sessions |
 | **Relationship Tracking** | Characters remember how they feel about each other (trust, respect, affection, rivalry, fear) |
 | **Timeline Continuity** | Events logged and retrievable as a narrative timeline |
@@ -188,6 +190,8 @@ npm run verify
 | Decision | Rationale |
 |----------|-----------|
 | **Modular monolith** | Single deployable unit. No microservices overhead |
+| **SSE for chat streaming** | Real-time UX without websocket infrastructure |
+| **Transparent cognition snapshot** | Exposes retrieval and prompt assembly without turning Qdrant into source-of-truth |
 | **Serial integer PKs** | Simplicity and join performance over UUID complexity |
 | **Docker-first** | `docker compose up -d` runs the entire stack |
 | **Postgres canonical, Qdrant retrieval only** | Deterministic, recoverable. Never trust vector DB with source of truth |
@@ -212,6 +216,8 @@ Stable velocity > sporadic brilliance
 
 - **Playwright E2E on Ubuntu 26.04**: Host OS not officially supported by Playwright 1.60.0. Tests run successfully inside `mcr.microsoft.com/playwright:v1.60.0-jammy` Docker container.
 - **Simulated AI fallback**: Without an `OPENAI_API_KEY`, chat uses deterministic template responses.
+- **Streaming fallback**: If the SSE request fails before completion, the web client falls back to the existing synchronous chat endpoint.
+- **Cognition visibility**: The inspector shows assembled context and retrieval signals, but it does not yet provide full token accounting or semantic memory compression.
 - **No auth / multi-user isolation**: All data is shared.
 - **Relationship sidebar refetch**: Short delay after chat before panels update.
 - **Vite moderate vulnerability**: `vite <=6.4.1` path traversal advisory. Upgrading to Vite 8 is a breaking change; deferred to v0.2.0.
@@ -230,7 +236,8 @@ Stable velocity > sporadic brilliance
 - [x] Final release pass — stabilization, polish, testing, deployment docs
 
 ### Upcoming (v0.2.0)
-- [ ] Streaming chat responses
+- [x] Streaming chat responses
+- [x] Transparent cognition inspector
 - [ ] PDF/EPUB ingestion
 - [ ] Memory compression and summarization
 - [ ] Character-to-character relationship visualization

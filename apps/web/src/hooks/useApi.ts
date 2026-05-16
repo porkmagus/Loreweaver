@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const RAW_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001').replace(/\/$/, '');
-const API_BASE = RAW_BASE + '/api';
+export const API_BASE = RAW_BASE + '/api';
 
 interface ApiState<T> {
   data: T | null;

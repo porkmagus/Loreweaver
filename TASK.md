@@ -2,387 +2,356 @@
 
 # Current Objective
 
-Execute a Visual Identity Overhaul for Loreweaver.
+Implement a Transparent Cognition & Streaming UX pass for Loreweaver.
 
-The infrastructure, onboarding, retrieval pipeline, persistence systems, and MVP functionality are now established.
+The application now has:
+- world generation
+- retrieval
+- persistent memory
+- relationships
+- timelines
+- onboarding
+- polished UI
+- Docker-first runtime
+- testing infrastructure
 
-The app no longer needs major backend systems.
+The next priority is:
 
-It now needs:
-- visual identity
-- atmosphere
-- hierarchy
-- immersion
-- cohesion
-- polish
-
-The current UI is functional but visually generic.
-
-This phase focuses on transforming Loreweaver from:
 ```txt
-generic AI dashboard
+make the AI cognition pipeline visible and emotionally understandable
+```
+
+This phase focuses on:
+- streaming responses
+- transparent retrieval visibility
+- visible memory recall
+- visible relationship changes
+- observable AI context assembly
+
+The goal is to transform Loreweaver from:
+```txt
+AI black box
 ```
 
 into:
 ```txt
-living narrative archive
+observable narrative cognition system
 ```
 
-This is NOT a complete product rewrite.
+This is a portfolio-impact phase.
 
-This is a focused visual design and frontend polish phase.
+Not a major architecture rewrite.
 
 ---
 
-# Core Visual Direction
+# Primary Goals
 
-Target aesthetic:
+Users should be able to:
+- see responses stream in real-time
+- understand WHY the AI responded a certain way
+- see retrieved memories/lore
+- observe relationship changes
+- observe timeline creation
+- understand the system is persistent and retrieval-aware
 
-```txt
-Dark scholarly sci-fi fantasy
-+
-living codex
-+
-occult archive
-+
-high-end developer tool
-```
-
-Inspirations:
-- Obsidian
-- Disco Elysium UI
-- illuminated manuscripts
-- SCP archive aesthetics
-- premium terminal/devtool interfaces
-- dark archival systems
-
-Avoid:
-- generic SaaS dashboards
-- Tailwind starter aesthetics
-- bright startup gradients
-- excessive glassmorphism
-- gamer MMO UI
-- neon cyberpunk overload
-- over-animated interfaces
-
-Atmosphere should feel:
+The system should feel:
+- alive
 - intelligent
-- immersive
-- mysterious
-- restrained
-- readable
-- premium
+- inspectable
+- grounded
+- technically sophisticated
 
 ---
 
-# Required Work
+# Scope
 
-## 1. Create VISUAL_DIRECTION.md
+Implement:
 
-Create:
+- streaming chat responses
+- prompt context inspector
+- retrieval visibility
+- memory recall visibility
+- relationship delta visibility
+- timeline creation visibility
+- lightweight cognition transparency UI
 
-```txt
-VISUAL_DIRECTION.md
-```
+Do not redesign the backend architecture.
 
-Document:
-- design philosophy
-- typography rules
-- spacing rules
-- color palette
-- component philosophy
-- animation philosophy
-- layout philosophy
-- visual hierarchy rules
-- icon usage rules
-- inspirations
-- anti-inspirations
-
-This becomes the permanent visual doctrine file.
+Do not introduce autonomous agents.
 
 ---
 
-# 2. Typography Overhaul
+# 1. Streaming Chat Responses
 
-Improve typography hierarchy across the app.
+Implement real-time streaming responses.
 
-Goals:
-- larger headings
-- stronger visual hierarchy
-- more breathing room
-- less tiny text
-- better readability
-- stronger section separation
-
-Preferred font direction:
-- Inter
-- Geist
-- IBM Plex Sans
-
-Optional display/accent font:
-- Cormorant Garamond
-- similar restrained serif
-
-Do not use novelty fantasy fonts.
-
----
-
-# 3. Color System Overhaul
-
-Replace generic Tailwind-looking colors with a cohesive palette.
-
-Preferred palette direction:
-
-Base:
-- deep charcoal
-- warm slate
-- near-black archival tones
-
-Accents:
-- muted gold
-- dim cyan
-- faded ember/crimson
-- subtle silver
+Preferred:
+- Server-Sent Events (SSE)
+- fetch streaming
 
 Avoid:
-- oversaturated colors
-- bright Tailwind defaults
-- rainbow accents
-- excessive gradients
+- websocket overengineering unless already trivial
 
-Document palette in VISUAL_DIRECTION.md.
-
----
-
-# 4. Layout & Spacing Overhaul
-
-Reduce:
-- card spam
-- cramped layouts
-- repetitive panels
-
-Improve:
-- spacing rhythm
-- hierarchy
-- asymmetry where appropriate
-- visual flow
-- readability
-
-Pages should feel:
-- intentional
-- atmospheric
-- calm
-- navigable
-
-Not:
-```txt
-analytics dashboard soup
-```
+Requirements:
+- assistant responses stream token-by-token or chunk-by-chunk
+- loading states remain smooth
+- scrolling remains stable
+- partial responses render cleanly
+- streaming failure gracefully falls back to standard response behavior
 
 ---
 
-# 5. Dashboard Redesign
+# 2. Prompt Context Inspector
 
-Rework dashboard to feel:
-- world-centric
-- narrative-centric
-- atmospheric
+Create a developer/advanced-user cognition panel.
 
-Reduce:
-- generic stat tile energy
+This is one of the highest-value portfolio features.
 
-Increase:
-- world identity
-- visual hierarchy
-- meaningful focal points
+The panel should expose:
 
-Dashboard should emphasize:
-- worlds
-- characters
-- memories
-- lore
-- timeline activity
+- retrieved lore chunks
+- retrieved memories
+- relationship state
+- recent timeline events
+- prompt sections
+- token/context estimates if easy
+- AI mode (live/simulated)
 
----
-
-# 6. Sidebar & Navigation Polish
-
-Improve:
-- navigation hierarchy
-- icon consistency
-- spacing
-- hover states
-- active states
-
-Navigation should feel:
+The inspector should feel:
 - elegant
-- restrained
-- premium
-
-Avoid:
-- loud hover effects
-- giant colored pills
-- generic admin panel styling
-
----
-
-# 7. Chat Interface Overhaul
-
-The chat UI is one of the most important visual surfaces.
-
-Improve:
-- message readability
-- spacing
-- typography
-- character identity
-- contextual sidebar styling
-- memory/timeline panel cohesion
-
-Desired feeling:
-```txt
-conversation inside a living archive
-```
+- inspectable
+- archival
+- readable
 
 Not:
 ```txt
-Discord clone
+raw debug log spam
+```
+
+Preferred placement:
+- collapsible sidebar
+- expandable panel
+- developer toggle
+
+---
+
+# 3. Retrieved Lore Visibility
+
+During chat:
+- visibly show which lore entries influenced the response
+- optionally highlight:
+  - title
+  - snippet
+  - similarity score if available
+
+Suggested label:
+```txt
+Retrieved Lore
+```
+
+Users should understand:
+```txt
+the AI searched the world archive
 ```
 
 ---
 
-# 8. World & Lore Pages
+# 4. Memory Recall Visibility
 
-These should become:
-- immersive
-- archival
-- codex-like
+When memories are injected or referenced:
+- show memory recall cards/snippets
+- optionally animate subtly
 
-Improve:
-- lore readability
-- section hierarchy
-- content density
-- search presentation
-- timeline readability
+Suggested label:
+```txt
+Recalled Memory
+```
+
+Goal:
+Users should emotionally understand:
+```txt
+the system remembers prior interactions
+```
 
 ---
 
-# 9. Motion & Atmosphere
+# 5. Relationship Delta Visibility
 
-Add restrained atmospheric polish.
+After meaningful interactions:
+- visibly show relationship changes
 
-Allowed:
-- subtle fades
-- subtle hover transitions
-- soft glows
-- restrained motion
-- elegant loading states
+Examples:
+```txt
+Trust +2
+Respect -1
+Affection +3
+```
+
+Keep visual treatment:
+- subtle
+- elegant
+- non-gamified
 
 Avoid:
-- excessive animation
-- motion sickness
-- glowing neon effects
-- large parallax systems
-- over-engineered animation frameworks
-
-Subtlety > spectacle.
+- giant RPG stat explosions
+- MMO UI styling
 
 ---
 
-# 10. Empty State & Status Polish
+# 6. Timeline Event Visibility
 
-All empty states should feel intentional.
+When a timeline event is created:
+- show subtle timeline creation feedback
 
-Improve:
-- copywriting
-- spacing
-- icon treatment
-- atmospheric consistency
+Example:
+```txt
+Timeline Updated
+"The Blackwood Pact was discussed."
+```
 
-Health/status indicators should feel integrated into the visual language.
+Should feel:
+- archival
+- narrative
+- persistent
 
 ---
 
-# 11. Accessibility & Readability
+# 7. Cognition Pipeline UX
+
+The app should now communicate:
+
+```txt
+retrieve
+↓
+assemble context
+↓
+generate
+↓
+persist memory
+↓
+update relationships
+↓
+update timeline
+```
+
+Without overwhelming the user.
+
+The system should feel:
+- understandable
+- layered
+- intelligent
+
+---
+
+# 8. Visual Consistency
+
+All new UI must follow:
+- VISUAL_DIRECTION.md
+- existing visual overhaul direction
 
 Preserve:
-- readable contrast
-- accessible font sizing
-- usable spacing
-- keyboard usability
+- atmospheric design
+- typography hierarchy
+- restrained motion
+- dark codex/archive aesthetic
 
-Do not sacrifice usability for atmosphere.
+Avoid:
+- generic debug panels
+- bright developer dashboards
+- ugly JSON walls
+- noisy telemetry aesthetics
 
 ---
 
-# 12. Screenshot Worthiness
+# 9. Streaming State Polish
 
-Every major page should now look:
-- screenshot-worthy
-- portfolio-worthy
-- memorable
+Improve:
+- typing indicators
+- partial message rendering
+- loading transitions
+- interruption handling if practical
 
-Priority pages:
-- onboarding
-- dashboard
-- world overview
-- lore search
-- character chat
-- relationship/timeline sidebar
+Streaming should feel:
+- smooth
+- premium
+- intentional
+
+---
+
+# 10. Documentation
+
+Update:
+- README.md
+- MEMORY.md
+
+Document:
+- streaming architecture
+- cognition inspector
+- transparent retrieval features
+- known limitations
 
 ---
 
 # Constraints
 
 Do not:
-- rewrite backend architecture
-- add major new systems
-- add auth
-- add billing
-- add multiplayer
+- redesign core backend architecture
+- add autonomous agents
+- add multi-agent orchestration
 - add voice
-- add heavy animation libraries
-- redesign routing/data flow
-- replace core frontend stack
+- add multiplayer
+- add Kubernetes
+- add background job systems
+- massively refactor persistence
+- introduce massive frontend state complexity
 
 Preserve:
-- current functionality
-- onboarding flow
-- retrieval pipeline
-- chat flow
-- passing tests
 - Docker-first runtime
+- current onboarding
+- current retrieval pipeline
+- current persistence systems
+- current visual direction
+- passing tests
+- type safety
 
 ---
 
 # Verification Requirements
 
 Run and report:
-- npm run build
-- npm run typecheck
-- npm test
 
-Verify:
+```bash
+docker compose up -d --build
+npm run build
+npm run typecheck
+npm test
+```
+
+Manual verification:
 - onboarding still works
 - world generation still works
-- lore ingestion still works
-- chat still works
-- sidebar updates still work
-- layout responsive behavior still works
+- streaming responses work
+- lore retrieval visibly appears
+- memory recall visibly appears
+- relationship changes visibly appear
+- timeline creation visibly appears
+- inspector panel works
+- UI remains visually cohesive
 
 ---
 
 # Success Criteria
 
-- app has clear visual identity
-- UI no longer feels generic
-- typography feels premium
-- layouts feel intentional
-- dashboard feels narrative-centric
-- chat feels immersive
-- lore pages feel archival
-- screenshots feel portfolio-worthy
-- atmosphere improved without sacrificing usability
-- functionality preserved
+- responses stream in real time
+- cognition pipeline feels observable
+- lore retrieval is visible
+- memory recall is visible
+- relationship changes are visible
+- timeline creation is visible
+- inspector panel feels polished
+- app feels technically sophisticated
+- app feels emotionally alive
+- visual consistency preserved
 - tests/builds remain green
 
 ---
@@ -390,9 +359,10 @@ Verify:
 # Final Deliverables
 
 Provide:
-- VISUAL_DIRECTION.md
-- changed files summary
-- before/after design summary
-- screenshots or screenshot checklist
-- remaining visual weaknesses
-- recommendations for future polish phases
+- changed files
+- streaming implementation summary
+- cognition inspector summary
+- retrieval/memory visibility summary
+- verification results
+- remaining UX limitations
+- recommendations for future premium polish

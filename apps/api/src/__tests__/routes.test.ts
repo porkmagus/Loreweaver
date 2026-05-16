@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../index.js';
 import { listCharacters, getCharacterById } from '../services/characterService.js';
-import { sendCharacterChat, getChatHistory } from '../services/chatService.js';
+import { sendCharacterChat, getChatHistory, streamCharacterChat, buildCognitionContext } from '../services/chatService.js';
 
 const mockSelect = vi.fn();
 const mockInsert = vi.fn();
@@ -41,6 +41,11 @@ vi.mock('../services/characterService.js', () => ({
 vi.mock('../services/chatService.js', () => ({
   sendCharacterChat: vi.fn(),
   getChatHistory: vi.fn(),
+  getChatSessionSummary: vi.fn(),
+  streamCharacterChat: vi.fn(),
+  buildCognitionContext: vi.fn(),
+  getOrCreateSession: vi.fn().mockResolvedValue({ id: 7 }),
+  toCognitionSnapshot: vi.fn((cognition: unknown) => cognition),
 }));
 
 async function readyApp() {
@@ -224,6 +229,49 @@ describe('POST /api/chat/character/:id', () => {
       .send({ worldId: 1, message: 'hi' })
       .expect(200);
     expect(res.body.data).toEqual({ reply: 'Hello there!', sessionId: 7 });
+  });
+
+  it('streams chat events as SSE', async () => {
+    const a = await readyApp();
+    vi.mocked(getCharacterById).mockResolvedValue({ id: 1, worldId: 1, name: 'Alice' } as any);
+    vi.mocked(streamCharacterChat).mockImplementation(async function* () {
+      yield { type: 'retrieved', lore: [], memories: [] };
+      yield { type: 'token', content: 'Hello' };
+      yield {
+        type: 'done',
+        sessionId: 7,
+        effects: { timelineCreated: false, memoryCreated: false, topic: 'greeting', relationshipUpdates: [] },
+      };
+    } as any);
+
+    const res = await request(a.server)
+      .post('/api/chat/character/1/stream')
+      .send({ worldId: 1, message: 'hi' })
+      .expect(200);
+
+    expect(res.text).toContain('data: {"type":"token","content":"Hello"}');
+    expect(res.text).toContain('"type":"done"');
+  });
+
+  it('returns cognition context', async () => {
+    const a = await readyApp();
+    vi.mocked(getCharacterById).mockResolvedValue({ id: 1, worldId: 1, name: 'Alice' } as any);
+    vi.mocked(buildCognitionContext).mockResolvedValue({
+      prompt: 'SYSTEM\n...',
+      aiMode: 'simulated',
+      retrievedLore: [],
+      retrievedMemories: [],
+      relationships: [],
+      timeline: [],
+      history: [],
+    } as any);
+
+    const res = await request(a.server)
+      .post('/api/chat/character/1/cognition')
+      .send({ worldId: 1, message: 'hi' })
+      .expect(200);
+
+    expect(res.body.data.prompt).toBe('SYSTEM\n...');
   });
 });
 

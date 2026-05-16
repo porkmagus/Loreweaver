@@ -191,6 +191,24 @@ Optimize only after stability.
 
 ---
 
+## Phase5TransparentCognitionStreaming
+
+Transparent cognition and streaming UX pass completed:
+- Chat now supports Server-Sent Events at `POST /api/chat/character/:characterId/stream`.
+- Streaming emits three visible phases: retrieval/cognition snapshot, token chunks, and done/effects.
+- Web chat uses fetch streaming and falls back to the existing synchronous chat endpoint if SSE fails.
+- Cognition inspector exposes AI mode, context estimate, retrieved lore, recalled memories, relationship state, timeline context, recent history, and assembled prompt.
+- Chat surface now shows subtle pipeline state, retrieved lore snippets, recalled memory, relationship drift, and timeline/memory persistence feedback.
+- Backend keeps Postgres canonical and Qdrant retrieval-only; no autonomous agents or new infrastructure were introduced.
+
+Known limitations:
+- Token estimates are word/character based, not provider tokenizer counts.
+- Relationship deltas are keyword-score based and apply to existing character relationships.
+- Live OpenAI and Qdrant behavior still depends on configured `OPENAI_API_KEY` and ingested lore.
+- Local API typecheck may require `NODE_OPTIONS=--jitless` on the current host because plain `tsc --noEmit` triggers a Node/V8 fatal crash before diagnostics.
+
+---
+
 ## BootstrapHistory
 
 Phase 0 bootstrap completed:
