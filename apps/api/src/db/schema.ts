@@ -119,6 +119,16 @@ export const chatMessages = pgTable('chat_messages', {
   index('msg_session_id_idx').on(table.sessionId),
 ]);
 
+// Application settings — canonical runtime config persistence
+export const appSettings = pgTable('app_settings', {
+  id: serial('id').primaryKey(),
+  key: varchar('key', { length: 255 }).notNull().unique(),
+  value: jsonb('value').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index('app_settings_key_idx').on(table.key),
+]);
+
 // Relations
 export const worldsRelations = relations(worlds, ({ many }) => ({
   characters: many(characters),
@@ -154,6 +164,4 @@ export const chatSessionsRelations = relations(chatSessions, ({ one, many }) => 
   messages: many(chatMessages),
 }));
 
-export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
-  session: one(chatSessions, { fields: [chatMessages.sessionId], references: [chatSessions.id] }),
-}));
+export const appSettingsRelations = relations(appSettings, () => ({}));

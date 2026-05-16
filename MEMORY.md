@@ -191,6 +191,72 @@ Optimize only after stability.
 
 ---
 
+## Phase10PersistentProviderSettings
+
+Persistent backend storage for provider and image settings completed.
+
+### Scope
+- Added `app_settings` table (`key` unique, `value` jsonb, `updated_at`) to store runtime configuration in Postgres.
+- Added `apps/api/src/services/appSettings.ts` with `getPersistedProviderConfig`, `setPersistedProviderConfig`, `getPersistedImageProviderConfig`, `setPersistedImageProviderConfig`.
+- Added `apps/api/src/services/runtimeConfig.ts` with `loadPersistedConfig`, `getResolvedConfig`, `updateProviderConfig`, `updateImageProviderConfig`. Loads persisted values into runtime memory on startup and refreshes cache on updates.
+- Updated `apps/api/src/startup.ts` to call `loadPersistedConfig` after migrations so container restarts preserve GUI-configured providers.
+- Updated `apps/api/src/routes/settings.ts` to use `updateProviderConfig` / `updateImageProviderConfig` on POST, which persist to DB and refresh the cache.
+- Updated `apps/api/src/routes/health.ts` to call `resolveProviderConfig()` / `resolveImageProviderConfig()` dynamically instead of reading env at import time.
+- Converted all backend services from module-level env capture to runtime function calls:
+  - `chatService.ts`: `hasLiveProvider()` now calls `resolveProviderConfig()`
+  - `worldGenerationService.ts`: same `hasLiveProvider()` pattern
+  - `embedding.ts`: `getEmbeddingClient()` calls `resolveProviderConfig()`
+- Fixed preset matching in `Settings.tsx` to compare both `provider` and `baseUrl`, disambiguating Ollama local (`http://localhost:11434`) vs remote (`https://www.ollama.com/v1`).
+- Fixed `applyPreset` to always write `baseUrl` so remote presets get correct defaults.
+- Fixed `handleImageTest` with explicit early returns:
+  - disabled / not enabled → warning
+  - openai-image with no apiKey → error
+  - no model and not disabled → error
+  - otherwise cost warning then proceed
+- Fixed sidebar provider/model label overflow via `max-w-[5rem]` + `truncate`.
+- Fixed `Onboarding.tsx` to query `/api/health`, show simulated-mode banner, and link to Settings when no live provider is configured.
+- Added `aria-label`s to mobile sidebar toggle buttons in `Layout.tsx`.
+- Frontend `localStorage` keys renamed to `loreweaver-provider-config-draft` and `loreweaver-image-provider-config-draft` to avoid collision with legacy persisted keys.
+
+### Files added
+- `apps/api/src/services/appSettings.ts`
+- `apps/api/src/services/runtimeConfig.ts`
+- `apps/api/drizzle/0002_add_app_settings.sql`
+
+### Files modified
+- `apps/api/src/db/schema.ts` — added `app_settings` table + index
+- `apps/api/src/routes/settings.ts` — POST now persists and returns merged config
+- `apps/api/src/routes/health.ts` — dynamic config resolution
+- `apps/api/src/services/chatService.ts` — `hasLiveProvider()` function
+- `apps/api/src/services/worldGenerationService.ts` — `hasLiveProvider()` function
+- `apps/api/src/services/embedding.ts` — `getEmbeddingClient()` function
+- `apps/api/src/startup.ts` — load persisted config after migrations
+- `apps/api/src/__tests__/routes.test.ts` — mocks already compatible; all 60 tests pass
+- `apps/web/src/pages/Settings.tsx` — preset disambiguation, image test guards, overflow fix
+- `apps/web/src/components/Layout.tsx` — `aria-label`s + truncate
+- `apps/web/src/pages/Onboarding.tsx` — simulated banner + settings link
+- `README.md` — documented persisted settings behavior
+- `MEMORY.md` — added this phase log
+
+### Verification
+- `npm run typecheck` — pass (api + web)
+- `npm run build` — pass (api + web)
+- `npm test --workspace=apps/api` — 60 tests passing
+- `docker compose up -d --build` — stack healthy
+- API health returns correct `aiMode` and persisted provider values after restart
+
+### Runtime config resolution hierarchy
+1. **Persisted settings** (DB `app_settings`) — highest priority, set via GUI
+2. **Environment variables** (`.env`) — fallback defaults if nothing persisted
+3. **Simulated fallback** — deterministic responses when no live provider configured
+
+### Known limitations
+- `app_settings` stores JSONB values without strict schema validation at the DB level. Runtime code uses Zod schemas before persistence.
+- The `.env` file is never rewritten by the application. GUI settings go to the DB exclusively.
+- Image provider `provider` field currently reports `disabled` even when `enabled: true` because the image provider preset logic maps “Disabled” to provider `disabled`; this is cosmetic in health output and does not affect runtime behavior.
+
+---
+
 ## Phase9ImageProviderSettings
 
 Image provider settings and hardening phase completed.

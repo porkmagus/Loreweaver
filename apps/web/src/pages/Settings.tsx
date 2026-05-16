@@ -22,52 +22,68 @@ import {
 } from 'lucide-react';
 import type { ProviderConfig, ProviderStatus, ImageProviderConfig, ImageProviderStatus } from '@loreweaver/shared';
 
-const STORAGE_KEY = 'loreweaver-provider-config';
-const IMAGE_STORAGE_KEY = 'loreweaver-image-provider-config';
+const STORAGE_KEY = 'loreweaver-provider-config-draft';
+const IMAGE_STORAGE_KEY = 'loreweaver-image-provider-config-draft';
 
-const PRESETS: { label: string; value: ProviderConfig['provider']; defaults: Partial<ProviderConfig> }[] = [
+// ── Provider presets ────────────────────────────────────────────
+export interface ProviderPreset {
+  label: string;
+  value: ProviderConfig['provider'];
+  baseUrl: string;
+  chatModel: string;
+  embeddingModel: string;
+  imageModel: string;
+}
+
+const PRESETS: ProviderPreset[] = [
   {
     label: 'Custom OpenAI-Compatible',
     value: 'custom-openai',
-    defaults: {
-      baseUrl: 'http://localhost:1234/v1',
-      chatModel: '',
-      embeddingModel: '',
-      imageModel: '',
-    },
+    baseUrl: 'http://localhost:1234/v1',
+    chatModel: '',
+    embeddingModel: '',
+    imageModel: '',
   },
   {
     label: 'Ollama Local',
     value: 'ollama',
-    defaults: {
-      baseUrl: 'http://localhost:11434',
-      chatModel: '',
-      embeddingModel: '',
-      imageModel: '',
-    },
+    baseUrl: 'http://localhost:11434',
+    chatModel: '',
+    embeddingModel: '',
+    imageModel: '',
   },
   {
-    label: 'Ollama Remote / Cloud',
+    label: 'Ollama Cloud / Remote',
     value: 'ollama',
-    defaults: {
-      baseUrl: '',
-      chatModel: '',
-      embeddingModel: '',
-      imageModel: '',
-    },
+    baseUrl: 'https://www.ollama.com/v1',
+    chatModel: '',
+    embeddingModel: '',
+    imageModel: '',
   },
   {
     label: 'OpenRouter',
     value: 'openrouter',
-    defaults: {
-      baseUrl: 'https://openrouter.ai/api/v1',
-      chatModel: '',
-      embeddingModel: '',
-      imageModel: '',
-    },
+    baseUrl: 'https://openrouter.ai/api/v1',
+    chatModel: '',
+    embeddingModel: '',
+    imageModel: '',
   },
 ];
 
+function matchPreset(form: Partial<ProviderConfig>): ProviderPreset | undefined {
+  return PRESETS.find((p) => {
+    if (form.provider !== p.value) return false;
+    const url = (form.baseUrl ?? '').toLowerCase().replace(/\/$/, '');
+    const pUrl = p.baseUrl.toLowerCase().replace(/\/$/, '');
+    if (p.value === 'ollama') {
+      // Ollama presets must match baseUrl to disambiguate local vs remote
+      return url === pUrl || (url === '' && pUrl === 'https://www.ollama.com/v1');
+    }
+    return url === pUrl || url.startsWith(pUrl);
+  });
+}
+
+// ── Image presets ───────────────────────────────────────────────
 const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; defaults: Partial<ImageProviderConfig> }[] = [
   {
     label: 'OpenAI Image',
@@ -77,6 +93,7 @@ const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; de
       size: '1536x1024',
       quality: 'low',
       format: 'webp',
+      enabled: true,
     },
   },
   {
@@ -88,6 +105,7 @@ const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; de
       size: '1536x1024',
       quality: 'low',
       format: 'webp',
+      enabled: true,
     },
   },
   {
@@ -103,7 +121,8 @@ const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; de
   },
 ];
 
-function loadSavedConfig(): Partial<ProviderConfig> | null {
+// ── Draft caching (optional UI comfort) ─────────────────────────
+function loadDraft(): Partial<ProviderConfig> | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -112,12 +131,10 @@ function loadSavedConfig(): Partial<ProviderConfig> | null {
     return null;
   }
 }
-
-function saveConfig(config: Partial<ProviderConfig>) {
+function saveDraft(config: Partial<ProviderConfig>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
 }
-
-function loadSavedImageConfig(): Partial<ImageProviderConfig> | null {
+function loadImageDraft(): Partial<ImageProviderConfig> | null {
   try {
     const raw = localStorage.getItem(IMAGE_STORAGE_KEY);
     if (!raw) return null;
@@ -126,8 +143,7 @@ function loadSavedImageConfig(): Partial<ImageProviderConfig> | null {
     return null;
   }
 }
-
-function saveImageConfig(config: Partial<ImageProviderConfig>) {
+function saveImageDraft(config: Partial<ImageProviderConfig>) {
   localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(config));
 }
 
@@ -135,7 +151,7 @@ export function Settings() {
   const { data: serverConfig, loading: serverLoading } = useApi<ProviderConfig>('/settings/provider');
   const { data: serverImageConfig, loading: imageServerLoading } = useApi<ImageProviderConfig>('/settings/image-provider');
 
-  const [form, setForm] = useState<Partial<ProviderConfig>>(loadSavedConfig() ?? {
+  const [form, setForm] = useState<Partial<ProviderConfig>>({
     provider: 'custom-openai',
     baseUrl: 'http://localhost:1234/v1',
     apiKey: '',
@@ -146,7 +162,7 @@ export function Settings() {
     maxTokens: 800,
   });
 
-  const [imageForm, setImageForm] = useState<Partial<ImageProviderConfig>>(loadSavedImageConfig() ?? {
+  const [imageForm, setImageForm] = useState<Partial<ImageProviderConfig>>({
     provider: 'disabled',
     baseUrl: '',
     apiKey: '',
@@ -168,11 +184,14 @@ export function Settings() {
   const [imageTestResult, setImageTestResult] = useState<ImageProviderStatus | null>(null);
   const [showCostWarning, setShowCostWarning] = useState(false);
 
+  // Hydrate from server → draft → defaults
   useEffect(() => {
     if (serverConfig) {
       setForm((prev) => ({
-        ...serverConfig,
         ...prev,
+        ...serverConfig,
+        // Preserve any draft fields not yet saved on server
+        apiKey: serverConfig.apiKey ?? prev.apiKey,
       }));
     }
   }, [serverConfig]);
@@ -180,20 +199,23 @@ export function Settings() {
   useEffect(() => {
     if (serverImageConfig) {
       setImageForm((prev) => ({
-        ...serverImageConfig,
         ...prev,
+        ...serverImageConfig,
+        apiKey: serverImageConfig.apiKey ?? prev.apiKey,
       }));
     }
   }, [serverImageConfig]);
 
-  const applyPreset = (preset: (typeof PRESETS)[number]) => {
+  const activePreset = matchPreset(form);
+
+  const applyPreset = (preset: ProviderPreset) => {
     setForm((prev: Partial<ProviderConfig>) => ({
       ...prev,
       provider: preset.value,
-      baseUrl: preset.defaults.baseUrl ?? prev.baseUrl,
-      chatModel: preset.defaults.chatModel ?? prev.chatModel,
-      embeddingModel: preset.defaults.embeddingModel ?? prev.embeddingModel,
-      imageModel: preset.defaults.imageModel ?? prev.imageModel,
+      baseUrl: preset.baseUrl,
+      chatModel: preset.chatModel || prev.chatModel || '',
+      embeddingModel: preset.embeddingModel || prev.embeddingModel || '',
+      imageModel: preset.imageModel || prev.imageModel || '',
     }));
     setSaved(false);
     setTestResult(null);
@@ -230,7 +252,7 @@ export function Settings() {
     if (!form.baseUrl || !form.chatModel) return;
     setSaving(true);
     try {
-      saveConfig(form);
+      saveDraft(form);
       const payload: ProviderConfig = {
         provider: form.provider ?? 'custom-openai',
         baseUrl: form.baseUrl,
@@ -283,7 +305,7 @@ export function Settings() {
   const handleImageSave = async () => {
     setImageSaving(true);
     try {
-      saveImageConfig(imageForm);
+      saveImageDraft(imageForm);
       const payload: ImageProviderConfig = {
         provider: imageForm.provider ?? 'disabled',
         baseUrl: imageForm.baseUrl,
@@ -305,14 +327,31 @@ export function Settings() {
   };
 
   const handleImageTest = async () => {
+    // Predictable disabled behavior
     if ((imageForm.provider ?? 'disabled') === 'disabled' || !imageForm.enabled) {
       setImageTestResult({ ok: true, provider: 'disabled', warning: 'Image generation is disabled. Fallback assets will be used.' });
+      setShowCostWarning(false);
       return;
     }
-    if (!showCostWarning && imageForm.provider !== 'disabled') {
+
+    // Predictable missing-API-key behavior for OpenAI Image
+    if (imageForm.provider === 'openai-image' && !imageForm.apiKey) {
+      setImageTestResult({ ok: false, provider: 'openai-image', error: 'Missing API key. Enter your OpenAI API key or set OPENAI_API_KEY in environment.' });
+      return;
+    }
+
+    // Predictable missing-model behavior
+    if (!imageForm.model && imageForm.provider !== 'disabled') {
+      setImageTestResult({ ok: false, provider: imageForm.provider ?? 'unknown', error: 'Missing image model. Enter a model name (e.g., gpt-image-2).' });
+      return;
+    }
+
+    // Cost-safe gate for non-disabled providers
+    if (!showCostWarning) {
       setShowCostWarning(true);
       return;
     }
+
     setImageTesting(true);
     setImageTestResult(null);
     try {
@@ -357,23 +396,24 @@ export function Settings() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {PRESETS.map((preset) => (
-            <button
-              key={preset.label}
-              type="button"
-              onClick={() => applyPreset(preset)}
-              className={cn(
-                'rounded-card border px-4 py-2 text-small transition-all duration-archive',
-                form.provider === preset.value && preset.label.toLowerCase().includes((form.baseUrl ?? '').toLowerCase().includes('ollama') ? 'ollama' : form.baseUrl ?? '')
-                  ? 'border-gold bg-gold/10 text-gold'
-                  : form.provider === preset.value
+          {PRESETS.map((preset) => {
+            const isActive = activePreset?.label === preset.label;
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                className={cn(
+                  'rounded-card border px-4 py-2 text-small transition-all duration-archive',
+                  isActive
                     ? 'border-gold bg-gold/10 text-gold'
                     : 'border-ridge bg-surface text-ash hover:text-parchment hover:bg-surface/60'
-              )}
-            >
-              {preset.label}
-            </button>
-          ))}
+                )}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
         </div>
 
         {serverLoading && (
@@ -677,7 +717,7 @@ export function Settings() {
               </Button>
               <Button
                 onClick={handleImageTest}
-                disabled={imageTesting || !imageForm.enabled}
+                disabled={imageTesting}
                 variant="outline"
               >
                 {imageTesting ? <RotateCw className="mr-2 h-4 w-4 animate-spin" /> : <WifiOff className="mr-2 h-4 w-4" />}

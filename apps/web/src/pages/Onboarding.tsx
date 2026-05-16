@@ -1,15 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiPost } from '@/hooks/useApi';
+import { apiPost, API_BASE } from '@/hooks/useApi';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
-import { Globe, Sparkles, AlertCircle } from 'lucide-react';
+import { Globe, Sparkles, AlertCircle, Settings } from 'lucide-react';
+
+interface HealthData {
+  status: string;
+  aiMode: 'live' | 'simulated';
+  provider?: string;
+  chatModel?: string;
+}
 
 export function Onboarding() {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [health, setHealth] = useState<HealthData | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/health`)
+      .then((r) => r.json())
+      .then((json) => setHealth(json))
+      .catch(() => setHealth({ status: 'ok', aiMode: 'simulated' }));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +63,23 @@ export function Onboarding() {
             </p>
           </div>
         </div>
+
+        {health && health.aiMode === 'simulated' && (
+          <div className="mx-auto flex max-w-xl flex-col items-center gap-3 rounded-card border border-gold/20 bg-gold/5 px-5 py-4">
+            <div className="flex items-center gap-2 text-small text-gold">
+              <AlertCircle className="h-4 w-4" strokeWidth={1.5} />
+              Running in simulated mode — no live AI provider configured.
+            </div>
+            <Button
+              variant="ghost"
+              className="text-tiny text-gold hover:text-parchment"
+              onClick={() => navigate('/settings')}
+            >
+              <Settings className="h-3 w-3" strokeWidth={1.5} />
+              Open settings to configure a provider
+            </Button>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">

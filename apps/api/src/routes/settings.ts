@@ -10,8 +10,11 @@ import {
   ImageProviderConfigSchema,
   resolveImageProviderConfig,
   testImageProviderConnection,
-  setRuntimeImageProviderConfig,
 } from '../services/imageProvider.js';
+import {
+  updateProviderConfig,
+  updateImageProviderConfig,
+} from '../services/runtimeConfig.js';
 import type { ImageProviderConfig } from '@loreweaver/shared';
 
 const SetProviderSchema = z.object({
@@ -36,20 +39,10 @@ const SetImageProviderSchema = z.object({
   enabled: z.boolean().optional().default(true),
 });
 
-let runtimeProviderConfig: Partial<ProviderConfig> | null = null;
-
-export function setRuntimeProviderConfig(config: Partial<ProviderConfig>) {
-  runtimeProviderConfig = config;
-}
-
-export function getRuntimeProviderConfig(): Partial<ProviderConfig> | null {
-  return runtimeProviderConfig;
-}
-
 export async function settingsRoutes(app: FastifyInstance) {
   app.get('/settings/provider', async (_request, reply) => {
-    const env = resolveProviderConfig();
-    reply.send({ data: env });
+    const resolved = resolveProviderConfig();
+    reply.send({ data: resolved });
   });
 
   app.post('/settings/provider', async (request, reply) => {
@@ -62,8 +55,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       });
       return;
     }
-    setRuntimeProviderConfig(parsed.data);
-    const merged = resolveProviderConfig(parsed.data);
+    const merged = await updateProviderConfig(parsed.data);
     reply.send({ data: merged });
   });
 
@@ -84,8 +76,8 @@ export async function settingsRoutes(app: FastifyInstance) {
 
   // Image provider settings
   app.get('/settings/image-provider', async (_request, reply) => {
-    const env = resolveImageProviderConfig();
-    reply.send({ data: env });
+    const resolved = resolveImageProviderConfig();
+    reply.send({ data: resolved });
   });
 
   app.post('/settings/image-provider', async (request, reply) => {
@@ -98,8 +90,7 @@ export async function settingsRoutes(app: FastifyInstance) {
       });
       return;
     }
-    setRuntimeImageProviderConfig(parsed.data);
-    const merged = resolveImageProviderConfig(parsed.data);
+    const merged = await updateImageProviderConfig(parsed.data);
     reply.send({ data: merged });
   });
 

@@ -1,15 +1,17 @@
 import OpenAI from 'openai';
 import { createHash } from 'crypto';
-import { getEnvProviderConfig } from './provider.js';
+import { resolveProviderConfig } from './provider.js';
 
 const dimension = Number(process.env.EMBEDDING_DIMENSION ?? 1536);
 
-const envProvider = getEnvProviderConfig();
-const apiKey = envProvider.apiKey ?? process.env.OPENAI_API_KEY;
-const model = envProvider.embeddingModel ?? process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
-const baseUrl = envProvider.baseUrl;
-
-const client = apiKey && baseUrl ? new OpenAI({ apiKey, baseURL: baseUrl }) : null;
+function getEmbeddingClient(): { client: OpenAI | null; apiKey: string | undefined; model: string; baseUrl: string } {
+  const cfg = resolveProviderConfig();
+  const apiKey = cfg.apiKey ?? process.env.OPENAI_API_KEY;
+  const model = cfg.embeddingModel ?? process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
+  const baseUrl = cfg.baseUrl;
+  const client = apiKey && baseUrl ? new OpenAI({ apiKey, baseURL: baseUrl }) : null;
+  return { client, apiKey, model, baseUrl };
+}
 
 function deterministicVector(text: string, dim: number): number[] {
   const hash = createHash('sha256').update(text).digest();
@@ -21,6 +23,7 @@ function deterministicVector(text: string, dim: number): number[] {
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
+  const { client, apiKey, model } = getEmbeddingClient();
   if (!client || !apiKey) {
     return texts.map((t) => deterministicVector(t, dimension));
   }

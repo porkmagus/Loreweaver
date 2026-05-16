@@ -10,6 +10,7 @@ import {
   createFallbackWorldBanner,
   type VisualMetadata,
 } from './services/imageGenerationService.js';
+import { loadPersistedConfig } from './services/runtimeConfig.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -222,6 +223,14 @@ export async function startup() {
 
   // 1. Run migrations
   await runMigrations();
+
+  // 1b. Load persisted provider / image settings
+  try {
+    await loadPersistedConfig();
+    console.log('✅ Runtime config loaded from persisted settings.\n');
+  } catch (err) {
+    console.warn('⚠️ Failed to load persisted runtime config:', err instanceof Error ? err.message : String(err));
+  }
 
   // 2. Seed if database is empty and SEED_ON_STARTUP is explicitly enabled
   const empty = await isDatabaseEmpty();

@@ -25,8 +25,10 @@ const RELATIONSHIP_LIMIT = 5;
 
 type MemoryRow = typeof memories.$inferSelect;
 
-const envProvider = getEnvProviderConfig();
-const hasLiveProvider = Boolean(envProvider.baseUrl && envProvider.chatModel);
+function hasLiveProvider(): boolean {
+  const cfg = resolveProviderConfig();
+  return Boolean(cfg.baseUrl && cfg.chatModel);
+}
 
 export async function getOrCreateSession(characterId: number, worldId: number, userId?: number | null) {
   const existing = await db.select().from(chatSessions)
@@ -268,7 +270,7 @@ export async function buildCognitionContext(
     relationships: dbRelationships,
     timeline: dbTimeline,
     history: dbHistory,
-    aiMode: hasLiveProvider ? 'live' : 'simulated',
+    aiMode: hasLiveProvider() ? 'live' : 'simulated',
   };
 }
 
@@ -410,7 +412,7 @@ export async function* streamCharacterChat(
 
   let reply: string;
 
-  if (hasLiveProvider && cognition.aiMode === 'live') {
+  if (hasLiveProvider() && cognition.aiMode === 'live') {
     const config = resolveProviderConfig();
     const stream = streamChatCompletion(config, [
       { role: 'system', content: cognition.prompt.split('\nTASK\n')[0] },
@@ -467,7 +469,7 @@ export async function sendCharacterChat(
 
   let reply: string;
 
-  if (hasLiveProvider) {
+  if (hasLiveProvider()) {
     const config = resolveProviderConfig();
     const completion = await chatCompletion(config, [
       { role: 'system', content: prompt.split('\nTASK\n')[0] },

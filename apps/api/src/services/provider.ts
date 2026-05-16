@@ -80,6 +80,7 @@ export function resolveProviderConfig(override?: Partial<ProviderConfig>): Provi
   };
 }
 
+
 function getOpenAIClient(config: ProviderConfig): OpenAI | null {
   if (config.provider === 'ollama') return null;
   const apiKey = config.apiKey || 'dummy';

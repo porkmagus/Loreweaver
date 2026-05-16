@@ -11,8 +11,10 @@ import {
   getEnvProviderConfig,
 } from './provider.js';
 
-const envProvider = getEnvProviderConfig();
-const hasLiveProvider = Boolean(envProvider.baseUrl && envProvider.chatModel);
+function hasLiveProvider(): boolean {
+  const cfg = resolveProviderConfig();
+  return Boolean(cfg.baseUrl && cfg.chatModel);
+}
 
 interface GeneratedWorld {
   name: string;
@@ -191,7 +193,7 @@ function deterministicWorld(prompt: string): GeneratedWorld {
 }
 
 async function callLLM(prompt: string): Promise<GeneratedWorld> {
-  if (!hasLiveProvider) {
+  if (!hasLiveProvider()) {
     throw new Error('AI provider not available');
   }
 
@@ -232,7 +234,7 @@ async function callLLM(prompt: string): Promise<GeneratedWorld> {
 }
 
 export async function generateWorldFromPrompt(userPrompt: string): Promise<{ worldId: number; name: string }> {
-  const generated = hasLiveProvider
+  const generated = hasLiveProvider()
     ? await callLLM(userPrompt).catch(() => deterministicWorld(userPrompt))
     : deterministicWorld(userPrompt);
 

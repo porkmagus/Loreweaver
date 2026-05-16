@@ -77,7 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <span className="text-tiny text-dust tracking-wider">ARCHIVE</span>
             </div>
           </Link>
-          <button type="button" onClick={() => setSidebarOpen(false)} className="text-dust hover:text-parchment lg:hidden transition-colors">
+          <button type="button" aria-label="Close sidebar" onClick={() => setSidebarOpen(false)} className="text-dust hover:text-parchment lg:hidden transition-colors">
             <X className="h-5 w-5" strokeWidth={1.5} />
           </button>
         </div>
@@ -114,7 +114,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <span className="text-tiny text-dust tracking-wide">{health.provider.toUpperCase()}</span>
               )}
               {health.chatModel && (
-                <span className="text-tiny text-dust tracking-wide truncate max-w-[6rem]" title={health.chatModel}>{health.chatModel.split('/').pop() ?? health.chatModel}</span>
+                <span className="text-tiny text-dust tracking-wide truncate max-w-[5rem]" title={health.chatModel}>{health.chatModel.split('/').pop() ?? health.chatModel}</span>
               )}
             </div>
           ) : healthError ? (
@@ -170,7 +170,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="flex h-16 items-center gap-3 border-b border-ridge bg-void px-6 lg:hidden">
-          <button type="button" onClick={() => setSidebarOpen(true)} className="text-ash hover:text-parchment transition-colors">
+          <button type="button" aria-label="Open sidebar" onClick={() => setSidebarOpen(true)} className="text-ash hover:text-parchment transition-colors">
             <Menu className="h-5 w-5" strokeWidth={1.5} />
           </button>
           <span className="font-serif text-h3 text-parchment">Loreweaver</span>

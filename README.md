@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white&style=flat-square" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Qdrant-Vector-FF0000?style=flat-square" alt="Qdrant">
   <img src="https://img.shields.io/badge/Docker-First-2496ED?logo=docker&logoColor=white&style=flat-square" alt="Docker">
-  <img src="https://img.shields.io/badge/tests-44%20passing-22c55e?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-60%20passing-22c55e?style=flat-square" alt="Tests">
   <img src="https://img.shields.io/badge/license-MIT-4d7c0f?style=flat-square" alt="License">
 </p>
 
@@ -176,6 +176,8 @@ IMAGE_API_KEY=
 ```
 
 Without an `OPENAI_API_KEY`, the app uses deterministic simulated responses and deterministic visual fallbacks — fully usable for exploration and demos.
+
+**Provider and image settings are persisted in the database** and survive container restarts. You do not need to edit `.env` for normal onboarding or day-to-day provider changes. Configure providers via the **Settings** UI; `.env` variables serve only as fallback defaults.
 
 ---
 

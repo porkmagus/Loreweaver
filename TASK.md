@@ -1,325 +1,201 @@
-# TASK.md
+---
 
-# Current Objective
+# 6. Runtime Settings Persistence (Replace env-first behavior)
 
-Implement dedicated Image Provider Settings and Image Generation Hardening for Loreweaver.
+Current behavior:
 
-Loreweaver now supports flexible LLM providers for text generation, but image generation is still too tightly coupled to OpenAI assumptions and fallback placeholders.
+- provider settings are primarily env-driven
+- GUI settings may only exist in localStorage/runtime memory
+- backend container restart may lose settings
+- `.env` editing is still implied as part of setup
 
-This phase adds a pragmatic image provider layer.
-
-Primary goals:
-
-- make image generation configurable
-- make image status transparent
-- support official OpenAI image generation cleanly
-- prepare for future image providers without overbuilding
-- preserve deterministic fallback behavior
-
-This is not a major architecture rewrite.
+This should be improved.
 
 ---
 
-# Provider Targets
+# Required Architecture Change
 
-Support at minimum:
+Provider and image settings should persist in application storage/database.
 
-```txt
-openai-image
-custom-image-endpoint
-disabled/fallback
-```
+Do NOT automatically rewrite `.env` from the GUI.
 
-Optional future-ready provider labels may be documented but not fully implemented:
+`.env` should remain:
 
 ```txt
-codex-oauth-image
-replicate
-fal
-stability
-comfyui
-automatic1111
+deployment defaults
+server bootstrap defaults
+advanced configuration
+fallback values
 ```
 
-Do not implement unsupported OAuth flows unless there is already a stable working credential path in the repo.
+NOT:
+
+```txt
+primary runtime state
+```
 
 ---
 
-# OpenAI Image Provider
+# Required Persistence Model
 
-Use official OpenAI API image generation.
-
-Default model:
+Preferred hierarchy:
 
 ```txt
-gpt-image-2
+database/app settings
+↓
+env defaults
+↓
+simulated fallback
 ```
 
-Allow user override:
+Meaning:
 
-```txt
-gpt-image-2
-gpt-image-1.5
-gpt-image-1
-gpt-image-1-mini
-```
+1. If persisted app settings exist, use them.
+2. Otherwise use env defaults.
+3. Otherwise use simulated/fallback mode.
 
-Do not hardcode this as a closed list. Free-text model names should be allowed.
-
-Required settings:
-
-```txt
-IMAGE_PROVIDER=openai-image
-IMAGE_MODEL=gpt-image-2
-IMAGE_API_KEY=
-IMAGE_BASE_URL=
-IMAGE_SIZE=
-IMAGE_QUALITY=
-IMAGE_FORMAT=
-IMAGE_GENERATION_ENABLED=true
-```
-
-Use actual env naming consistent with the repo if different.
+Frontend localStorage alone is insufficient.
 
 ---
 
-# Custom Image Endpoint
+# Required Backend Storage
 
-Add a custom image provider mode.
+Add a lightweight persistent settings model.
 
-Required fields:
-
-```txt
-Image Provider
-Image Base URL
-Image API Key
-Image Model
-Image Size
-Image Quality
-Image Format
-```
-
-This should support future OpenAI-compatible or proxy image providers where practical.
-
-If implementation cannot safely call arbitrary custom providers yet:
-
-- expose settings
-- persist settings
-- clearly mark provider as configured but unsupported
-- preserve fallback behavior
-
-Do not fake success.
-
----
-
-# Settings UI Requirements
-
-Extend the Settings page with an Image Generation section.
-
-Fields:
-
-- Image Provider
-- Image Base URL
-- Image API Key
-- Image Model
-- Image Size
-- Image Quality
-- Image Format
-- Enable/Disable Image Generation
-- Test Image Provider button
-
-Provider presets:
+Preferred:
 
 ```txt
-OpenAI Image
-Custom Image Endpoint
-Disabled / Fallback Only
+app_settings
 ```
 
-The UI must clearly show:
-
-- image generation enabled/disabled
-- configured provider
-- configured model
-- whether generated assets are real or fallback
-
----
-
-# Image Test Button
-
-Add a Test Image Provider button.
-
-Behavior:
-
-- does not spend large amounts
-- generates a tiny/simple test image if safe
-- or performs a non-generating validation if provider supports it
-- returns clear status
-
-If live test would incur cost:
-
-- warn clearly
-- require explicit click
-- keep prompt tiny
-
-Do not silently generate paid images.
-
----
-
-# Image Generation Pipeline
-
-When world generation runs:
-
-- generate world banner if image provider is enabled
-- generate character portraits if image provider is enabled
-- if image generation fails, use deterministic fallback
-- preserve world/character creation even if image generation fails
-
-All image generation must be best-effort.
-
-Image failures must not break:
-
-- onboarding
-- world generation
-- character creation
-- chat
-
----
-
-# Storage Strategy
-
-Current data URI storage is acceptable for MVP but should be documented.
-
-Review current image storage behavior.
-
-If easy and safe, improve local storage:
-
-- save generated images to a local mounted volume
-- store file path/URL in metadata
-
-If not easy:
-
-- keep data URI strategy
-- document limitation clearly
-
-Do not introduce S3/CDN/object storage in this phase.
-
----
-
-# Status Semantics
-
-Every visual asset should have clear status:
+Simple structure acceptable:
 
 ```txt
-generated
-fallback
-failed
-disabled
-generating
+id
+key
+value
+updatedAt
 ```
 
-UI should not imply fallback art is real AI-generated output.
+or equivalent JSON/settings structure.
+
+Keep implementation minimal and pragmatic.
+
+Do not build:
+- user accounts
+- RBAC
+- enterprise secret vaults
+- complex configuration systems
 
 ---
 
-# Codex/OAuth Note
+# Settings To Persist
 
-Document but do not implement unless already safely supported:
-
-Some agent runtimes may support OpenAI/ChatGPT/Codex OAuth-backed image generation through their own credential systems.
-
-Loreweaver should not depend on unofficial or runtime-specific OAuth flows by default.
-
-Future provider possibility:
+Persist at minimum:
 
 ```txt
-codex-oauth-image
+ai.provider
+ai.baseUrl
+ai.apiKey
+ai.chatModel
+ai.embeddingModel
+ai.temperature
+ai.maxTokens
+
+image.provider
+image.baseUrl
+image.apiKey
+image.model
+image.size
+image.quality
+image.format
+image.enabled
 ```
 
-Only implement later if:
-- credential source is explicit
-- auth flow is stable
-- user consent is clear
-- ToS/compliance risk is understood
+Actual schema can vary if simpler.
+
+---
+
+# Runtime Behavior
+
+On backend startup:
+
+1. Load persisted settings if present.
+2. Fall back to env defaults if settings absent.
+3. Fall back to simulated mode if neither configured.
+
+On GUI save:
+
+1. Persist settings to backend storage/database.
+2. Update runtime provider state immediately.
+3. Do NOT require container restart.
+4. Do NOT rewrite `.env`.
+
+---
+
+# Frontend Behavior
+
+Settings page and onboarding should:
+
+- load persisted backend settings
+- allow editing/saving
+- survive page refresh
+- survive container restart
+- survive browser restart
+
+localStorage may still cache draft UI state, but canonical runtime settings should come from backend persistence.
+
+---
+
+# Important Constraint
+
+Avoid introducing:
+- multiple conflicting sources of truth
+- env rewrite logic
+- runtime/env synchronization hacks
+- restart-required configuration flows
+
+The backend runtime config should derive from:
+```txt
+persisted settings first
+env defaults second
+```
 
 ---
 
 # Documentation Requirements
 
-Update:
+Update README.md and MEMORY.md:
 
-- README.md
-- MEMORY.md
-- .env.example
-
-Document:
-
-- OpenAI image setup
-- custom image provider settings
-- fallback behavior
-- image status meanings
-- known limitations
-- cost warning for live image generation
-
----
-
-# Constraints
-
-Do not:
-
-- break existing text provider settings
-- break streaming chat
-- break onboarding
-- add auth/accounts
-- add billing
-- add S3/CDN systems
-- add giant image provider marketplace
-- implement unsupported OAuth token scraping
-- spend live image credits during tests without explicit setting
-
-Preserve:
-
-- Docker-first runtime
-- fallback image behavior
-- current visual design
-- world generation flow
-- character generation flow
-- passing tests
+- `.env` values are optional defaults
+- provider setup can happen fully through GUI
+- GUI settings persist in app storage/database
+- container restart should preserve GUI settings
+- `.env` rewriting is intentionally not used
 
 ---
 
 # Verification Requirements
 
-Run and report:
-
-```bash
-npm run typecheck
-npm run build
-npm test --workspace=apps/api
-docker compose up -d --build
-```
-
 Manual verification:
 
-- Settings page shows image provider section
-- Disabled/fallback mode works
-- OpenAI image provider can be configured
-- Custom provider fields persist
-- world generation does not break if images fail
-- fallback assets still render
-- status labels correctly distinguish generated/fallback/failed/disabled
-
-Do not require paid live image generation for normal verification.
+1. Start app with empty AI-related `.env`.
+2. Configure provider through onboarding/settings GUI.
+3. Save settings.
+4. Generate/chat successfully.
+5. Restart backend container.
+6. Reload app.
+7. Confirm provider settings persist.
+8. Confirm `.env` file was NOT modified.
+9. Confirm runtime still uses persisted settings.
 
 ---
 
 # Success Criteria
 
-- image generation is configurable
-- OpenAI image provider is cleanly supported
-- custom image provider settings exist
-- fallback behavior remains reliable
-- image status is transparent
-- docs explain setup and limitations
-- no unsupported OAuth hack is introduced
-- builds/tests remain green
+- GUI provider settings persist across container restarts
+- `.env` editing is optional
+- `.env` is not rewritten by the app
+- backend runtime uses persisted settings
+- onboarding works without manual env editing
+- no conflicting runtime/env behavior appears

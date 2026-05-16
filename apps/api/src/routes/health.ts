@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { HealthResponseSchema } from '@loreweaver/shared';
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { getEnvProviderConfig, testProviderConnection } from '../services/provider.js';
-import { getEnvImageProviderConfig, testImageProviderConnection } from '../services/imageProvider.js';
+import { resolveProviderConfig, testProviderConnection } from '../services/provider.js';
+import { resolveImageProviderConfig, testImageProviderConnection } from '../services/imageProvider.js';
 
 const qdrantUrl = process.env.QDRANT_URL ?? 'http://localhost:6333';
 const qdrantClient = new QdrantClient({ url: qdrantUrl });
@@ -26,11 +26,11 @@ async function checkQdrant(): Promise<boolean> {
 export async function healthRoutes(app: FastifyInstance) {
   app.get('/health', async (_request, reply) => {
     const qdrantOk = await checkQdrant();
-    const providerConfig = getEnvProviderConfig();
+    const providerConfig = resolveProviderConfig();
     const live = Boolean(providerConfig.baseUrl && providerConfig.chatModel);
     const providerStatus = live ? await testProviderConnection(providerConfig) : null;
 
-    const imageConfig = getEnvImageProviderConfig();
+    const imageConfig = resolveImageProviderConfig();
     const imageStatus = imageConfig.enabled
       ? await testImageProviderConnection(imageConfig)
       : { ok: true, provider: 'disabled', warning: 'Image generation disabled' };
@@ -54,7 +54,7 @@ export async function healthRoutes(app: FastifyInstance) {
   });
 
   app.get('/health/provider', async (_request, reply) => {
-    const config = getEnvProviderConfig();
+    const config = resolveProviderConfig();
     const status = await testProviderConnection(config);
     reply.send({ data: status });
   });
