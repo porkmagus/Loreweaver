@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Layout } from '@/components/Layout';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Dashboard } from '@/pages/Dashboard';
 import { Worlds } from '@/pages/Worlds';
 import { Characters } from '@/pages/Characters';
@@ -8,6 +9,7 @@ import { Lore } from '@/pages/Lore';
 import { Timeline } from '@/pages/Timeline';
 import { Chat } from '@/pages/Chat';
 import { Onboarding } from '@/pages/Onboarding';
+import { NotFound } from '@/pages/NotFound';
 import { Spinner } from '@/components/ui/Spinner';
 
 const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001').replace(/\/$/, '') + '/api';
@@ -54,6 +56,7 @@ function AppRoutes() {
       <Route path="/timeline" element={<Timeline />} />
       <Route path="/chat" element={<Chat />} />
       <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
@@ -83,11 +86,13 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <OnboardingGate>
-      <Layout>
-        <AppRoutes />
-      </Layout>
-    </OnboardingGate>
+    <ErrorBoundary>
+      <OnboardingGate>
+        <Layout>
+          <AppRoutes />
+        </Layout>
+      </OnboardingGate>
+    </ErrorBoundary>
   );
 }
 

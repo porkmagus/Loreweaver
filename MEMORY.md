@@ -407,6 +407,66 @@ UI polish + deployment preparation + documentation enrichment completed and veri
 
 ---
 
+## Phase8VisualIdentity
+
+Complete visual identity overhaul — transformed generic Tailwind UI into living archival aesthetic.
+
+### Scope
+- VISUAL_DIRECTION.md design doctrine (permanent reference)
+- Custom Tailwind palette: void/depth/surface/ridge base layers + gold/sage/ember/silver accents
+- Typography: Inter (body), Cormorant Garamond (headings/display), JetBrains Mono (data)
+- Redesigned all UI primitives: Button, Card, Input, Textarea, Spinner
+- Sidebar redesign: gold left-border active states, depth layering, elegant nav hierarchy
+- Dashboard: world-centric hero, chronicle tiles, character cards
+- Chat: immersive dialogue surface, text-centric messages, marginalia context panels
+- Onboarding: codex atmosphere with refined hero
+- Lore/Worlds/Characters/Timeline: archival card styling, improved hierarchy
+- Context cards: relationship score bars (trust/fear), timeline event badges, memory italic quotes
+- index.html: inline SVG favicon, Open Graph meta tags, noscript message
+- Error boundary: archival-styled crash recovery page
+- 404 page: "This page has been lost to the archives"
+
+### Design decisions
+- Dark mode is canonical; light mode exists as subdued alternative
+- No heavy shadows — subtle 1px borders and depth layers
+- Gold accent `#C9A96E` replaces generic indigo
+- Serif headings at lighter weights (300-500) for elegance
+- Body minimum 15px with 1.65 line-height
+- Uppercase labels with tracking-widest for hierarchy
+
+### Files touched
+- `VISUAL_DIRECTION.md` (new)
+- `apps/web/tailwind.config.js`
+- `apps/web/src/index.css`
+- `apps/web/src/components/ui/*` (Button, Card, Input, Textarea, Spinner)
+- `apps/web/src/components/Layout.tsx`
+- `apps/web/src/components/ErrorBoundary.tsx` (new)
+- `apps/web/src/components/GenerateWorldModal.tsx`
+- `apps/web/src/components/RelationshipCard.tsx`
+- `apps/web/src/components/TimelineCard.tsx`
+- `apps/web/src/components/MemoryCard.tsx`
+- `apps/web/src/pages/Dashboard.tsx`
+- `apps/web/src/pages/Chat.tsx`
+- `apps/web/src/pages/Onboarding.tsx`
+- `apps/web/src/pages/Lore.tsx`
+- `apps/web/src/pages/Worlds.tsx`
+- `apps/web/src/pages/Characters.tsx`
+- `apps/web/src/pages/Timeline.tsx`
+- `apps/web/src/pages/NotFound.tsx` (new)
+- `apps/web/src/App.tsx`
+- `apps/web/index.html`
+- `apps/web/e2e/smoke.spec.ts`
+- `docs/screenshots/*.png` (regenerated)
+
+### Verification
+- Typecheck: pass (all workspaces)
+- Build: pass
+- API tests: 44 passing
+- E2E tests: 18/18 passing (chromium, firefox, webkit)
+- Docker rebuild: pass
+
+---
+
 ## RuntimeMantra
 
 Preserve momentum.
