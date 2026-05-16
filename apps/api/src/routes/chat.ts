@@ -8,6 +8,8 @@ import {
   buildCognitionContext,
   getOrCreateSession,
   toCognitionSnapshot,
+  getLatestSessionForCharacter,
+  listCharacterChatSessions,
 } from '../services/chatService.js';
 import { getCharacterById } from '../services/characterService.js';
 
@@ -160,24 +162,54 @@ export async function chatRoutes(app: FastifyInstance) {
 
   app.get('/chat/character/:characterId/history', async (request, reply) => {
     const characterId = Number((request.params as Record<string, string>).characterId);
-    const sessionId = Number((request.query as Record<string, string>).sessionId);
+    const sessionIdParam = (request.query as Record<string, string>).sessionId;
+    const sessionId = sessionIdParam ? Number(sessionIdParam) : null;
 
     if (!Number.isFinite(characterId) || characterId <= 0) {
       reply.status(400).send({ error: 'Invalid characterId', code: 'VALIDATION_ERROR' });
       return;
     }
-    if (!Number.isFinite(sessionId) || sessionId <= 0) {
-      reply.status(400).send({ error: 'Missing or invalid sessionId', code: 'VALIDATION_ERROR' });
-      return;
-    }
 
     try {
-      const history = await getChatHistory(sessionId);
+      let resolvedSessionId = sessionId;
+      if (!resolvedSessionId || !Number.isFinite(resolvedSessionId) || resolvedSessionId <= 0) {
+        const latest = await getLatestSessionForCharacter(characterId);
+        if (!latest) {
+          reply.send({ data: [] });
+          return;
+        }
+        resolvedSessionId = latest.id;
+      }
+      const history = await getChatHistory(resolvedSessionId);
       reply.send({ data: history });
     } catch (err) {
       reply.status(500).send({
         error: err instanceof Error ? err.message : 'Failed to fetch history',
         code: 'HISTORY_ERROR',
+      });
+    }
+  });
+
+  app.get('/chat/character/:characterId/sessions', async (request, reply) => {
+    const characterId = Number((request.params as Record<string, string>).characterId);
+    if (!Number.isFinite(characterId) || characterId <= 0) {
+      reply.status(400).send({ error: 'Invalid characterId', code: 'VALIDATION_ERROR' });
+      return;
+    }
+
+    const character = await getCharacterById(characterId);
+    if (!character) {
+      reply.status(404).send({ error: 'Character not found', code: 'NOT_FOUND' });
+      return;
+    }
+
+    try {
+      const sessions = await listCharacterChatSessions(characterId);
+      reply.send({ data: sessions });
+    } catch (err) {
+      reply.status(500).send({
+        error: err instanceof Error ? err.message : 'Failed to fetch sessions',
+        code: 'SESSIONS_ERROR',
       });
     }
   });

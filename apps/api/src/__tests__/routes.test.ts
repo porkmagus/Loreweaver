@@ -2,7 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { buildApp } from '../index.js';
 import { listCharacters, getCharacterById } from '../services/characterService.js';
-import { sendCharacterChat, getChatHistory, streamCharacterChat, buildCognitionContext } from '../services/chatService.js';
+import {
+  sendCharacterChat,
+  getChatHistory,
+  streamCharacterChat,
+  buildCognitionContext,
+  getLatestSessionForCharacter,
+  listCharacterChatSessions,
+} from '../services/chatService.js';
 
 const mockSelect = vi.fn();
 const mockInsert = vi.fn();
@@ -45,6 +52,8 @@ vi.mock('../services/chatService.js', () => ({
   streamCharacterChat: vi.fn(),
   buildCognitionContext: vi.fn(),
   getOrCreateSession: vi.fn().mockResolvedValue({ id: 7 }),
+  getLatestSessionForCharacter: vi.fn(),
+  listCharacterChatSessions: vi.fn(),
   toCognitionSnapshot: vi.fn((cognition: unknown) => cognition),
 }));
 
@@ -276,15 +285,34 @@ describe('POST /api/chat/character/:id', () => {
 });
 
 describe('GET /api/chat/character/:id/history', () => {
-  it('returns 400 for invalid sessionId', async () => {
+  it('resolves latest session when sessionId omitted and returns history', async () => {
     const a = await readyApp();
+    vi.mocked(getCharacterById).mockResolvedValue({ id: 1, worldId: 1, name: 'Alice' } as any);
+    vi.mocked(getLatestSessionForCharacter).mockResolvedValue({ id: 7, characterId: 1, worldId: 1, userId: null, title: null, summary: null, createdAt: new Date(), updatedAt: new Date() } as any);
+    const history = [
+      { id: 1, role: 'user', content: 'hi', createdAt: '2024-01-01T00:00:00Z' },
+      { id: 2, role: 'assistant', content: 'hello', createdAt: '2024-01-01T00:00:01Z' },
+    ];
+    vi.mocked(getChatHistory).mockResolvedValue(history as any);
     const res = await request(a.server)
       .get('/api/chat/character/1/history')
-      .expect(400);
-    expect(res.body.code).toBe('VALIDATION_ERROR');
+      .expect(200);
+    expect(res.body.data).toEqual(history);
+    expect(getLatestSessionForCharacter).toHaveBeenCalledWith(1);
+    expect(getChatHistory).toHaveBeenCalledWith(7);
   });
 
-  it('returns chat history', async () => {
+  it('returns empty history when no session exists and sessionId omitted', async () => {
+    const a = await readyApp();
+    vi.mocked(getCharacterById).mockResolvedValue({ id: 1, worldId: 1, name: 'Alice' } as any);
+    vi.mocked(getLatestSessionForCharacter).mockResolvedValue(null as any);
+    const res = await request(a.server)
+      .get('/api/chat/character/1/history')
+      .expect(200);
+    expect(res.body.data).toEqual([]);
+  });
+
+  it('returns chat history with explicit sessionId', async () => {
     const a = await readyApp();
     const history = [
       { id: 1, role: 'user', content: 'hi', createdAt: '2024-01-01T00:00:00Z' },
@@ -295,5 +323,30 @@ describe('GET /api/chat/character/:id/history', () => {
       .get('/api/chat/character/1/history?sessionId=7')
       .expect(200);
     expect(res.body.data).toEqual(history);
+  });
+});
+
+describe('GET /api/chat/character/:id/sessions', () => {
+  it('returns sessions for a character', async () => {
+    const a = await readyApp();
+    vi.mocked(getCharacterById).mockResolvedValue({ id: 1, worldId: 1, name: 'Alice' } as any);
+    const sessions = [
+      { id: 7, characterId: 1, worldId: 1, userId: null, title: null, summary: null, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-02T00:00:00Z' },
+    ];
+    vi.mocked(listCharacterChatSessions).mockResolvedValue(sessions as any);
+    const res = await request(a.server)
+      .get('/api/chat/character/1/sessions')
+      .expect(200);
+    expect(res.body.data).toEqual(sessions);
+    expect(listCharacterChatSessions).toHaveBeenCalledWith(1);
+  });
+
+  it('returns 404 when character not found', async () => {
+    const a = await readyApp();
+    vi.mocked(getCharacterById).mockResolvedValue(null as any);
+    const res = await request(a.server)
+      .get('/api/chat/character/1/sessions')
+      .expect(404);
+    expect(res.body.code).toBe('NOT_FOUND');
   });
 });

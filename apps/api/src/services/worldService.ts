@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { eq, count } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { worlds, characters } from '../db/schema.js';
+import { worlds, characters, loreEntries, timelineEvents, chatSessions } from '../db/schema.js';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -49,4 +49,24 @@ export async function deleteWorld(id: number) {
   if (!existing) return null;
   await db.delete(worlds).where(eq(worlds.id, id));
   return existing;
+}
+
+export async function getWorldStats(worldId: number) {
+  const [charCount] = await db.select({ value: count() }).from(characters).where(eq(characters.worldId, worldId));
+  const [loreCount] = await db.select({ value: count() }).from(loreEntries).where(eq(loreEntries.worldId, worldId));
+
+  const timelineRows = await db.select({ id: timelineEvents.id })
+    .from(timelineEvents)
+    .innerJoin(characters, eq(timelineEvents.characterId, characters.id))
+    .where(eq(characters.worldId, worldId));
+
+  const [chatCount] = await db.select({ value: count() }).from(chatSessions).where(eq(chatSessions.worldId, worldId));
+
+  return {
+    worldId,
+    characters: charCount?.value ?? 0,
+    loreEntries: loreCount?.value ?? 0,
+    timelineEvents: timelineRows.length,
+    chatSessions: chatCount?.value ?? 0,
+  };
 }

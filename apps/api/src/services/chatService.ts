@@ -1,4 +1,4 @@
-import { eq, and, desc, isNull, gte } from 'drizzle-orm';
+import { eq, and, desc, isNull, gte, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { chatSessions, chatMessages, memories, timelineEvents } from '../db/schema.js';
 import { getCharacterById } from './characterService.js';
@@ -54,6 +54,21 @@ export async function getChatHistory(sessionId: number, limit = HISTORY_LIMIT) {
     .limit(limit);
 }
 
+export async function getLatestSessionForCharacter(characterId: number) {
+  const sessions = await db.select().from(chatSessions)
+    .where(eq(chatSessions.characterId, characterId))
+    .orderBy(desc(chatSessions.updatedAt))
+    .limit(1);
+  return sessions[0] ?? null;
+}
+
+export async function listCharacterChatSessions(characterId: number, limit = SESSION_LIMIT) {
+  return db.select().from(chatSessions)
+    .where(eq(chatSessions.characterId, characterId))
+    .orderBy(desc(chatSessions.updatedAt))
+    .limit(limit);
+}
+
 export async function getChatSessionSummary(sessionId: number) {
   const sessionMessages = await db.select().from(chatMessages)
     .where(eq(chatMessages.sessionId, sessionId))
@@ -73,6 +88,12 @@ export async function saveMessage(sessionId: number, role: string, content: stri
     content,
     metadata: null,
   }).returning();
+
+  // Bump session updated_at so getOrCreateSession returns the most recently active session
+  await db.update(chatSessions)
+    .set({ updatedAt: sql`now()` })
+    .where(eq(chatSessions.id, sessionId));
+
   return msg;
 }
 

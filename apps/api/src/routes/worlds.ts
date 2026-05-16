@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { CreateWorldSchema } from '../schemas/requests.js';
-import { listWorlds, getWorldById, getWorldCharacters, createWorld, updateWorld, deleteWorld } from '../services/worldService.js';
+import { listWorlds, getWorldById, getWorldCharacters, createWorld, updateWorld, deleteWorld, getWorldStats } from '../services/worldService.js';
 import { getLoreByWorldId } from '../services/loreService.js';
 import { listTimelineByWorldId } from '../services/timelineService.js';
 import { generateWorldFromPrompt } from '../services/worldGenerationService.js';
@@ -128,6 +128,24 @@ export async function worldRoutes(app: FastifyInstance) {
       offset: q.offset ? Number(q.offset) : undefined,
     });
     reply.send({ data: results });
+  });
+
+  app.get('/worlds/:id/stats', async (request, reply) => {
+    const id = Number((request.params as { id: string }).id);
+    const world = await getWorldById(id);
+    if (!world) {
+      reply.status(404).send({ error: 'World not found', code: 'NOT_FOUND' });
+      return;
+    }
+    try {
+      const stats = await getWorldStats(id);
+      reply.send({ data: stats });
+    } catch (err) {
+      reply.status(500).send({
+        error: err instanceof Error ? err.message : 'Failed to fetch stats',
+        code: 'STATS_ERROR',
+      });
+    }
   });
 
   app.post('/worlds/:id/generate', async (request, reply) => {

@@ -18,6 +18,14 @@ import {
 import { Link } from 'react-router-dom';
 import type { HealthResponse, World, Character, LoreEntry, TimelineEvent } from '@loreweaver/shared';
 
+interface WorldStats {
+  worldId: number;
+  characters: number;
+  loreEntries: number;
+  timelineEvents: number;
+  chatSessions: number;
+}
+
 export function Dashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -27,8 +35,9 @@ export function Dashboard() {
   const { data: characters, loading: cLoading } = useApi<Character[]>(`/worlds/${firstWorldId}/characters`);
   const { data: lore, loading: lLoading } = useApi<LoreEntry[]>(`/worlds/${firstWorldId}/lore`);
   const { data: events, loading: eLoading } = useApi<TimelineEvent[]>(`/worlds/${firstWorldId}/timeline`);
+  const { data: stats, loading: sLoading } = useApi<WorldStats>(worlds?.[0] ? `/worlds/${firstWorldId}/stats` : null);
 
-  const anyLoading = hLoading || wLoading || cLoading || lLoading || eLoading;
+  const anyLoading = hLoading || wLoading || cLoading || lLoading || eLoading || sLoading;
   const world = worlds?.[0];
 
   const handleReset = async () => {
@@ -140,7 +149,7 @@ export function Dashboard() {
           <ChronicleTile
             icon={Scroll}
             label="Chat Sessions"
-            count={0}
+            count={stats?.chatSessions ?? 0}
             description="Active dialogues"
             to="/chat"
             color="text-mist"

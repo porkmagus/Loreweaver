@@ -4,6 +4,7 @@ import { buildApp } from '../index.js';
 import { getCharacterById } from '../services/characterService.js';
 import { sendCharacterChat, getChatHistory } from '../services/chatService.js';
 import { searchLore } from '../services/qdrant.js';
+import { getWorldById, getWorldStats } from '../services/worldService.js';
 
 const mockSelect = vi.fn();
 const mockInsert = vi.fn();
@@ -45,6 +46,16 @@ vi.mock('../services/characterService.js', () => ({
 vi.mock('../services/chatService.js', () => ({
   sendCharacterChat: vi.fn(),
   getChatHistory: vi.fn(),
+}));
+
+vi.mock('../services/worldService.js', () => ({
+  listWorlds: vi.fn(),
+  getWorldById: vi.fn(),
+  getWorldCharacters: vi.fn(),
+  createWorld: vi.fn(),
+  updateWorld: vi.fn(),
+  deleteWorld: vi.fn(),
+  getWorldStats: vi.fn(),
 }));
 
 async function readyApp() {
@@ -160,5 +171,45 @@ describe('Chat -> timeline event creation integration', () => {
       .expect(200);
 
     expect(chatRes.body.data).toEqual({ reply: 'Noted in the timeline.', sessionId: 9 });
+  });
+});
+
+describe('World stats integration', () => {
+  it('returns aggregated stats for a world', async () => {
+    const a = await readyApp();
+
+    vi.mocked(getWorldById).mockResolvedValueOnce({ id: 1, name: 'Azeroth' } as any);
+    vi.mocked(getWorldStats).mockResolvedValueOnce({
+      worldId: 1,
+      characters: 3,
+      loreEntries: 5,
+      timelineEvents: 2,
+      chatSessions: 1,
+    });
+
+    const res = await request(a.server)
+      .get('/api/worlds/1/stats')
+      .expect(200);
+
+    expect(res.body.data).toEqual({
+      worldId: 1,
+      characters: 3,
+      loreEntries: 5,
+      timelineEvents: 2,
+      chatSessions: 1,
+    });
+    expect(getWorldStats).toHaveBeenCalledWith(1);
+  });
+
+  it('returns 404 when world not found', async () => {
+    const a = await readyApp();
+
+    vi.mocked(getWorldById).mockResolvedValueOnce(null as any);
+
+    const res = await request(a.server)
+      .get('/api/worlds/999/stats')
+      .expect(404);
+
+    expect(res.body.code).toBe('NOT_FOUND');
   });
 });

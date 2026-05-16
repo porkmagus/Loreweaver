@@ -127,3 +127,113 @@ GET /api/chat/character/:characterId/sessions
 GET /api/chat/session/:sessionId/messages
 POST /api/chat/character/:characterId
 POST /api/chat/character/:characterId/stream
+
+If current routes differ, document actual routes clearly.
+
+Required Done Event
+
+The SSE done event must include:
+
+{
+  "sessionId": 123,
+  "userMessageId": 456,
+  "assistantMessageId": 789,
+  "messageCount": 2
+}
+
+Include relationship/memory/timeline effects if already available.
+
+Frontend Requirements
+
+On Chat page mount:
+
+fetch latest persisted history for character
+if history exists, render it
+if no history exists, show empty state
+
+During streaming:
+
+optimistically render user message
+stream assistant message
+on done, store sessionId
+safely merge persisted IDs
+do not overwrite active state with stale history
+
+After navigation/remount:
+
+load persisted history from backend
+do not depend on in-memory buffer
+Stats Requirement
+
+World stats must reflect chat session creation.
+
+After one completed chat exchange:
+
+chatSessions >= 1
+
+If the stats query intentionally counts something else, fix or rename it.
+
+Tests Required
+
+Add/update backend tests proving:
+
+streaming chat creates chat_session
+streaming chat persists user message
+streaming chat persists assistant message
+history endpoint returns streamed messages
+world stats session count increments after chat
+sync and streaming routes use the same persistence behavior where practical
+
+Frontend/E2E if practical:
+
+send message
+navigate away
+return
+history remains visible
+Manual Verification Required
+
+Perform and report:
+
+Create or open newly generated world.
+Confirm world stats show 0 chat sessions.
+Open a character.
+Send a chat message.
+Wait for streamed assistant response to finish.
+Confirm SSE done includes valid sessionId.
+Confirm database/API reports at least one chat session.
+Navigate away.
+Return to same character.
+Confirm messages remain visible.
+Refresh browser.
+Confirm messages remain visible.
+Confirm world stats show chat session count > 0.
+Constraints
+
+Do not:
+
+add new product features
+redesign chat UI
+add global state library
+add auth
+add background jobs
+rewrite the whole app
+
+Preserve:
+
+SSE streaming
+sync fallback
+cognition inspector
+compact cognition badges
+visual design
+Docker-first runtime
+passing tests
+Success Criteria
+chat sessions are actually created
+world stats reflect chat sessions
+streamed user messages persist
+streamed assistant messages persist
+history survives navigation
+history survives refresh
+character histories remain scoped correctly
+tests prove persistence behavior
+build/typecheck/tests pass

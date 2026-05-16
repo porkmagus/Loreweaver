@@ -14,6 +14,17 @@ import { Send, Bot, User, Sparkles, BookOpen, Brain, HeartPulse, Clock, PanelRig
 import type { World, Character, Relationship, TimelineEvent, Memory } from '@loreweaver/shared';
 import { useSearchParams } from 'react-router-dom';
 
+interface ChatSession {
+  id: number;
+  worldId: number;
+  characterId: number;
+  userId: number | null;
+  title: string | null;
+  summary: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface ChatMessage {
   id: number;
   role: 'user' | 'assistant';
@@ -94,7 +105,7 @@ function useSmartScroll() {
 }
 
 export function Chat() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: worlds } = useApi<World[]>('/worlds');
   const [selectedWorldId, setSelectedWorldId] = useState<number | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<number | null>(null);
@@ -103,10 +114,13 @@ export function Chat() {
   const charactersUrl = selectedWorldId ? `/worlds/${selectedWorldId}/characters` : null;
   const { data: characters, loading: charactersLoading } = useApi<Character[]>(charactersUrl);
 
-  const historyUrl = selectedCharacterId && sessionId
-    ? `/chat/character/${selectedCharacterId}/history?sessionId=${sessionId}`
+  const historyUrl = selectedCharacterId
+    ? `/chat/character/${selectedCharacterId}/history${sessionId ? `?sessionId=${sessionId}` : ''}`
     : null;
   const { data: historyData, refetch: refetchHistory } = useApi<ChatMessage[]>(historyUrl);
+
+  const sessionsUrl = selectedCharacterId && !sessionId ? `/chat/character/${selectedCharacterId}/sessions` : null;
+  const { data: sessionsData } = useApi<ChatSession[]>(sessionsUrl);
 
   const relationshipsUrl = selectedCharacterId ? `/characters/${selectedCharacterId}/relationships` : null;
   const { data: relationshipsData, refetch: refetchRelationships } = useApi<Relationship[]>(relationshipsUrl);
@@ -130,6 +144,7 @@ export function Chat() {
 
   const { scrollContainerRef, messagesEndRef, scrollToBottom, handleScroll } = useSmartScroll();
 
+  // Restore world/character/session from URL on mount
   useEffect(() => {
     const worldParam = Number(searchParams.get('worldId'));
     if (!selectedWorldId && Number.isFinite(worldParam) && worldParam > 0) {
@@ -143,6 +158,30 @@ export function Chat() {
       setSelectedCharacterId(characterParam);
     }
   }, [searchParams, selectedCharacterId, characters]);
+
+  useEffect(() => {
+    const sessionParam = Number(searchParams.get('sessionId'));
+    if (!sessionId && Number.isFinite(sessionParam) && sessionParam > 0) {
+      setSessionId(sessionParam);
+    }
+  }, [searchParams, sessionId]);
+
+  // When a character is selected but no sessionId is known, use the latest persisted session
+  useEffect(() => {
+    if (selectedCharacterId && !sessionId && sessionsData && sessionsData.length > 0) {
+      setSessionId(sessionsData[0].id);
+    }
+  }, [selectedCharacterId, sessionId, sessionsData]);
+
+  // Sync sessionId back to URL so it survives navigation and refresh
+  const updateUrlSession = useCallback((nextSessionId: number | null) => {
+    const params = new URLSearchParams(searchParams);
+    if (selectedWorldId) params.set('worldId', String(selectedWorldId));
+    if (selectedCharacterId) params.set('characterId', String(selectedCharacterId));
+    if (nextSessionId) params.set('sessionId', String(nextSessionId));
+    else params.delete('sessionId');
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams, selectedWorldId, selectedCharacterId]);
 
   useEffect(() => {
     scrollToBottom('smooth');
@@ -169,6 +208,7 @@ export function Chat() {
     );
 
     setSessionId(res.sessionId);
+    updateUrlSession(res.sessionId);
     setMessages((prev) => prev.map((msg) => (
       msg.pending
         ? { ...msg, content: res.reply, pending: false, createdAt: new Date().toISOString() }
@@ -176,7 +216,7 @@ export function Chat() {
     )));
     refetchHistory();
     refreshContextPanels();
-  }, [selectedCharacterId, selectedWorldId, sessionId, refetchHistory, refreshContextPanels]);
+  }, [selectedCharacterId, selectedWorldId, sessionId, refetchHistory, refreshContextPanels, updateUrlSession]);
 
   const sendWithStreaming = useCallback(async (message: string) => {
     const response = await fetch(`${API_BASE}/chat/character/${selectedCharacterId}/stream`, {
@@ -217,6 +257,7 @@ export function Chat() {
       if (event.type === 'done') {
         if (event.sessionId) {
           setSessionId(event.sessionId);
+          updateUrlSession(event.sessionId);
         }
         if (event.effects) {
           setLatestEffects(event.effects);
@@ -246,7 +287,7 @@ export function Chat() {
         handleEvent(JSON.parse(dataLine.slice(6)) as StreamEvent);
       }
     }
-  }, [selectedCharacterId, selectedWorldId, sessionId, refetchHistory, refreshContextPanels]);
+  }, [selectedCharacterId, selectedWorldId, sessionId, refetchHistory, refreshContextPanels, updateUrlSession]);
 
   const handleSend = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -336,10 +377,17 @@ export function Chat() {
               value={selectedWorldId ?? ''}
               onChange={(e) => {
                 const id = Number(e.target.value);
-                setSelectedWorldId(Number.isFinite(id) && id > 0 ? id : null);
+                const nextWorldId = Number.isFinite(id) && id > 0 ? id : null;
+                setSelectedWorldId(nextWorldId);
                 setSelectedCharacterId(null);
                 setSessionId(null);
                 setMessages([]);
+                const params = new URLSearchParams(searchParams);
+                if (nextWorldId) params.set('worldId', String(nextWorldId));
+                else params.delete('worldId');
+                params.delete('characterId');
+                params.delete('sessionId');
+                setSearchParams(params, { replace: true });
               }}
               className="h-10 appearance-none rounded-card border border-ridge bg-surface px-4 pr-10 text-small text-parchment focus:border-gold focus:shadow-gold-glow focus:outline-none"
             >
@@ -363,9 +411,15 @@ export function Chat() {
                     value={selectedCharacterId ?? ''}
                     onChange={(e) => {
                       const id = Number(e.target.value);
-                      setSelectedCharacterId(Number.isFinite(id) && id > 0 ? id : null);
+                      const nextCharacterId = Number.isFinite(id) && id > 0 ? id : null;
+                      setSelectedCharacterId(nextCharacterId);
                       setSessionId(null);
                       setMessages([]);
+                      const params = new URLSearchParams(searchParams);
+                      if (nextCharacterId) params.set('characterId', String(nextCharacterId));
+                      else params.delete('characterId');
+                      params.delete('sessionId');
+                      setSearchParams(params, { replace: true });
                     }}
                     className="h-10 appearance-none rounded-card border border-ridge bg-surface px-4 pr-10 text-small text-parchment focus:border-gold focus:shadow-gold-glow focus:outline-none"
                   >
