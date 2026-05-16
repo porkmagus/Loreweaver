@@ -8,7 +8,13 @@ import { listTimelineByCharacter, createTimelineEvent } from './timelineService.
 import { embedText } from './embedding.js';
 import { searchLore, type SearchHit } from './qdrant.js';
 import { scoreChatRelationship, extractSummary, clampScore } from '../utils/chatScoring.js';
-import OpenAI from 'openai';
+import {
+  chatCompletion,
+  streamChatCompletion,
+  resolveProviderConfig,
+  getEnvProviderConfig,
+  type ProviderConfig,
+} from './provider.js';
 
 const SESSION_LIMIT = 10;
 const HISTORY_LIMIT = 20;
@@ -17,10 +23,10 @@ const MEMORY_LIMIT = 10;
 const TIMELINE_LIMIT = 5;
 const RELATIONSHIP_LIMIT = 5;
 
-const apiKey = process.env.OPENAI_API_KEY;
-const openai = apiKey ? new OpenAI({ apiKey }) : null;
-const chatModel = process.env.CHAT_MODEL ?? 'gpt-4o-mini';
 type MemoryRow = typeof memories.$inferSelect;
+
+const envProvider = getEnvProviderConfig();
+const hasLiveProvider = Boolean(envProvider.baseUrl && envProvider.chatModel);
 
 export async function getOrCreateSession(characterId: number, worldId: number, userId?: number | null) {
   const existing = await db.select().from(chatSessions)
@@ -262,7 +268,7 @@ export async function buildCognitionContext(
     relationships: dbRelationships,
     timeline: dbTimeline,
     history: dbHistory,
-    aiMode: openai ? 'live' : 'simulated',
+    aiMode: hasLiveProvider ? 'live' : 'simulated',
   };
 }
 
@@ -404,28 +410,24 @@ export async function* streamCharacterChat(
 
   let reply: string;
 
-  if (openai && cognition.aiMode === 'live') {
-    const stream = await openai.chat.completions.create({
-      model: chatModel,
-      messages: [
-        { role: 'system', content: cognition.prompt.split('\nTASK\n')[0] },
-        { role: 'user', content: userMessage },
-      ],
-      max_tokens: 800,
-      temperature: 0.8,
-      stream: true,
-    });
+  if (hasLiveProvider && cognition.aiMode === 'live') {
+    const config = resolveProviderConfig();
+    const stream = streamChatCompletion(config, [
+      { role: 'system', content: cognition.prompt.split('\nTASK\n')[0] },
+      { role: 'user', content: userMessage },
+    ]);
 
     reply = '';
     for await (const chunk of stream) {
-      const token = chunk.choices[0]?.delta?.content ?? '';
+      const token = chunk.content ?? '';
       if (token) {
         reply += token;
         yield { type: 'token', content: token };
       }
+      if (chunk.done) break;
     }
   } else {
-    reply = `[No OPENAI_API_KEY configured - simulated response]\n\nHello. I am ${cognition.character?.name ?? 'the character'}. You asked: "${userMessage}".\n\nWhat rises from the archive: ${cognition.retrievedLore.length > 0 ? cognition.retrievedLore.slice(0, 2).map((h) => h.payload.chunkText).join('; ') : cognition.dbLore.slice(0, 2).map((l) => l.title).join('; ')}`;
+    reply = `[No AI provider configured - simulated response]\n\nHello. I am ${cognition.character?.name ?? 'the character'}. You asked: "${userMessage}".\n\nWhat rises from the archive: ${cognition.retrievedLore.length > 0 ? cognition.retrievedLore.slice(0, 2).map((h) => h.payload.chunkText).join('; ') : cognition.dbLore.slice(0, 2).map((l) => l.title).join('; ')}`;
     for (const token of chunkText(reply, 18)) {
       yield { type: 'token', content: token };
       await new Promise((resolve) => setTimeout(resolve, 12));
@@ -465,19 +467,15 @@ export async function sendCharacterChat(
 
   let reply: string;
 
-  if (openai) {
-    const completion = await openai.chat.completions.create({
-      model: chatModel,
-      messages: [
-        { role: 'system', content: prompt.split('\nTASK\n')[0] },
-        { role: 'user', content: userMessage },
-      ],
-      max_tokens: 800,
-      temperature: 0.8,
-    });
-    reply = completion.choices[0]?.message?.content ?? '...';
+  if (hasLiveProvider) {
+    const config = resolveProviderConfig();
+    const completion = await chatCompletion(config, [
+      { role: 'system', content: prompt.split('\nTASK\n')[0] },
+      { role: 'user', content: userMessage },
+    ]);
+    reply = completion.content;
   } else {
-    reply = `[No OPENAI_API_KEY configured — simulated response]\n\nHello! I am ${context.characterName}. You asked: "${userMessage}".\n\nHere's what I know about my world: ${context.lore.slice(0, 2).join('; ')}`;
+    reply = `[No AI provider configured — simulated response]\n\nHello! I am ${context.characterName}. You asked: "${userMessage}".\n\nHere's what I know about my world: ${context.lore.slice(0, 2).join('; ')}`;
   }
 
   await saveMessage(session.id, 'assistant', reply);

@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { HealthResponseSchema } from '@loreweaver/shared';
 import { QdrantClient } from '@qdrant/js-client-rest';
+import { getEnvProviderConfig, testProviderConnection } from '../services/provider.js';
 
 const qdrantUrl = process.env.QDRANT_URL ?? 'http://localhost:6333';
 const qdrantClient = new QdrantClient({ url: qdrantUrl });
@@ -24,18 +25,27 @@ async function checkQdrant(): Promise<boolean> {
 export async function healthRoutes(app: FastifyInstance) {
   app.get('/health', async (_request, reply) => {
     const qdrantOk = await checkQdrant();
-    const openAiKey = !!process.env.OPENAI_API_KEY;
-    const embeddingModel = process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
+    const providerConfig = getEnvProviderConfig();
+    const live = Boolean(providerConfig.baseUrl && providerConfig.chatModel);
+    const providerStatus = live ? await testProviderConnection(providerConfig) : null;
 
     const response = HealthResponseSchema.parse({
       status: 'ok',
       timestamp: new Date().toISOString(),
       version: '0.1.0',
-      aiMode: openAiKey ? 'live' : 'simulated',
+      aiMode: live ? 'live' : 'simulated',
       qdrantConnected: qdrantOk,
-      embeddingAvailable: openAiKey,
-      embeddingModel,
+      embeddingAvailable: live,
+      embeddingModel: providerConfig.embeddingModel,
+      provider: providerConfig.provider,
+      chatModel: providerConfig.chatModel,
     });
     reply.send(response);
+  });
+
+  app.get('/health/provider', async (_request, reply) => {
+    const config = getEnvProviderConfig();
+    const status = await testProviderConnection(config);
+    reply.send({ data: status });
   });
 }

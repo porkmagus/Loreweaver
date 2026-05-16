@@ -9,6 +9,8 @@ export const HealthResponseSchema = z.object({
   qdrantConnected: z.boolean().optional(),
   embeddingAvailable: z.boolean().optional(),
   embeddingModel: z.string().optional(),
+  provider: z.string().optional(),
+  chatModel: z.string().optional(),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;

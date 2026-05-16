@@ -1,11 +1,15 @@
 import OpenAI from 'openai';
 import { createHash } from 'crypto';
+import { getEnvProviderConfig } from './provider.js';
 
-const apiKey = process.env.OPENAI_API_KEY;
-const model = process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
 const dimension = Number(process.env.EMBEDDING_DIMENSION ?? 1536);
 
-const client = apiKey ? new OpenAI({ apiKey }) : null;
+const envProvider = getEnvProviderConfig();
+const apiKey = envProvider.apiKey ?? process.env.OPENAI_API_KEY;
+const model = envProvider.embeddingModel ?? process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
+const baseUrl = envProvider.baseUrl;
+
+const client = apiKey && baseUrl ? new OpenAI({ apiKey, baseURL: baseUrl }) : null;
 
 function deterministicVector(text: string, dim: number): number[] {
   const hash = createHash('sha256').update(text).digest();

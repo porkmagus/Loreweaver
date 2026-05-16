@@ -8,6 +8,7 @@ import { Characters } from '@/pages/Characters';
 import { Lore } from '@/pages/Lore';
 import { Timeline } from '@/pages/Timeline';
 import { Chat } from '@/pages/Chat';
+import { Settings } from '@/pages/Settings';
 import { Onboarding } from '@/pages/Onboarding';
 import { NotFound } from '@/pages/NotFound';
 import { Spinner } from '@/components/ui/Spinner';
@@ -54,6 +55,7 @@ function AppRoutes() {
       <Route path="/lore" element={<Lore />} />
       <Route path="/timeline" element={<Timeline />} />
       <Route path="/chat" element={<Chat />} />
+      <Route path="/settings" element={<Settings />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

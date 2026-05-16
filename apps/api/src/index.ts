@@ -9,6 +9,7 @@ import { relationshipRoutes } from './routes/relationships.js';
 import { searchRoutes } from './routes/search.js';
 import { chatRoutes } from './routes/chat.js';
 import { devRoutes } from './routes/dev.js';
+import { settingsRoutes } from './routes/settings.js';
 import { startup } from './startup.js';
 
 export async function buildApp() {
@@ -42,6 +43,7 @@ export async function buildApp() {
   await app.register(searchRoutes, { prefix: '/api' });
   await app.register(chatRoutes, { prefix: '/api' });
   await app.register(devRoutes, { prefix: '/api' });
+  await app.register(settingsRoutes, { prefix: '/api' });
 
   app.setErrorHandler((error, _request, reply) => {
     const err = error instanceof Error ? error : new Error(String(error));

@@ -7,6 +7,7 @@ import {
   BookOpen,
   Clock,
   MessageSquare,
+  Settings as SettingsIcon,
   Menu,
   X,
   Moon,
@@ -25,6 +26,7 @@ const navItems = [
   { to: '/lore', label: 'Lore', icon: BookOpen },
   { to: '/timeline', label: 'Timeline', icon: Clock },
   { to: '/chat', label: 'Chat', icon: MessageSquare },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -107,6 +109,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
               {health.qdrantConnected && (
                 <span className="text-tiny text-dust tracking-wide">QDRANT</span>
+              )}
+              {health.provider && (
+                <span className="text-tiny text-dust tracking-wide">{health.provider.toUpperCase()}</span>
+              )}
+              {health.chatModel && (
+                <span className="text-tiny text-dust tracking-wide truncate max-w-[6rem]" title={health.chatModel}>{health.chatModel.split('/').pop() ?? health.chatModel}</span>
               )}
             </div>
           ) : healthError ? (

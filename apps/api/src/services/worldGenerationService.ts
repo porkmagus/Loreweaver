@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import { createWorld, updateWorld } from './worldService.js';
 import { createCharacter, updateCharacter } from './characterService.js';
 import { createLore } from './loreService.js';
@@ -6,10 +5,14 @@ import { createTimelineEvent } from './timelineService.js';
 import { createRelationship } from './relationshipService.js';
 import { ingestLore } from './ingestService.js';
 import { generateCharacterPortrait, generateWorldBanner, type VisualMetadata } from './imageGenerationService.js';
+import {
+  chatCompletion,
+  resolveProviderConfig,
+  getEnvProviderConfig,
+} from './provider.js';
 
-const apiKey = process.env.OPENAI_API_KEY;
-const openai = apiKey ? new OpenAI({ apiKey }) : null;
-const chatModel = process.env.CHAT_MODEL ?? 'gpt-4o-mini';
+const envProvider = getEnvProviderConfig();
+const hasLiveProvider = Boolean(envProvider.baseUrl && envProvider.chatModel);
 
 interface GeneratedWorld {
   name: string;
@@ -188,22 +191,17 @@ function deterministicWorld(prompt: string): GeneratedWorld {
 }
 
 async function callLLM(prompt: string): Promise<GeneratedWorld> {
-  if (!openai) {
-    throw new Error('OpenAI client not available');
+  if (!hasLiveProvider) {
+    throw new Error('AI provider not available');
   }
 
-  const completion = await openai.chat.completions.create({
-    model: chatModel,
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: buildUserPrompt(prompt) },
-    ],
-    max_tokens: 2048,
-    temperature: 0.7,
-    response_format: { type: 'json_object' },
-  });
+  const config = resolveProviderConfig();
+  const completion = await chatCompletion(config, [
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'user', content: buildUserPrompt(prompt) },
+  ]);
 
-  const raw = completion.choices[0]?.message?.content?.trim() ?? '';
+  const raw = completion.content.trim();
   if (!raw) {
     throw new Error('Empty LLM response');
   }
@@ -234,7 +232,7 @@ async function callLLM(prompt: string): Promise<GeneratedWorld> {
 }
 
 export async function generateWorldFromPrompt(userPrompt: string): Promise<{ worldId: number; name: string }> {
-  const generated = openai
+  const generated = hasLiveProvider
     ? await callLLM(userPrompt).catch(() => deterministicWorld(userPrompt))
     : deterministicWorld(userPrompt);
 

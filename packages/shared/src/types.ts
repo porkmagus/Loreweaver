@@ -7,57 +7,23 @@ export interface AppConfig {
   nodeEnv: 'development' | 'production' | 'test';
 }
 
-export interface World {
-  id: number;
-  name: string;
-  description: string | null;
-  genre: string | null;
-  metadata?: Record<string, unknown> | null;
-  createdAt: string;
-  updatedAt: string;
-}
+export type ProviderType = 'custom-openai' | 'ollama' | 'openrouter';
 
-export interface Character {
-  id: number;
-  worldId: number;
-  name: string;
-  description: string | null;
-  personality: string | null;
-  role: string | null;
-  isPlayer: boolean;
-  metadata?: Record<string, unknown> | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface LoreEntry {
-  id: number;
-  worldId: number;
-  title: string;
-  content: string;
-  category: string | null;
-  tags: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface TimelineEvent {
-  id: number;
-  characterId: number;
-  title: string;
-  description: string | null;
-  eventType: string;
-  happenedAt: string;
-  significance: number;
-  createdAt: string;
-}
-
-export interface HealthResponse {
-  status: 'ok' | 'healthy' | 'degraded' | 'unhealthy';
-  timestamp?: string;
-  version: string;
-  aiMode?: 'live' | 'simulated';
-  qdrantConnected?: boolean;
-  embeddingAvailable?: boolean;
+export interface ProviderConfig {
+  provider: ProviderType;
+  baseUrl: string;
+  apiKey?: string;
+  chatModel: string;
   embeddingModel?: string;
+  imageModel?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface ProviderStatus {
+  ok: boolean;
+  provider: string;
+  streaming: boolean;
+  model?: string;
+  error?: string;
 }
