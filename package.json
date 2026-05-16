@@ -21,6 +21,8 @@
     "seed": "docker compose exec api node dist/seed/index.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.8.0",
     "typescript": "^5.4.5"
   },
   "engines": {

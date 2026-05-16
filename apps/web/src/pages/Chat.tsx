@@ -89,8 +89,12 @@ function useSmartScroll() {
   const isNearBottomRef = useRef(true);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
-    if (isNearBottomRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior });
+    const el = scrollContainerRef.current;
+    if (!el || !isNearBottomRef.current) return;
+    if (behavior === 'smooth') {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    } else {
+      el.scrollTop = el.scrollHeight;
     }
   }, []);
 
@@ -332,7 +336,7 @@ export function Chat() {
   ];
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
       <div className="mb-section space-y-4">
         <div className="flex items-center justify-between">
@@ -444,15 +448,15 @@ export function Chat() {
         </div>
       )}
 
-      <div className="flex flex-1 gap-section overflow-hidden">
+      <div className="flex flex-1 gap-section overflow-hidden min-h-0">
         {/* Chat Panel */}
-        <Card className="flex flex-1 flex-col overflow-hidden border-ridge">
-          <CardContent className="flex flex-1 flex-col p-0">
+        <Card className="flex flex-1 flex-col overflow-hidden border-ridge min-h-0">
+          <CardContent className="flex flex-1 flex-col p-0 min-h-0">
             {/* Messages */}
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
-              className="flex-1 overflow-y-auto p-inner space-y-6 [scrollbar-gutter:stable]"
+              className="flex-1 min-h-0 overflow-y-auto p-inner space-y-6 [scrollbar-gutter:stable]"
             >
               {selectedCharacterId && (
                 <div className="grid gap-2 border-b border-ridge/70 pb-4 text-tiny text-dust sm:grid-cols-5">
@@ -505,7 +509,7 @@ export function Chat() {
                       msg.role === 'user' ? 'text-right' : ''
                     }`}
                   >
-                    <p className={`text-body leading-relaxed whitespace-pre-wrap ${
+                    <p className={`text-body leading-relaxed whitespace-pre-wrap break-words ${
                       msg.role === 'user' ? 'text-parchment' : 'text-ash'
                     }`}>
                       {msg.content || (msg.pending ? (
@@ -594,7 +598,7 @@ export function Chat() {
 
         {/* Context Panel — Marginalia */}
         {selectedCharacterId && inspectorOpen && (
-          <div className="hidden w-96 flex-col gap-4 overflow-y-auto pr-3 [scrollbar-gutter:stable] md:flex">
+          <div className="hidden w-96 h-full flex-col gap-4 overflow-y-auto pr-3 [scrollbar-gutter:stable] md:flex min-h-0">
             <div className="space-y-1">
               <p className="text-label">COGNITION</p>
               <CognitionPanel data={cognitionData} streaming={sending} />

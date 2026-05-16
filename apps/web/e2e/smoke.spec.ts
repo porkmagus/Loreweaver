@@ -64,3 +64,40 @@ test('lore page shows entries or empty state', async ({ page }) => {
     await expect(page.getByText('The codex is empty')).toBeVisible();
   }
 });
+
+test('chat message list is independently scrollable', async ({ page }) => {
+  await page.goto('/chat');
+  await expect(page.getByText('DIALOGUE')).toBeVisible();
+
+  // Select world and character
+  await page.locator('select').first().selectOption('1');
+  await expect(page.locator('select')).toHaveCount(2);
+  await page.locator('select').nth(1).selectOption('1');
+
+  // Wait for chat history to load or empty state
+  await page.waitForTimeout(500);
+
+  // Send enough messages to overflow the container
+  const textarea = page.locator('textarea');
+  for (let i = 0; i < 6; i++) {
+    await textarea.fill(`Scroll test message ${i}`);
+    await textarea.press('Enter');
+    await page.waitForTimeout(800);
+  }
+
+  // Find the scrollable message container
+  const scrollContainer = page.locator('div.overflow-y-auto').first();
+
+  // Verify the container is scrollable (scrollHeight > clientHeight)
+  const scrollHeight = await scrollContainer.evaluate((el: HTMLElement) => el.scrollHeight);
+  const clientHeight = await scrollContainer.evaluate((el: HTMLElement) => el.clientHeight);
+  expect(scrollHeight).toBeGreaterThan(clientHeight);
+
+  // Scroll to top and verify an early message is still in the DOM
+  await scrollContainer.evaluate((el: HTMLElement) => { el.scrollTop = 0; });
+  await expect(page.getByText('Scroll test message 0')).toBeVisible();
+
+  // Scroll to bottom and verify the latest message is visible
+  await scrollContainer.evaluate((el: HTMLElement) => { el.scrollTop = el.scrollHeight; });
+  await expect(page.getByText('Scroll test message 5')).toBeVisible();
+});
