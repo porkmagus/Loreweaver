@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -172,24 +172,24 @@ export function Settings() {
   const { data: serverImageConfig, loading: imageServerLoading } = useApi<ImageProviderConfig>('/settings/image-provider');
 
   const [form, setForm] = useState<Partial<ProviderConfig>>({
-    provider: 'custom-openai',
-    baseUrl: '',
-    apiKey: '',
-    chatModel: '',
-    embeddingModel: '',
-    temperature: 0.8,
-    maxTokens: 800,
+    provider: undefined,
+    baseUrl: undefined,
+    apiKey: undefined,
+    chatModel: undefined,
+    embeddingModel: undefined,
+    temperature: undefined,
+    maxTokens: undefined,
   });
 
   const [imageForm, setImageForm] = useState<Partial<ImageProviderConfig>>({
-    provider: 'disabled',
-    baseUrl: '',
-    apiKey: '',
-    model: '',
-    size: '',
-    quality: '',
-    format: '',
-    enabled: false,
+    provider: undefined,
+    baseUrl: undefined,
+    apiKey: undefined,
+    model: undefined,
+    size: undefined,
+    quality: undefined,
+    format: undefined,
+    enabled: undefined,
   });
 
   const [saving, setSaving] = useState(false);
@@ -201,28 +201,14 @@ export function Settings() {
   const [imageSaved, setImageSaved] = useState(false);
   const [imageTesting, setImageTesting] = useState(false);
   const [imageTestResult, setImageTestResult] = useState<ImageProviderStatus | null>(null);
-  const [showCostWarning, setShowCostWarning] = useState(false);
-
-  // Hydrate from server → draft → defaults
-  useEffect(() => {
-    if (serverConfig) {
-      setForm((prev) => ({
-        ...prev,
-        ...serverConfig,
-        apiKey: serverConfig.apiKey ?? prev.apiKey,
-      }));
-    }
-  }, [serverConfig]);
-
-  useEffect(() => {
-    if (serverImageConfig) {
-      setImageForm((prev) => ({
-        ...prev,
-        ...serverImageConfig,
-        apiKey: serverImageConfig.apiKey ?? prev.apiKey,
-      }));
-    }
-  }, [serverImageConfig]);
+  // Inline one-time hydration: runs synchronously during render.
+  // Once user clicks a preset, provider becomes a string → condition fails → hydration stops.
+  if (serverConfig && form.provider === undefined) {
+    setForm(serverConfig);
+  }
+  if (serverImageConfig && imageForm.provider === undefined) {
+    setImageForm(serverImageConfig);
+  }
 
   const activePreset = matchTextPreset(form);
 
@@ -231,8 +217,9 @@ export function Settings() {
       ...prev,
       provider: preset.value,
       baseUrl: preset.baseUrl,
-      chatModel: preset.chatModel || prev.chatModel || '',
-      embeddingModel: preset.embeddingModel || prev.embeddingModel || '',
+      chatModel: preset.value === 'ollama' ? '' : (preset.chatModel || prev.chatModel || ''),
+      embeddingModel: preset.value === 'ollama' ? '' : (preset.embeddingModel || prev.embeddingModel || ''),
+      apiKey: preset.value === 'ollama' ? '' : prev.apiKey,
     }));
     setSaved(false);
     setTestResult(null);
@@ -251,7 +238,6 @@ export function Settings() {
     }));
     setImageSaved(false);
     setImageTestResult(null);
-    setShowCostWarning(false);
   };
 
   const updateField = <K extends keyof ProviderConfig>(key: K, value: ProviderConfig[K]) => {
@@ -262,7 +248,6 @@ export function Settings() {
   const updateImageField = <K extends keyof ImageProviderConfig>(key: K, value: ImageProviderConfig[K]) => {
     setImageForm((prev: Partial<ImageProviderConfig>) => ({ ...prev, [key]: value }));
     setImageSaved(false);
-    setShowCostWarning(false);
   };
 
   const handleSave = async () => {
@@ -351,12 +336,6 @@ export function Settings() {
   const handleImageTest = async () => {
     if ((imageForm.provider ?? 'disabled') === 'disabled' || !imageForm.enabled) {
       setImageTestResult({ ok: true, provider: 'disabled', warning: 'Image generation is disabled. Fallback assets will be used.' });
-      setShowCostWarning(false);
-      return;
-    }
-
-    if (imageForm.provider === 'openai-image' && !imageForm.apiKey) {
-      setImageTestResult({ ok: false, provider: 'openai-image', error: 'Missing API key. Enter your OpenAI API key or set OPENAI_API_KEY in environment.' });
       return;
     }
 
@@ -365,17 +344,12 @@ export function Settings() {
       return;
     }
 
-    if (!showCostWarning) {
-      setShowCostWarning(true);
-      return;
-    }
-
     setImageTesting(true);
     setImageTestResult(null);
     try {
       const payload: ImageProviderConfig = {
         provider: imageForm.provider ?? 'disabled',
-        baseUrl: imageForm.baseUrl,
+        baseUrl: imageForm.baseUrl ?? '',
         apiKey: imageForm.apiKey,
         model: imageForm.model,
         size: imageForm.size,
@@ -383,8 +357,8 @@ export function Settings() {
         format: imageForm.format,
         enabled: imageForm.enabled ?? false,
       };
-      const res = await apiPost<{ data: ImageProviderStatus }>('/settings/image-provider/test', payload);
-      setImageTestResult(res.data);
+      const res = await apiPost<ImageProviderStatus>('/settings/image-provider/test', payload);
+      setImageTestResult(res);
     } catch (err) {
       setImageTestResult({
         ok: false,
@@ -393,7 +367,6 @@ export function Settings() {
       });
     } finally {
       setImageTesting(false);
-      setShowCostWarning(false);
     }
   };
 
@@ -461,7 +434,7 @@ export function Settings() {
 
             <FieldRow icon={Key} label="API Key">
               <Input
-                type="password"
+                type="text"
                 value={form.apiKey ?? ''}
                 onChange={(e) => updateField('apiKey', e.target.value)}
                 placeholder="Optional for local providers"
@@ -551,7 +524,7 @@ export function Settings() {
                 <span>Chat Model:</span>
                 <span className="text-ash">{form.chatModel || '—'}</span>
                 <span>API Key:</span>
-                <span className="text-ash">{form.apiKey ? '••••••••' : 'none'}</span>
+                <span className="text-ash">{form.apiKey || 'none'}</span>
               </div>
             </div>
           </CardContent>
@@ -713,7 +686,7 @@ export function Settings() {
 
             <FieldRow icon={Key} label="Image API Key">
               <Input
-                type="password"
+                type="text"
                 value={imageForm.apiKey ?? ''}
                 onChange={(e) => updateImageField('apiKey', e.target.value)}
                 placeholder="sk-... (falls back to OPENAI_API_KEY if empty)"
@@ -781,23 +754,6 @@ export function Settings() {
               </Button>
             </div>
 
-            {showCostWarning && (
-              <div className="rounded-card border border-ember/40 bg-ember/5 px-4 py-3 text-small text-ember">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.5} />
-                  <div className="space-y-1">
-                    <p className="font-medium">This test may incur image generation cost.</p>
-                    <p className="text-tiny opacity-90">
-                      The test sends a lightweight probe first. If that fails, a tiny generation may run.
-                    </p>
-                    <Button onClick={handleImageTest} variant="outline" className="mt-2 border-ember text-ember hover:bg-ember/10">
-                      Confirm and Run Test
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {imageTestResult && (
               <div
                 className={cn(
@@ -836,7 +792,7 @@ export function Settings() {
                 <span>Model:</span>
                 <span className="text-ash">{imageForm.model || 'default'}</span>
                 <span>API Key:</span>
-                <span className="text-ash">{imageForm.apiKey ? '••••••••' : 'none'}</span>
+                <span className="text-ash">{imageForm.apiKey || 'none'}</span>
                 <span>Base URL:</span>
                 <span className="text-ash">{imageForm.baseUrl || 'official'}</span>
                 <span>Size / Quality / Format:</span>
