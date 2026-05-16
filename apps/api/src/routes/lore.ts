@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { CreateLoreSchema } from '../schemas/requests.js';
-import { listLore, getLoreByWorldId, getLoreById, createLore } from '../services/loreService.js';
+import { listLore, getLoreByWorldId, getLoreById, createLore, updateLore, deleteLore } from '../services/loreService.js';
 import { ingestLore } from '../services/ingestService.js';
 
 export async function loreRoutes(app: FastifyInstance) {
@@ -35,6 +35,33 @@ export async function loreRoutes(app: FastifyInstance) {
     }
     const entry = await createLore(parsed.data);
     reply.status(201).send({ data: entry });
+  });
+
+  app.patch('/lore/:id', async (request, reply) => {
+    const id = Number((request.params as { id: string }).id);
+    const body = request.body as Record<string, unknown>;
+    const updates: Record<string, unknown> = {};
+    if ('title' in body) updates.title = String(body.title);
+    if ('content' in body) updates.content = String(body.content);
+    if ('category' in body) updates.category = body.category === undefined ? null : String(body.category);
+    if ('tags' in body) updates.tags = body.tags === undefined ? null : String(body.tags);
+
+    const entry = await updateLore(id, updates);
+    if (!entry) {
+      reply.status(404).send({ error: 'Lore entry not found', code: 'NOT_FOUND' });
+      return;
+    }
+    reply.send({ data: entry });
+  });
+
+  app.delete('/lore/:id', async (request, reply) => {
+    const id = Number((request.params as { id: string }).id);
+    const entry = await deleteLore(id);
+    if (!entry) {
+      reply.status(404).send({ error: 'Lore entry not found', code: 'NOT_FOUND' });
+      return;
+    }
+    reply.status(204).send();
   });
 
   app.post('/lore/:id/ingest', async (request, reply) => {

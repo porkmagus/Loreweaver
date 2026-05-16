@@ -5,6 +5,10 @@ export const HealthResponseSchema = z.object({
   status: z.literal('ok'),
   timestamp: z.string().datetime(),
   version: z.string(),
+  aiMode: z.enum(['live', 'simulated']).optional(),
+  qdrantConnected: z.boolean().optional(),
+  embeddingAvailable: z.boolean().optional(),
+  embeddingModel: z.string().optional(),
 });
 
 export type HealthResponse = z.infer<typeof HealthResponseSchema>;

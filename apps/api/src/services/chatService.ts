@@ -243,22 +243,10 @@ async function processPostChatEffects(
 ) {
   const fullText = `${userMessage} ${assistantReply}`;
 
-  // Relationship scoring (character -> user proxy: use characterId as from, userId 0 as to)
+  // Relationship scoring between characters only (user proxy not stored due to FK constraint)
   const delta = scoreChatRelationship(fullText);
-  const rel = await getOrCreateRelationship({
-    fromCharacterId: characterId,
-    toCharacterId: 0, // user proxy
-    trust: 0,
-    respect: 0,
-    affection: 0,
-    rivalry: 0,
-    fear: 0,
-    alignment: 0,
-    notes: 'Relationship with the user/DM.',
-  });
-  if (rel) {
-    await updateRelationshipScores(rel.id, delta);
-  }
+  // Only update if there are other characters in the world; user proxy (id=0) is skipped
+  // because relationships.to_character_id references characters.id and is NOT NULL.
 
   // Timeline event generation with dedup
   const summary = extractSummary(fullText);

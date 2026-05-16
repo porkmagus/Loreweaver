@@ -8,6 +8,8 @@ import { timelineRoutes } from './routes/timeline.js';
 import { relationshipRoutes } from './routes/relationships.js';
 import { searchRoutes } from './routes/search.js';
 import { chatRoutes } from './routes/chat.js';
+import { devRoutes } from './routes/dev.js';
+import { startup } from './startup.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -30,6 +32,7 @@ export async function buildApp() {
     }, 'incoming request');
   });
 
+  await app.register(healthRoutes);
   await app.register(healthRoutes, { prefix: '/api' });
   await app.register(worldRoutes, { prefix: '/api' });
   await app.register(characterRoutes, { prefix: '/api' });
@@ -38,6 +41,7 @@ export async function buildApp() {
   await app.register(relationshipRoutes, { prefix: '/api' });
   await app.register(searchRoutes, { prefix: '/api' });
   await app.register(chatRoutes, { prefix: '/api' });
+  await app.register(devRoutes, { prefix: '/api' });
 
   app.setErrorHandler((error, _request, reply) => {
     const err = error instanceof Error ? error : new Error(String(error));
@@ -63,8 +67,10 @@ async function main() {
 }
 
 if (!process.env.VITEST) {
-  main().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+  startup()
+    .then(() => main())
+    .catch((err) => {
+      console.error('Startup failed:', err);
+      process.exit(1);
+    });
 }

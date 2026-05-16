@@ -13,7 +13,7 @@
     "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
-    "@loreweaver/shared": "0.0.1",
+    "@loreweaver/shared": "0.1.0",
     "@radix-ui/react-slot": "^1.2.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

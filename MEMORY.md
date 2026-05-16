@@ -204,9 +204,9 @@ Phase 0 bootstrap completed:
 - repository docs reorganized per BOOTSTRAP.md (docs/, skills/)
 
 Remaining audit items:
-- fastify 4.27.0: 1 high (requires fastify@5.8.5, breaking change)
-- vite 5.x: 1 moderate (requires vite@8.0.13, breaking change)
-Decision: accept until upstream workspace packages update major versions.
+- vite 5.x: 1 moderate (path traversal in `.map` handling; requires vite@8.0.13, breaking change)
+- fastify: resolved — upgraded to 5.8.5
+Decision: accept vite moderate until v0.2.0 to avoid breaking build pipeline.
 
 ---
 

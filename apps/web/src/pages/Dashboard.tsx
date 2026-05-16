@@ -1,25 +1,48 @@
+import { useState } from 'react';
 import { useApi } from '@/hooks/useApi';
 import { Spinner } from '@/components/ui/Spinner';
 import { Card, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { GenerateWorldModal } from '@/components/GenerateWorldModal';
 import {
   Globe,
   Users,
   BookOpen,
   Clock,
   Activity,
+  Sparkles,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { HealthResponse, World, Character, LoreEntry, TimelineEvent } from '@loreweaver/shared';
 import { cn } from '@/lib/utils';
 
 export function Dashboard() {
-  const { data: health, loading: hLoading, error: hError } = useApi<HealthResponse>('/health');
-  const { data: worlds, loading: wLoading } = useApi<World[]>('/worlds');
-  const { data: characters, loading: cLoading } = useApi<Character[]>('/characters');
-  const { data: lore, loading: lLoading } = useApi<LoreEntry[]>('/lore');
-  const { data: events, loading: eLoading } = useApi<TimelineEvent[]>('/timeline');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const { data: health, loading: hLoading, error: hError, refetch: refetchHealth } = useApi<HealthResponse>('/health');
+  const { data: worlds, loading: wLoading, refetch: refetchWorlds } = useApi<World[]>('/worlds');
+  const firstWorldId = worlds?.[0]?.id ?? 1;
+  const { data: characters, loading: cLoading } = useApi<Character[]>(`/worlds/${firstWorldId}/characters`);
+  const { data: lore, loading: lLoading } = useApi<LoreEntry[]>(`/worlds/${firstWorldId}/lore`);
+  const { data: events, loading: eLoading } = useApi<TimelineEvent[]>(`/worlds/${firstWorldId}/timeline`);
 
   const anyLoading = hLoading || wLoading || cLoading || lLoading || eLoading;
+
+  const handleReset = async () => {
+    if (!confirm('Reset all data? This wipes worlds, characters, lore, timeline, and chat history.')) return;
+    setResetting(true);
+    try {
+      await fetch((import.meta.env.VITE_API_URL ?? 'http://localhost:3001').replace(/\/$/, '') + '/api/dev/reset', { method: 'POST' });
+      refetchHealth();
+      refetchWorlds();
+      alert('Data reset. Reloading...');
+      window.location.reload();
+    } catch {
+      alert('Reset failed');
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const stats = [
     {
@@ -63,12 +86,23 @@ export function Dashboard() {
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Overview of your Loreweaver universe</p>
         </div>
-        {health && (
-          <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
-            <Activity className="h-4 w-4" />
-            API Healthy
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" onClick={() => setModalOpen(true)}>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Generate World
+          </Button>
+          {health && health.aiMode !== 'live' && (
+            <Button variant="ghost" disabled={resetting} onClick={handleReset} title="Reset all data">
+              {resetting ? 'Resetting…' : 'Reset Data'}
+            </Button>
+          )}
+          {health && (
+            <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+              <Activity className="h-4 w-4" />
+              API Healthy
+            </div>
+          )}
+        </div>
       </div>
 
       {hError && (
@@ -126,6 +160,8 @@ export function Dashboard() {
           );
         })}
       </div>
+
+      {modalOpen && <GenerateWorldModal onClose={() => setModalOpen(false)} />}
     </div>
   );
 }

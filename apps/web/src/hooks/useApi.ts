@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+const RAW_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001').replace(/\/$/, '');
+const API_BASE = RAW_BASE + '/api';
 
 interface ApiState<T> {
   data: T | null;
@@ -43,4 +44,26 @@ export async function apiPost<T>(url: string, body: unknown): Promise<T> {
   }
   const json = await res.json();
   return json.data ?? json;
+}
+
+export async function apiPatch<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${url}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? `HTTP ${res.status}`);
+  }
+  const json = await res.json();
+  return json.data ?? json;
+}
+
+export async function apiDelete(url: string): Promise<void> {
+  const res = await fetch(`${API_BASE}${url}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? `HTTP ${res.status}`);
+  }
 }

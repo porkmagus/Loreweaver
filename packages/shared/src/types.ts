@@ -51,6 +51,11 @@ export interface TimelineEvent {
 }
 
 export interface HealthResponse {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: 'ok' | 'healthy' | 'degraded' | 'unhealthy';
+  timestamp?: string;
   version: string;
+  aiMode?: 'live' | 'simulated';
+  qdrantConnected?: boolean;
+  embeddingAvailable?: boolean;
+  embeddingModel?: string;
 }

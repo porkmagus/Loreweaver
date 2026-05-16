@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useApi, apiPost } from '@/hooks/useApi';
+import { useApi, apiPost, apiPatch, apiDelete } from '@/hooks/useApi';
 import { Spinner } from '@/components/ui/Spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
-import { BookOpen, Plus, ChevronLeft, Tag, Search, Upload } from 'lucide-react';
+import { BookOpen, Plus, ChevronLeft, Tag, Search, Upload, Pencil, Trash2 } from 'lucide-react';
 import type { LoreEntry, World } from '@loreweaver/shared';
 import { Link, useSearchParams } from 'react-router-dom';
 
@@ -136,45 +136,60 @@ function LoreList() {
 
       <div className="space-y-3">
         {entries?.map((entry) => (
-          <Link
+          <div
             key={entry.id}
-            to={`/lore?id=${entry.id}`}
-            className="group block rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/20"
+            className="group relative rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/20"
           >
             <div className="flex items-start gap-3">
-              <div className="rounded-lg bg-amber-50 p-2 dark:bg-amber-950/30">
-                <BookOpen className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
-                  {entry.title}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                  {entry.content}
-                </p>
-                <div className="mt-2 flex items-center gap-2">
-                  {entry.category && (
-                    <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                      {entry.category}
-                    </span>
-                  )}
-                  {entry.tags && (
-                    <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                      <Tag className="h-3 w-3" />
-                      {entry.tags}
-                    </span>
-                  )}
+              <Link to={`/lore?id=${entry.id}`} className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="rounded-lg bg-amber-50 p-2 dark:bg-amber-950/30">
+                  <BookOpen className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                 </div>
-              </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    {entry.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                    {entry.content}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    {entry.category && (
+                      <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                        {entry.category}
+                      </span>
+                    )}
+                    {entry.tags && (
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                        <Tag className="h-3 w-3" />
+                        {entry.tags}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+              <button
+                onClick={async () => {
+                  if (!confirm('Delete this lore entry?')) return;
+                  try { await apiDelete(`/lore/${entry.id}`); refetch(); } catch {}
+                }}
+                className="shrink-0 rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
       {entries?.length === 0 && !loading && (
         <div className="flex flex-col items-center justify-center py-12 text-slate-400">
           <BookOpen className="h-10 w-10 mb-3 opacity-30" />
-          <p className="text-sm">No lore entries yet.</p>
+          <p className="text-sm mb-3">No lore entries yet.</p>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Lore Entry
+          </Button>
         </div>
       )}
     </div>
@@ -182,7 +197,7 @@ function LoreList() {
 }
 
 function LoreDetail({ loreId }: { loreId: number }) {
-  const { data: entry, loading, error } = useApi<LoreEntry>(`/lore/${loreId}`);
+  const { data: entry, loading, error, refetch } = useApi<LoreEntry>(`/lore/${loreId}`);
   const [ingesting, setIngesting] = useState(false);
   const [ingestResult, setIngestResult] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -195,6 +210,9 @@ function LoreDetail({ loreId }: { loreId: number }) {
     title: string;
     entryExists: boolean;
   }> | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleIngest = async () => {
     setIngesting(true);
@@ -230,6 +248,27 @@ function LoreDetail({ loreId }: { loreId: number }) {
     }
   };
 
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await apiPatch<LoreEntry>(`/lore/${loreId}`, {
+        title: fd.get('title') || undefined,
+        content: fd.get('content') || undefined,
+        category: fd.get('category') || undefined,
+        tags: fd.get('tags') || undefined,
+      });
+      setEditing(false);
+      refetch();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-4 max-w-4xl">
       <div className="flex items-center gap-3">
@@ -244,6 +283,10 @@ function LoreDetail({ loreId }: { loreId: number }) {
             {entry?.category ?? 'No category'}
           </p>
         </div>
+        <Button variant="ghost" size="sm" onClick={() => setEditing(!editing)} disabled={!entry}>
+          <Pencil className="mr-1 h-4 w-4" />
+          Edit
+        </Button>
         <Button variant="outline" size="sm" onClick={handleIngest} disabled={ingesting || !entry}>
           <Upload className="mr-2 h-4 w-4" />
           {ingesting ? 'Ingesting…' : 'Ingest'}
@@ -268,7 +311,26 @@ function LoreDetail({ loreId }: { loreId: number }) {
         </div>
       )}
 
-      {entry && (
+      {editing && entry && (
+        <Card>
+          <CardHeader><CardTitle>Edit Lore Entry</CardTitle></CardHeader>
+          <CardContent>
+            <form onSubmit={handleUpdate} className="space-y-3">
+              <Input name="title" defaultValue={entry.title} placeholder="Title" required />
+              <Textarea name="content" defaultValue={entry.content} placeholder="Content" rows={5} required />
+              <Input name="category" defaultValue={entry.category ?? ''} placeholder="Category" />
+              <Input name="tags" defaultValue={entry.tags ?? ''} placeholder="Tags (comma-separated)" />
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
+              <div className="flex gap-2">
+                <Button type="submit" disabled={submitting} variant="primary">{submitting ? 'Saving…' : 'Save'}</Button>
+                <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {entry && !editing && (
         <Card>
           <CardContent className="p-4 space-y-3">
             <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">

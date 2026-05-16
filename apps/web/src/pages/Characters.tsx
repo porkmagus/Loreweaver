@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useApi, apiPost } from '@/hooks/useApi';
+import { useApi, apiPost, apiPatch, apiDelete } from '@/hooks/useApi';
 import { Spinner } from '@/components/ui/Spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
-import { Users, Plus, ChevronLeft, Clock, Heart } from 'lucide-react';
+import { Users, Plus, ChevronLeft, Clock, Heart, Pencil, Trash2 } from 'lucide-react';
 import type { Character, World, TimelineEvent } from '@loreweaver/shared';
 import { Link, useSearchParams } from 'react-router-dom';
 
@@ -141,42 +141,57 @@ function CharacterList() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         {characters?.map((char) => (
-          <Link
+          <div
             key={char.id}
-            to={`/characters?id=${char.id}`}
-            className="group rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/20"
+            className="group relative rounded-lg border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/20"
           >
             <div className="flex items-start gap-3">
-              <div className="rounded-lg bg-indigo-50 p-2 dark:bg-indigo-950/30">
-                <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
-                  {char.name}
-                </h3>
-                {char.role && (
-                  <span className="mt-1 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                    {char.role}
-                  </span>
-                )}
-                {char.isPlayer && (
-                  <span className="ml-1 mt-1 inline-block rounded bg-emerald-50 px-2 py-0.5 text-xs text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
-                    Player
-                  </span>
-                )}
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                  {char.description ?? 'No description'}
-                </p>
-              </div>
+              <Link to={`/characters?id=${char.id}`} className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="rounded-lg bg-indigo-50 p-2 dark:bg-indigo-950/30">
+                  <Users className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                    {char.name}
+                  </h3>
+                  {char.role && (
+                    <span className="mt-1 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                      {char.role}
+                    </span>
+                  )}
+                  {char.isPlayer && (
+                    <span className="ml-1 mt-1 inline-block rounded bg-emerald-50 px-2 py-0.5 text-xs text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
+                      Player
+                    </span>
+                  )}
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                    {char.description ?? 'No description'}
+                  </p>
+                </div>
+              </Link>
+              <button
+                onClick={async () => {
+                  if (!confirm('Delete this character?')) return;
+                  try { await apiDelete(`/characters/${char.id}`); refetch(); } catch {}
+                }}
+                className="shrink-0 rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
       {characters?.length === 0 && !loading && worldId && (
         <div className="flex flex-col items-center justify-center py-12 text-slate-400">
           <Users className="h-10 w-10 mb-3 opacity-30" />
-          <p className="text-sm">No characters in this world yet.</p>
+          <p className="text-sm mb-3">No characters in this world yet.</p>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Character
+          </Button>
         </div>
       )}
     </div>
@@ -184,8 +199,33 @@ function CharacterList() {
 }
 
 function CharacterDetail({ characterId }: { characterId: number }) {
-  const { data: char, loading, error } = useApi<Character>(`/characters/${characterId}`);
+  const { data: char, loading, error, refetch } = useApi<Character>(`/characters/${characterId}`);
   const { data: timeline } = useApi<TimelineEvent[]>(`/characters/${characterId}/timeline`);
+  const [editing, setEditing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await apiPatch<Character>(`/characters/${characterId}`, {
+        name: fd.get('name') || undefined,
+        description: fd.get('description') || undefined,
+        personality: fd.get('personality') || undefined,
+        role: fd.get('role') || undefined,
+        isPlayer: fd.get('isPlayer') === 'on',
+      });
+      setEditing(false);
+      refetch();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-4 max-w-4xl">
@@ -195,12 +235,16 @@ function CharacterDetail({ characterId }: { characterId: number }) {
             <ChevronLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold tracking-tight">{char?.name ?? 'Character'}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {char?.role ?? 'No role'}
           </p>
         </div>
+        <Button variant="ghost" size="sm" onClick={() => setEditing(!editing)} disabled={!char}>
+          <Pencil className="mr-1 h-4 w-4" />
+          Edit
+        </Button>
       </div>
 
       {error && (
@@ -215,7 +259,30 @@ function CharacterDetail({ characterId }: { characterId: number }) {
         </div>
       )}
 
-      {char && (
+      {editing && char && (
+        <Card>
+          <CardHeader><CardTitle>Edit Character</CardTitle></CardHeader>
+          <CardContent>
+            <form onSubmit={handleUpdate} className="space-y-3">
+              <Input name="name" defaultValue={char.name} placeholder="Name" required />
+              <Textarea name="description" defaultValue={char.description ?? ''} placeholder="Description" rows={2} />
+              <Input name="personality" defaultValue={char.personality ?? ''} placeholder="Personality traits" />
+              <Input name="role" defaultValue={char.role ?? ''} placeholder="Role in story" />
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="isPlayer" defaultChecked={char.isPlayer ?? false} className="rounded" />
+                Player character
+              </label>
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
+              <div className="flex gap-2">
+                <Button type="submit" disabled={submitting} variant="primary">{submitting ? 'Saving…' : 'Save'}</Button>
+                <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {char && !editing && (
         <div className="space-y-3">
           <Card>
             <CardContent className="p-4 space-y-2">

@@ -2,206 +2,325 @@
 
 # Current Objective
 
-Complete the Final Release Pass for Loreweaver v0.1.0 Portfolio MVP.
+Execute the Final Mega Pass for Loreweaver v0.1.0 Portfolio MVP.
 
-This is a stabilization, polish, deployment-readiness, and testing phase.
+This is the final cleanup, polish, onboarding, verification, release-readiness, and operational sanity pass.
 
-It is NOT a feature expansion phase.
+The goal is to leave the repository in a state where:
+
+```txt
+Fresh clone → docker compose up -d --build → usable polished app
+```
+
+This is NOT a feature expansion phase.
+
+Do not add major new systems.
+
+Do not redesign the architecture.
+
+Focus on:
+- stability
+- polish
+- onboarding
+- operational maturity
+- portfolio presentation quality
+- release confidence
+
+---
+
+# Primary Goals
+
+The repository should now feel:
+
+- polished
+- understandable
+- reliable
+- deployable
+- demo-ready
+- recruiter-friendly
+- engineer-friendly
+
+The app should feel like:
+- a real product MVP
+- not an experimental prototype
+- not an abandoned AI sandbox
 
 ---
 
 # Scope
 
-Complete:
+Perform a comprehensive cleanup and release verification pass covering:
 
-- README polish
-- deployment documentation
-- demo script
-- screenshot checklist/placeholders
-- production environment notes
-- Docker Compose production readiness review
-- Caddy/reverse proxy example
-- UI polish pass
+- onboarding flow
+- Docker runtime
+- startup simplicity
+- UI polish
 - empty/loading/error states
-- final verification checklist
-- release-quality test pyramid
-- MEMORY.md final release update
+- API sanity
+- test reliability
+- documentation quality
+- deployment readiness
+- repo cleanliness
+- developer ergonomics
+- final smoke verification
 
 ---
 
-# Documentation Requirements
+# DOCKER & STARTUP REQUIREMENTS
 
-Update or create:
+Perform a TRUE clean-room verification.
 
-- README.md
+Required verification flow:
+
+```bash
+docker compose down -v
+docker compose up -d --build
+```
+
+Confirm:
+- frontend healthy
+- backend healthy
+- postgres healthy
+- qdrant healthy
+- migrations applied
+- demo or generated data available
+- onboarding functional
+- generated worlds functional
+- lore ingestion functional
+- retrieval functional
+- chat functional
+- memory persistence functional
+- relationship updates functional
+- timeline events functional
+
+---
+
+# STARTUP UX REQUIREMENTS
+
+The primary onboarding flow should remain:
+
+```bash
+git clone https://github.com/porkmagus/loreweaver.git
+cd loreweaver
+cp .env.example .env
+docker compose up -d --build
+```
+
+Then:
+
+```txt
+Open:
+http://localhost:5173
+```
+
+The README must clearly communicate this.
+
+Avoid:
+- excessive setup instructions
+- unnecessary commands before first launch
+- hidden onboarding requirements
+
+---
+
+# README FINAL PASS
+
+Perform a final README polish pass.
+
+Ensure README contains:
+
+- concise project summary
+- screenshots section
+- feature overview
+- architecture overview
+- stack overview
+- quickstart
+- AI mode explanation
+- onboarding explanation
+- environment variables
+- Docker usage
+- testing commands
+- deployment overview
+- known limitations
+- roadmap summary
+- portfolio/resume bullet
+
+README should feel:
+- concise
+- modern
+- easy to skim
+- technically credible
+
+---
+
+# SCREENSHOT REQUIREMENTS
+
+Add or verify screenshot support.
+
+Preferred:
+- actual screenshots committed to repo
+
+Minimum:
+- screenshot placeholders
+- screenshot instructions
+
+Recommended screenshots:
+
+- onboarding screen
+- dashboard
+- world overview
+- lore search
+- character chat
+- relationship/timeline sidebar
+- generated world flow
+
+---
+
+# UI POLISH REQUIREMENTS
+
+Perform a final UI consistency pass.
+
+Review:
+
+- spacing
+- empty states
+- loading states
+- error states
+- status indicators
+- button consistency
+- icon consistency
+- card consistency
+- typography consistency
+
+Do not redesign the app.
+
+Apply targeted polish only.
+
+---
+
+# HEALTH & STATUS REQUIREMENTS
+
+Verify or improve:
+
+- /health endpoint
+- /api/health endpoint
+- frontend status indicators
+- simulated/live AI mode indicators
+- Qdrant connection indicator
+
+Health responses should remain lightweight and deterministic.
+
+---
+
+# TESTING REQUIREMENTS
+
+Perform final testing verification.
+
+Required:
+- unit tests
+- integration tests
+- E2E smoke tests if environment allows
+- build verification
+- typecheck verification
+
+Run and report:
+
+```bash
+npm test
+npm run build
+npm run typecheck
+npm run verify
+```
+
+Adjust commands to actual repo scripts.
+
+If Playwright browser install issues exist on Ubuntu 26:
+- document limitation clearly
+- preserve test structure
+- do not over-engineer workaround infrastructure
+
+---
+
+# ROOT SCRIPT REQUIREMENTS
+
+Verify ergonomic root scripts exist.
+
+Preferred examples:
+
+```json
+{
+  "scripts": {
+    "verify": "...",
+    "logs": "...",
+    "down": "...",
+    "seed": "...",
+    "reset": "..."
+  }
+}
+```
+
+Do not break existing workflows.
+
+---
+
+# CLEANUP REQUIREMENTS
+
+Perform a final cleanup pass.
+
+Review for:
+
+- dead exports
+- stale comments
+- unused imports
+- duplicated code
+- mismatched types
+- inconsistent naming
+- broken links
+- stale docs
+- stale TODOs
+- noisy console logs
+- accidental debug output
+
+Perform only safe targeted cleanup.
+
+---
+
+# DOCUMENTATION REQUIREMENTS
+
+Verify or improve:
+
 - docs/deployment.md
 - docs/demo-script.md
 - docs/roadmap.md
 - MEMORY.md
 - .env.example
 
-README must include:
-
-- project summary
-- feature list
-- architecture overview
-- tech stack
-- quickstart
-- environment variables
-- development commands
-- test commands
-- demo flow
-- screenshots section
-- deployment overview
-- known limitations
-- portfolio/resume bullet
-
----
-
-# Deployment Requirements
-
-Document deployment using:
-
-- VPS
-- Docker Compose
-- Caddy or equivalent reverse proxy
-
-Include:
-
-- production env variables
-- service ports
-- persistent volumes
-- Postgres persistence notes
-- Qdrant persistence notes
+Deployment docs should include:
+- VPS deployment
+- Docker Compose usage
+- persistence notes
 - backup notes
 - troubleshooting notes
 
-Do not require Kubernetes.
+---
+
+# KNOWN LIMITATIONS REQUIREMENTS
+
+Document all remaining important MVP limitations clearly.
+
+Examples:
+- delayed sidebar refetch after chat
+- simulated AI fallback behavior
+- Playwright Ubuntu limitation if unresolved
+- lack of auth/multi-user isolation
+- lack of advanced memory pruning
+
+Do not hide limitations.
+
+Transparent engineering presentation is preferred.
 
 ---
 
-# UI Polish Requirements
-
-Review and improve:
-
-- dashboard
-- world view
-- character profile
-- chat page
-- lore ingestion/search page
-- timeline display
-- memory display
-
-Add or improve:
-
-- loading states
-- error states
-- empty states
-- status indicators
-- visual consistency
-
-Keep polish targeted.
-
-Do not redesign the frontend.
-
----
-
-# Testing Requirements
-
-Implement a minimal release-quality test pyramid.
-
-## Unit Tests
-
-Add only for critical pure logic not already covered:
-
-- chunking
-- relationship scoring
-- memory dedup
-- timeline dedup
-- prompt assembly helpers
-
----
-
-## Integration Tests
-
-Implement backend integration tests for:
-
-- lore creation → ingestion → semantic retrieval
-- chat → persistence → memory creation
-- chat → relationship update
-- chat → timeline event creation
-
----
-
-## E2E Smoke Tests
-
-Implement minimal Playwright smoke tests covering:
-
-### Main Flow
-
-- app loads
-- dashboard/status visible
-- open character chat
-- send message
-- message appears
-- relationship/timeline/memory sidebar updates
-
-### Optional Lore Flow
-
-- add lore
-- ingest lore
-- search lore
-- search result appears
-
----
-
-# Testing Constraints
-
-Do not:
-
-- introduce large testing architecture
-- add visual regression testing
-- add broad coverage thresholds
-- add Cypress if Playwright is used
-- rewrite existing tests unnecessarily
-
-Prefer:
-- deterministic tests
-- stable tests
-- low runtime overhead
-
-Simulated mode is acceptable for LLM behavior.
-
----
-
-# Known MVP Limitation To Document
-
-The frontend currently refetches relationship, timeline, and memory panels after chat with a short delay to allow backend writes to complete.
-
-Document future improvement:
-
-Return updated sidebar context payload directly from the chat response instead of delayed frontend refetch.
-
----
-
-# Package Script Goals
-
-Add or verify scripts for:
-
-- build
-- lint
-- typecheck
-- test
-- test:unit
-- test:integration
-- test:e2e
-- verify
-
-Adjust scripts to current workspace/package manager setup.
-
----
-
-# Constraints
+# CONSTRAINTS
 
 Do not implement:
 
@@ -213,67 +332,71 @@ Do not implement:
 - background jobs
 - Kubernetes
 - major architecture rewrites
-- advanced provider abstraction
 - advanced emotional simulation
 - complex reranking
+- massive provider abstraction systems
 
 Preserve:
-
-- existing Docker runtime
-- existing API conventions
-- existing database schema unless minor fixes required
-- existing retrieval pipeline
-- existing chat flow
+- Docker-first runtime
+- current architecture
+- current retrieval pipeline
+- current onboarding flow
+- current chat flow
 - passing tests
 - type safety
 
 ---
 
-# Verification Requirements
+# FINAL VERIFICATION REQUIREMENTS
 
-Run and report:
+Perform and report final verification for:
 
-- docker compose up -d
-- npm run build
-- npm run lint if configured
-- npm run typecheck if configured
-- npm test
-- npm run test:e2e if added
-- manual demo flow verification
-
----
-
-# Success Criteria
-
-- README is portfolio-ready
-- deployment docs are usable
-- demo script is complete
-- screenshot checklist exists
-- .env.example is complete
-- MEMORY.md updated
-- UI has loading/error/empty states
-- integration tests cover core backend flows
-- E2E smoke tests cover demo path
-- docker compose runtime healthy
-- all builds pass
-- all tests pass
-- repository ready for GitHub presentation
-- repository ready for portfolio/demo usage
+- clean-room Docker startup
+- onboarding flow
+- generated world flow
+- lore ingestion
+- retrieval search
+- character chat
+- relationship updates
+- timeline updates
+- memory persistence
+- UI usability
+- tests/build/typecheck
 
 ---
 
-# Final Deliverables
+# SUCCESS CRITERIA
+
+- fresh clone startup works
+- onboarding feels polished
+- generated worlds work
+- retrieval works
+- chat works
+- persistence works
+- README is portfolio-quality
+- UI feels cohesive
+- startup friction minimized
+- repo feels operationally mature
+- all tests/builds pass
+- no obvious MVP usability gaps remain
+
+---
+
+# FINAL DELIVERABLES
 
 Provide:
 
-- release summary
+- final release summary
 - changed files
-- deployment readiness notes
-- known limitations
+- onboarding flow summary
 - verification command results
-- recommended git tag command
+- test/build results
+- deployment readiness notes
+- remaining known limitations
+- recommended GitHub release notes summary
+- recommended final git tag command
 
-Recommended tag target:
+Recommended tag:
 
 ```bash
 git tag v0.1.0-portfolio-mvp

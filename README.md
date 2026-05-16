@@ -75,7 +75,6 @@ Loreweaver is a **full-stack AI application** that turns raw worldbuilding docum
 
 - **Node.js** 20+ with npm
 - **Docker** + Docker Compose
-- **OpenAI API Key** ([get one here](https://platform.openai.com/api-keys))
 
 ### Installation & Launch
 
@@ -84,24 +83,44 @@ Loreweaver is a **full-stack AI application** that turns raw worldbuilding docum
 git clone https://github.com/porkmagus/loreweaver.git
 cd loreweaver
 
-# 2. Configure environment
-cp .env.example .env
-# Edit .env and set your OPENAI_API_KEY
-
-# 3. Install dependencies
-npm install
-
-# 4. Start the entire stack
+# 2. Start the entire stack
 npm run dev
-# → Equivalent to: docker compose up -d
+# → docker compose up -d --build (one-time) or restart
 
-# 5. Seed demo data (optional)
-docker compose exec api npx tsx src/seed/index.ts
-# or, locally: cd apps/api && npx tsx src/seed/index.ts
-
-# 6. Open the application
+# 3. Open the application
 open http://localhost:5173
 ```
+
+The first boot automatically creates tables and runs migrations. If `SEED_ON_STARTUP=true` is set, demo data is seeded; otherwise the app presents a **first-run onboarding** flow.
+
+### First-Run Onboarding
+
+When the database is empty, the app automatically shows the onboarding page:
+
+1. **Describe your world** — enter a short concept (e.g. *"A gothic kingdom ruled by spy nobles and haunted machines"*)
+2. **Click Generate** — the backend creates a complete starter world:
+   - World name + description
+   - 2–3 factions
+   - 2 characters with personalities
+   - Starting lore entries
+   - Initial timeline event
+   - Default relationship state
+3. **Explore immediately** — you're routed to the new world dashboard, ready to chat
+
+Onboarding works with or without an `OPENAI_API_KEY`:
+- **With key**: Real LLM generation (gpt-4o-mini) produces rich, varied worlds
+- **Without key**: Deterministic simulated generation creates consistent demo-ready content based on prompt keywords
+
+### Optional: AI Chat
+
+Set your OpenAI API key in `.env` for LLM-powered responses:
+
+```bash
+cp .env.example .env
+# Edit .env → OPENAI_API_KEY=sk-...
+```
+
+Without a key, chat uses simulated responses so the app is fully usable for exploration and demos.
 
 ### Development Mode (Hot Reload)
 
@@ -120,10 +139,19 @@ cd apps/web && npm run dev
 npm run verify
 
 # Expected output:
-# ✓ @loreweaver/api  typecheck
-# ✓ @loreweaver/web  typecheck
+# ✓ @loreweaver/api   typecheck
+# ✓ @loreweaver/web   typecheck
 # ✓ @loreweaver/shared typecheck
 # ✓ 44 tests passing (~400ms)
+```
+
+### One-Command Lifecycle
+
+```bash
+npm run dev   # Start all services
+npm run logs  # Tail API + web logs
+npm run down  # Stop everything
+npm run seed  # Re-seed demo data (wipes + resets)
 ```
 
 ---
@@ -133,7 +161,7 @@ npm run verify
 | Suite | Tests | Duration | Coverage |
 |-------|-------|----------|----------|
 | Unit + Integration | 44 | ~400ms | Lore chunking, relationship scoring, route validation, lore ingestion, semantic search, chat memory/timeline/relationship persistence |
-| E2E Smoke | 2 (scaffold) | Playwright | Ready for CI runners |
+| E2E Smoke | 6 | Playwright | Onboarding + dashboard + navigation coverage |
 
 ```bash
 # Run API unit/integration tests
@@ -263,6 +291,16 @@ The repository is designed as a **structured synthetic cognition environment** �
   <img src="docs/screenshots/07-chat-lore-response.png" width="80%" alt="Chat with Lore">
   <br><em>Character chat with lore-grounded context and contextual sidebar</em>
 </p>
+
+---
+
+## Known Limitations
+
+- **Playwright E2E**: `npm run test:e2e` requires `npx playwright install` to download browser binaries. On some headless Ubuntu environments, additional system dependencies may be needed.
+- **Simulated AI fallback**: Without an `OPENAI_API_KEY`, chat uses deterministic template responses — functional for demos, but not generative.
+- **No auth / multi-user isolation**: All data is shared; user separation is manual.
+- **Relationship sidebar refetch**: Relationship and timeline panels refresh on a short delay after chat; future improvement is to return updated panels directly in the chat response.
+- **Vite audit**: One moderate severity vulnerability in `vite <=6.4.1` (path traversal in `.map` handling). Upgrading to Vite 8 requires breaking changes; deferred to v0.2.0.
 
 ---
 

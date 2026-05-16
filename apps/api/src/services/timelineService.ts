@@ -1,6 +1,6 @@
 import { eq, desc } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { timelineEvents } from '../db/schema.js';
+import { timelineEvents, characters } from '../db/schema.js';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -16,6 +16,27 @@ export async function listTimelineByCharacter(characterId: number, opts?: { limi
   const offset = opts?.offset ?? 0;
   return db.select().from(timelineEvents)
     .where(eq(timelineEvents.characterId, characterId))
+    .orderBy(desc(timelineEvents.happenedAt))
+    .limit(limit).offset(offset);
+}
+
+export async function listTimelineByWorldId(worldId: number, opts?: { limit?: number; offset?: number }) {
+  const limit = Math.min(opts?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
+  const offset = opts?.offset ?? 0;
+  return db.select({
+    id: timelineEvents.id,
+    characterId: timelineEvents.characterId,
+    title: timelineEvents.title,
+    description: timelineEvents.description,
+    eventType: timelineEvents.eventType,
+    significance: timelineEvents.significance,
+    happenedAt: timelineEvents.happenedAt,
+    metadata: timelineEvents.metadata,
+    createdAt: timelineEvents.createdAt,
+  })
+    .from(timelineEvents)
+    .innerJoin(characters, eq(timelineEvents.characterId, characters.id))
+    .where(eq(characters.worldId, worldId))
     .orderBy(desc(timelineEvents.happenedAt))
     .limit(limit).offset(offset);
 }

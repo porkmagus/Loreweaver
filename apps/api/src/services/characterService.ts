@@ -52,3 +52,22 @@ export async function createCharacter(data: {
   }).returning();
   return character;
 }
+
+export async function updateCharacter(id: number, data: Partial<{
+  name: string;
+  description: string | null;
+  personality: string | null;
+  role: string | null;
+  isPlayer: boolean;
+}>) {
+  const [character] = await db.update(characters)
+    .set(data)
+    .where(eq(characters.id, id))
+    .returning();
+  return character ?? null;
+}
+
+export async function deleteCharacter(id: number) {
+  const result = await db.delete(characters).where(eq(characters.id, id)).returning();
+  return result[0] ?? null;
+}

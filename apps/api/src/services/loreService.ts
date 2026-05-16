@@ -38,3 +38,21 @@ export async function createLore(data: {
   }).returning();
   return entry;
 }
+
+export async function updateLore(id: number, data: Partial<{
+  title: string;
+  content: string;
+  category: string | null;
+  tags: string | null;
+}>) {
+  const [entry] = await db.update(loreEntries)
+    .set(data)
+    .where(eq(loreEntries.id, id))
+    .returning();
+  return entry ?? null;
+}
+
+export async function deleteLore(id: number) {
+  const result = await db.delete(loreEntries).where(eq(loreEntries.id, id)).returning();
+  return result[0] ?? null;
+}

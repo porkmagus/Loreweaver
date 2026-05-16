@@ -1,10 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-test('app loads and dashboard shows API health', async ({ page }) => {
+test('app loads and shows dashboard with seeded world', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/Loreweaver/);
   await expect(page.locator('text=Dashboard')).toBeVisible();
-  await expect(page.locator('text=API Healthy')).toBeVisible();
+  await expect(page.locator('text=Aethelgard')).toBeVisible();
+});
+
+test('onboarding page renders correctly', async ({ page }) => {
+  await page.goto('/onboarding');
+  await expect(page).toHaveTitle(/Loreweaver/);
+  await expect(page.locator('text=Welcome to Loreweaver')).toBeVisible();
+  await expect(page.locator('text=Describe a world and')).toBeVisible();
+  await expect(page.locator('textarea')).toBeVisible();
+  await expect(page.locator('button:has-text("Generate World")')).toBeVisible();
 });
 
 test('dashboard displays stat cards', async ({ page }) => {
@@ -17,6 +26,7 @@ test('dashboard displays stat cards', async ({ page }) => {
 
 test('navigation works across main pages', async ({ page }) => {
   await page.goto('/');
+
   await page.click('text=Worlds');
   await expect(page.locator('h1:has-text("Worlds")')).toBeVisible();
 
@@ -42,9 +52,8 @@ test('chat page shows world and character selectors', async ({ page }) => {
 test('lore page shows entries or empty state', async ({ page }) => {
   await page.goto('/lore');
   await expect(page.locator('h1:has-text("Lore")')).toBeVisible();
-  // Either entries exist or empty state is shown
-  const hasEntries = await page.locator('text=No lore entries').count() === 0;
-  if (!hasEntries) {
+  const noEntries = await page.locator('text=No lore entries').count();
+  if (noEntries > 0) {
     await expect(page.locator('text=No lore entries')).toBeVisible();
   }
 });
