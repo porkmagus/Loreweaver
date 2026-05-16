@@ -88,11 +88,21 @@ export async function chatRoutes(app: FastifyInstance) {
       return;
     }
 
-    reply.header('Content-Type', 'text/event-stream');
-    reply.header('Cache-Control', 'no-cache, no-transform');
-    reply.header('Connection', 'keep-alive');
+    const origin = request.headers.origin;
+    const headers: Record<string, string> = {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+    };
+    if (origin) {
+      headers['Access-Control-Allow-Origin'] = origin;
+      headers.Vary = 'Origin';
+      headers['Access-Control-Allow-Credentials'] = 'true';
+    }
 
     try {
+      reply.hijack();
+      reply.raw.writeHead(200, headers);
       const stream = streamCharacterChat(characterId, worldId, message, sessionId ?? null, userId ?? null);
       for await (const event of stream) {
         reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);

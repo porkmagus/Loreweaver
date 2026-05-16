@@ -31,14 +31,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dark, setDark] = useState(() => {
     if (typeof window === 'undefined') return true;
-    return document.documentElement.classList.contains('dark');
+    return window.localStorage.getItem('loreweaver-theme') !== 'light';
   });
 
   useEffect(() => {
     if (dark) {
       document.documentElement.classList.add('dark');
+      window.localStorage.setItem('loreweaver-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      window.localStorage.setItem('loreweaver-theme', 'light');
     }
   }, [dark]);
 

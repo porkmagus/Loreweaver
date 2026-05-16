@@ -1,10 +1,11 @@
 import OpenAI from 'openai';
-import { createWorld } from './worldService.js';
-import { createCharacter } from './characterService.js';
+import { createWorld, updateWorld } from './worldService.js';
+import { createCharacter, updateCharacter } from './characterService.js';
 import { createLore } from './loreService.js';
 import { createTimelineEvent } from './timelineService.js';
 import { createRelationship } from './relationshipService.js';
 import { ingestLore } from './ingestService.js';
+import { generateCharacterPortrait, generateWorldBanner, type VisualMetadata } from './imageGenerationService.js';
 
 const apiKey = process.env.OPENAI_API_KEY;
 const openai = apiKey ? new OpenAI({ apiKey }) : null;
@@ -243,6 +244,21 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
     genre: generated.genre,
   });
 
+  const bannerTask = generateWorldBanner({
+    name: generated.name,
+    description: generated.description,
+    genre: generated.genre,
+    themes: [
+      ...generated.lore.map((l) => l.title),
+      ...generated.timeline.map((t) => t.title),
+    ].slice(0, 6),
+  }).then((banner) => updateWorld(world.id, {
+    metadata: {
+      visual: { banner },
+    } satisfies VisualMetadata,
+  }));
+
+  const characterVisualTasks: Array<Promise<unknown>> = [];
   const characterIds: number[] = [];
   for (const c of generated.characters) {
     const char = await createCharacter({
@@ -253,6 +269,19 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
       role: c.role,
       isPlayer: c.isPlayer,
     });
+    characterVisualTasks.push(generateCharacterPortrait({
+      worldName: generated.name,
+      worldGenre: generated.genre,
+      worldDescription: generated.description,
+      name: c.name,
+      description: c.description,
+      personality: c.personality,
+      role: c.role,
+    }).then((portrait) => updateCharacter(char.id, {
+      metadata: {
+        visual: { portrait },
+      } satisfies VisualMetadata,
+    })));
     characterIds.push(char.id);
   }
 
@@ -302,6 +331,8 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
       notes: r.notes,
     });
   }
+
+  await Promise.allSettled([bannerTask, ...characterVisualTasks]);
 
   return { worldId: world.id, name: world.name };
 }

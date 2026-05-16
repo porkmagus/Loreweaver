@@ -11,16 +11,15 @@ import { Chat } from '@/pages/Chat';
 import { Onboarding } from '@/pages/Onboarding';
 import { NotFound } from '@/pages/NotFound';
 import { Spinner } from '@/components/ui/Spinner';
-
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001').replace(/\/$/, '') + '/api';
+import { API_BASE } from '@/hooks/useApi';
 
 function useWorldCount() {
   const [count, setCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCount = async () => {
-    setLoading(true);
+  const fetchCount = async ({ showLoading = true }: { showLoading?: boolean } = {}) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/worlds`);
@@ -39,7 +38,7 @@ function useWorldCount() {
   useEffect(() => {
     fetchCount();
     // Poll every 10s to detect world creation from other tabs/sessions
-    const id = setInterval(fetchCount, 10_000);
+    const id = setInterval(() => fetchCount({ showLoading: false }), 10_000);
     return () => clearInterval(id);
   }, []);
 

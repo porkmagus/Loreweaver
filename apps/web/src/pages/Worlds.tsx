@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { GenerateWorldModal } from '@/components/GenerateWorldModal';
+import { WorldBannerFrame } from '@/components/VisualAssetFrame';
+import { getWorldBanner } from '@/lib/visualAssets';
 import {
   Globe, Plus, ChevronLeft, Users, BookOpen, Clock, Pencil, Trash2, Sparkles,
   ArrowRight
@@ -105,22 +107,15 @@ function WorldList() {
           <Link
             key={world.id}
             to={`/worlds?id=${world.id}`}
-            className="group rounded-card border border-ridge bg-surface bg-surface-grad p-6 transition-all duration-archive hover:border-gold/20"
+            className="group overflow-hidden rounded-card border border-ridge bg-surface bg-surface-grad transition-all duration-archive hover:border-gold/20"
           >
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-card border border-gold/20 bg-gold/5">
-                  <Globe className="h-6 w-6 text-gold" strokeWidth={1.5} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-serif text-h2 text-parchment truncate group-hover:text-gold transition-colors">
-                    {world.name}
-                  </h3>
-                  {world.genre && (
-                    <span className="text-tiny text-dust uppercase tracking-wider">{world.genre}</span>
-                  )}
-                </div>
-              </div>
+            <WorldBannerFrame
+              asset={getWorldBanner(world.metadata)}
+              title={world.name}
+              subtitle={world.genre}
+              className="min-h-[190px] border-0"
+            />
+            <div className="space-y-4 p-5">
               {world.description && (
                 <p className="text-small text-ash line-clamp-2 leading-relaxed">
                   {world.description}
@@ -236,23 +231,16 @@ function WorldDetail({ worldId }: { worldId: number }) {
       )}
 
       {world && !editing && (
-        <Card>
+        <Card className="overflow-hidden">
+          <WorldBannerFrame
+            asset={getWorldBanner(world.metadata)}
+            title={world.name}
+            subtitle={world.description}
+            className="min-h-[320px] border-0"
+          />
           <CardContent className="p-inner space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-card border border-gold/20 bg-gold/5">
-                <Globe className="h-7 w-7 text-gold" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h2 className="font-serif text-h1 text-parchment">{world.name}</h2>
-                {world.genre && (
-                  <span className="text-tiny text-dust uppercase tracking-wider">{world.genre}</span>
-                )}
-              </div>
-            </div>
-            {world.description && (
-              <p className="text-body text-ash leading-relaxed max-w-2xl">
-                {world.description}
-              </p>
+            {world.genre && (
+              <span className="text-tiny text-dust uppercase tracking-wider">{world.genre}</span>
             )}
             <div className="flex items-center gap-4 pt-2">
               <Link to={`/characters?worldId=${world.id}`} className="text-small text-gold hover:text-gold-dim transition-colors flex items-center gap-1.5">

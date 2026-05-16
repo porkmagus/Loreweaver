@@ -14,6 +14,7 @@ export const worlds = pgTable('worlds', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   genre: varchar('genre', { length: 100 }),
+  metadata: jsonb('metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
@@ -28,6 +29,7 @@ export const characters = pgTable('characters', {
   personality: text('personality'),
   role: varchar('role', { length: 100 }),
   isPlayer: boolean('is_player').default(false).notNull(),
+  metadata: jsonb('metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [

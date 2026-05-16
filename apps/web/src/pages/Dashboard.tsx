@@ -3,7 +3,9 @@ import { useApi } from '@/hooks/useApi';
 import { Spinner } from '@/components/ui/Spinner';
 import { Button } from '@/components/ui/Button';
 import { GenerateWorldModal } from '@/components/GenerateWorldModal';
+import { PortraitFrame, WorldBannerFrame } from '@/components/VisualAssetFrame';
 import { cn } from '@/lib/utils';
+import { getCharacterPortrait, getWorldBanner } from '@/lib/visualAssets';
 import {
   Globe,
   Users,
@@ -82,39 +84,31 @@ export function Dashboard() {
           <Spinner />
         </div>
       ) : world ? (
-        <div className="rounded-card border border-ridge bg-surface bg-surface-grad p-inner">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-card border border-gold/20 bg-gold/5">
-              <Globe className="h-7 w-7 text-gold" strokeWidth={1.5} />
-            </div>
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="flex items-center gap-3">
-                <h2 className="font-serif text-h1 text-parchment">{world.name}</h2>
-                {world.genre && (
-                  <span className="rounded-full border border-ridge bg-depth px-3 py-1 text-tiny text-dust uppercase tracking-wider">
-                    {world.genre}
-                  </span>
-                )}
-              </div>
-              {world.description && (
-                <p className="text-body text-ash leading-relaxed max-w-2xl">
-                  {world.description}
-                </p>
-              )}
-              <div className="flex items-center gap-6 pt-2">
-                <Link to="/worlds" className="group flex items-center gap-1.5 text-small text-gold hover:text-gold-dim transition-colors">
-                  <span>Explore World</span>
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={1.5} />
-                </Link>
-                <Link to="/chat" className="group flex items-center gap-1.5 text-small text-gold hover:text-gold-dim transition-colors">
-                  <span>Converse</span>
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={1.5} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+        <WorldBannerFrame
+          asset={getWorldBanner(world.metadata)}
+          title={world.name}
+          subtitle={world.description}
+          className="min-h-[280px]"
+        />
       ) : null}
+
+      {world && (
+        <div className="-mt-section flex flex-wrap items-center gap-6 px-inner">
+          {world.genre && (
+            <span className="rounded-card border border-ridge bg-depth px-3 py-1 text-tiny uppercase tracking-wider text-dust">
+              {world.genre}
+            </span>
+          )}
+          <Link to="/worlds" className="group flex items-center gap-1.5 text-small text-gold hover:text-gold-dim transition-colors">
+            <span>Explore World</span>
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={1.5} />
+          </Link>
+          <Link to="/chat" className="group flex items-center gap-1.5 text-small text-gold hover:text-gold-dim transition-colors">
+            <span>Converse</span>
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={1.5} />
+          </Link>
+        </div>
+      )}
 
       {/* Chronicle Grid */}
       {world && (
@@ -168,22 +162,15 @@ export function Dashboard() {
               <Link
                 key={char.id}
                 to={`/characters?id=${char.id}`}
-                className="group rounded-card border border-ridge bg-surface bg-surface-grad p-5 transition-all duration-archive hover:border-gold/30 hover:bg-gold/5"
+                className="group overflow-hidden rounded-card border border-ridge bg-surface bg-surface-grad transition-all duration-archive hover:border-gold/30 hover:bg-gold/5"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-card border border-ridge bg-depth">
-                      <Users className="h-4 w-4 text-ash" strokeWidth={1.5} />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-serif text-h3 text-parchment truncate group-hover:text-gold transition-colors">
-                        {char.name}
-                      </h3>
-                      {char.role && (
-                        <p className="text-tiny text-dust uppercase tracking-wider">{char.role}</p>
-                      )}
-                    </div>
-                  </div>
+                <PortraitFrame
+                  asset={getCharacterPortrait(char.metadata)}
+                  name={char.name}
+                  role={char.role}
+                  className="aspect-[4/3] border-0"
+                />
+                <div className="space-y-3 p-5">
                   {char.description && (
                     <p className="text-small text-ash line-clamp-2 leading-relaxed">
                       {char.description}

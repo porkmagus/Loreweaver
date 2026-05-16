@@ -12,6 +12,7 @@ export interface World {
   name: string;
   description: string | null;
   genre: string | null;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +25,7 @@ export interface Character {
   personality: string | null;
   role: string | null;
   isPlayer: boolean;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
 }

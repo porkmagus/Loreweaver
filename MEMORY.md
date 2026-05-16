@@ -209,6 +209,24 @@ Known limitations:
 
 ---
 
+## Phase6VisualIdentityGeneration
+
+Dynamic visual identity pass completed:
+- Worlds now support a persisted visual banner in `worlds.metadata.visual.banner`.
+- Characters now support a persisted portrait in `characters.metadata.visual.portrait`.
+- Image generation uses the existing OpenAI SDK and `OPENAI_API_KEY` with `IMAGE_MODEL`, `IMAGE_QUALITY`, and `IMAGE_GENERATION_TIMEOUT_MS`.
+- If image generation is disabled, unavailable, times out, or fails, deterministic SVG data-URI fallbacks are stored instead.
+- World generation starts banner and portrait generation while canonical world/character/lore/timeline/relationship records remain in Postgres.
+- UI surfaces now render banners and portraits on onboarding, dashboard, worlds, character profile/list, and chat header.
+- No asset CDN, object storage, provider abstraction layer, background queue, or backend redesign was introduced.
+
+Known limitations:
+- Generated image data URLs live in row metadata; use object storage before serious production scale.
+- Existing seeded worlds without visual metadata render frontend atmospheric fallback frames until regenerated or backfilled.
+- Image generation is synchronous from the user perspective, bounded by timeout and fallback behavior.
+
+---
+
 ## BootstrapHistory
 
 Phase 0 bootstrap completed:

@@ -22,11 +22,12 @@ export async function getWorldCharacters(worldId: number, opts?: { limit?: numbe
   return db.select().from(characters).where(eq(characters.worldId, worldId)).limit(limit).offset(offset);
 }
 
-export async function createWorld(data: { name: string; description?: string; genre?: string }) {
+export async function createWorld(data: { name: string; description?: string; genre?: string; metadata?: unknown }) {
   const [world] = await db.insert(worlds).values({
     name: data.name,
     description: data.description ?? null,
     genre: data.genre ?? null,
+    metadata: data.metadata ?? null,
   }).returning();
   return world;
 }
@@ -36,6 +37,7 @@ export async function updateWorld(id: number, data: Record<string, unknown>) {
   if ('name' in data) values.name = data.name;
   if ('description' in data) values.description = data.description;
   if ('genre' in data) values.genre = data.genre;
+  if ('metadata' in data) values.metadata = data.metadata;
   if (Object.keys(values).length === 0) return getWorldById(id);
 
   const [world] = await db.update(worlds).set(values).where(eq(worlds.id, id)).returning();

@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
+import { PortraitFrame } from '@/components/VisualAssetFrame';
+import { getCharacterPortrait } from '@/lib/visualAssets';
 import { Users, Plus, ChevronLeft, Heart, Clock, Pencil, Trash2 } from 'lucide-react';
 import type { Character, World, TimelineEvent } from '@loreweaver/shared';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -132,22 +134,15 @@ function CharacterList() {
           <Link
             key={char.id}
             to={`/characters?id=${char.id}`}
-            className="group rounded-card border border-ridge bg-surface bg-surface-grad p-5 transition-all duration-archive hover:border-gold/20"
+            className="group overflow-hidden rounded-card border border-ridge bg-surface bg-surface-grad transition-all duration-archive hover:border-gold/20"
           >
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-card border border-ridge bg-depth">
-                  <Users className="h-4 w-4 text-ash" strokeWidth={1.5} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-serif text-h3 text-parchment truncate group-hover:text-gold transition-colors">
-                    {char.name}
-                  </h3>
-                  {char.role && (
-                    <p className="text-tiny text-dust uppercase tracking-wider">{char.role}</p>
-                  )}
-                </div>
-              </div>
+            <PortraitFrame
+              asset={getCharacterPortrait(char.metadata)}
+              name={char.name}
+              role={char.role}
+              className="aspect-[4/3] border-0"
+            />
+            <div className="space-y-3 p-5">
               {char.description && (
                 <p className="text-small text-ash line-clamp-2 leading-relaxed">
                   {char.description}
@@ -264,11 +259,14 @@ function CharacterDetail({ characterId }: { characterId: number }) {
       {char && !editing && (
         <div className="space-y-section">
           <Card>
-            <CardContent className="p-inner space-y-5">
-              <div className="flex items-start gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-card border border-ridge bg-depth shrink-0">
-                  <Users className="h-7 w-7 text-ash" strokeWidth={1.5} />
-                </div>
+            <CardContent className="grid gap-inner p-inner lg:grid-cols-[320px_1fr]">
+              <PortraitFrame
+                asset={getCharacterPortrait(char.metadata)}
+                name={char.name}
+                role={char.role}
+                className="aspect-[3/4] min-h-[360px]"
+              />
+              <div className="space-y-5">
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
                     <h2 className="font-serif text-h1 text-parchment">{char.name}</h2>
@@ -284,17 +282,17 @@ function CharacterDetail({ characterId }: { characterId: number }) {
                     </p>
                   )}
                 </div>
-              </div>
-              {char.description && (
-                <p className="text-body text-ash leading-relaxed max-w-2xl">
-                  {char.description}
-                </p>
-              )}
-              <div className="flex items-center gap-4 pt-2">
-                <Link to={`/chat?worldId=${char.worldId}&characterId=${char.id}`} className="text-small text-gold hover:text-gold-dim transition-colors flex items-center gap-1.5">
-                  <Heart className="h-4 w-4" strokeWidth={1.5} />
-                  Converse
-                </Link>
+                {char.description && (
+                  <p className="text-body text-ash leading-relaxed max-w-2xl">
+                    {char.description}
+                  </p>
+                )}
+                <div className="flex items-center gap-4 pt-2">
+                  <Link to={`/chat?worldId=${char.worldId}&characterId=${char.id}`} className="text-small text-gold hover:text-gold-dim transition-colors flex items-center gap-1.5">
+                    <Heart className="h-4 w-4" strokeWidth={1.5} />
+                    Converse
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -2,9 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { db, pool } from './db/client.js';
-import { users } from './db/schema.js';
-import { sql } from 'drizzle-orm';
+import { characters, users, worlds } from './db/schema.js';
+import { eq, sql } from 'drizzle-orm';
 import { seedData } from './seed/seedData.js';
+import {
+  createFallbackCharacterPortrait,
+  createFallbackWorldBanner,
+  type VisualMetadata,
+} from './services/imageGenerationService.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -63,11 +68,11 @@ async function runMigrations() {
           applied_at timestamp with time zone DEFAULT now() NOT NULL
         )
       `);
-      for (const entry of journal.entries) {
+      for (const entry of journal.entries.slice(0, 1)) {
         await db.execute(sql`INSERT INTO "drizzle_migrations" (tag) VALUES (${entry.tag})`);
         appliedTags.add(entry.tag);
       }
-      console.log('Created drizzle_migrations tracking table and marked existing migrations as applied.');
+      console.log('Created drizzle_migrations tracking table and marked baseline schema migration as applied.');
     }
     // else: fresh database; migrations will be applied below and
     // recorded afterward.
@@ -132,6 +137,81 @@ async function isDatabaseEmpty(): Promise<boolean> {
   }
 }
 
+function hasVisualMetadata(metadata: unknown, key: 'banner' | 'portrait'): boolean {
+  if (!metadata || typeof metadata !== 'object') return false;
+  const visual = (metadata as { visual?: Record<string, unknown> }).visual;
+  return Boolean(visual?.[key]);
+}
+
+function withVisualAsset(metadata: unknown, visual: VisualMetadata['visual']): VisualMetadata {
+  const base = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+    ? metadata as Record<string, unknown>
+    : {};
+  const existingVisual = base.visual && typeof base.visual === 'object' && !Array.isArray(base.visual)
+    ? base.visual as Record<string, unknown>
+    : {};
+
+  return {
+    ...base,
+    visual: {
+      ...existingVisual,
+      ...visual,
+    },
+  } as VisualMetadata;
+}
+
+async function ensureFallbackVisualMetadata() {
+  const worldRows = await db.select().from(worlds);
+  const worldById = new Map(worldRows.map((world) => [world.id, world]));
+  let updatedWorlds = 0;
+  let updatedCharacters = 0;
+
+  for (const world of worldRows) {
+    if (hasVisualMetadata(world.metadata, 'banner')) continue;
+
+    await db.update(worlds)
+      .set({
+        metadata: withVisualAsset(world.metadata, {
+          banner: createFallbackWorldBanner({
+            name: world.name,
+            description: world.description ?? '',
+            genre: world.genre ?? 'speculative fiction',
+            themes: [],
+          }),
+        }),
+      })
+      .where(eq(worlds.id, world.id));
+    updatedWorlds += 1;
+  }
+
+  const characterRows = await db.select().from(characters);
+  for (const character of characterRows) {
+    if (hasVisualMetadata(character.metadata, 'portrait')) continue;
+
+    const world = worldById.get(character.worldId);
+    await db.update(characters)
+      .set({
+        metadata: withVisualAsset(character.metadata, {
+          portrait: createFallbackCharacterPortrait({
+            worldName: world?.name ?? 'Loreweaver',
+            worldGenre: world?.genre ?? 'speculative fiction',
+            worldDescription: world?.description ?? '',
+            name: character.name,
+            description: character.description ?? '',
+            personality: character.personality ?? '',
+            role: character.role ?? 'persona',
+          }),
+        }),
+      })
+      .where(eq(characters.id, character.id));
+    updatedCharacters += 1;
+  }
+
+  if (updatedWorlds > 0 || updatedCharacters > 0) {
+    console.log(`✅ Visual fallbacks ready (${updatedWorlds} worlds, ${updatedCharacters} characters).`);
+  }
+}
+
 /**
  * Startup sequence: migrations → seed if empty.
  */
@@ -157,4 +237,6 @@ export async function startup() {
       console.log('✅ Database has existing data. Skipping seed.\n');
     }
   }
+
+  await ensureFallbackVisualMetadata();
 }

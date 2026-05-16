@@ -77,7 +77,7 @@ export function GenerateWorldModal({ onClose }: { onClose?: () => void }) {
             {generating ? (
               <span className="flex items-center justify-center gap-2">
                 <Spinner className="h-4 w-4" />
-                Weaving realm…
+                Weaving realm and imagery…
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2">
@@ -86,6 +86,13 @@ export function GenerateWorldModal({ onClose }: { onClose?: () => void }) {
               </span>
             )}
           </Button>
+          {generating && (
+            <div className="grid grid-cols-3 gap-2 text-center text-tiny uppercase tracking-widest text-dust">
+              <span className="rounded-card border border-ridge bg-depth px-2 py-2">World</span>
+              <span className="rounded-card border border-ridge bg-depth px-2 py-2">Banner</span>
+              <span className="rounded-card border border-ridge bg-depth px-2 py-2">Portraits</span>
+            </div>
+          )}
         </form>
       </div>
     </div>

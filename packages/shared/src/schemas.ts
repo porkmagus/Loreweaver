@@ -28,6 +28,7 @@ export const WorldSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   genre: z.string().nullable(),
+  metadata: z.record(z.unknown()).nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -42,6 +43,7 @@ export const CharacterSchema = z.object({
   personality: z.string().nullable(),
   role: z.string().nullable(),
   isPlayer: z.boolean(),
+  metadata: z.record(z.unknown()).nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

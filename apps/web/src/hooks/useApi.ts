@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const RAW_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:3001').replace(/\/$/, '');
+const FALLBACK_BASE = typeof window === 'undefined'
+  ? 'http://localhost:3001'
+  : `${window.location.protocol}//${window.location.hostname}:3001`;
+const RAW_BASE = (import.meta.env.VITE_API_URL ?? FALLBACK_BASE).replace(/\/$/, '');
 export const API_BASE = RAW_BASE + '/api';
 
 interface ApiState<T> {

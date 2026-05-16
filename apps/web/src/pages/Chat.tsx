@@ -8,8 +8,11 @@ import { RelationshipCard } from '@/components/RelationshipCard';
 import { TimelineCard } from '@/components/TimelineCard';
 import { MemoryCard } from '@/components/MemoryCard';
 import { CognitionPanel, type CognitionData, type CognitionLoreHit } from '@/components/CognitionPanel';
+import { PortraitFrame } from '@/components/VisualAssetFrame';
+import { getCharacterPortrait } from '@/lib/visualAssets';
 import { Send, Bot, User, Sparkles, BookOpen, Brain, Clock, HeartPulse, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import type { World, Character, Relationship, TimelineEvent, Memory } from '@loreweaver/shared';
+import { useSearchParams } from 'react-router-dom';
 
 interface ChatMessage {
   id: number;
@@ -41,6 +44,7 @@ type StreamEvent =
   | { type: 'error'; error?: string };
 
 export function Chat() {
+  const [searchParams] = useSearchParams();
   const { data: worlds } = useApi<World[]>('/worlds');
   const [selectedWorldId, setSelectedWorldId] = useState<number | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<number | null>(null);
@@ -81,6 +85,20 @@ export function Chat() {
       setMessages(historyData);
     }
   }, [historyData]);
+
+  useEffect(() => {
+    const worldParam = Number(searchParams.get('worldId'));
+    if (!selectedWorldId && Number.isFinite(worldParam) && worldParam > 0) {
+      setSelectedWorldId(worldParam);
+    }
+  }, [searchParams, selectedWorldId]);
+
+  useEffect(() => {
+    const characterParam = Number(searchParams.get('characterId'));
+    if (!selectedCharacterId && Number.isFinite(characterParam) && characterParam > 0 && characters?.some((c) => c.id === characterParam)) {
+      setSelectedCharacterId(characterParam);
+    }
+  }, [searchParams, selectedCharacterId, characters]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -233,11 +251,21 @@ export function Chat() {
       {/* Header */}
       <div className="mb-section space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-label mb-1">DIALOGUE</p>
-            <h1 className="font-serif text-display text-parchment">
-              {selectedCharacter ? selectedCharacter.name : 'Converse'}
-            </h1>
+          <div className="flex items-center gap-4">
+            {selectedCharacter && (
+              <PortraitFrame
+                asset={getCharacterPortrait(selectedCharacter.metadata)}
+                name={selectedCharacter.name}
+                role={selectedCharacter.role}
+                className="hidden h-20 w-16 shrink-0 md:block"
+              />
+            )}
+            <div>
+              <p className="text-label mb-1">DIALOGUE</p>
+              <h1 className="font-serif text-display text-parchment">
+                {selectedCharacter ? selectedCharacter.name : 'Converse'}
+              </h1>
+            </div>
           </div>
           {selectedCharacterId && (
             <Button
@@ -503,7 +531,7 @@ export function Chat() {
 
         {/* Context Panel — Marginalia */}
         {selectedCharacterId && inspectorOpen && (
-          <div className="hidden w-96 flex-col gap-4 overflow-y-auto md:flex">
+          <div className="hidden w-96 flex-col gap-4 overflow-y-auto pr-3 [scrollbar-gutter:stable] md:flex">
             <div className="space-y-1">
               <p className="text-label">COGNITION</p>
               <CognitionPanel data={cognitionData} streaming={sending} />

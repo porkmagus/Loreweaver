@@ -2,64 +2,55 @@
 
 # Current Objective
 
-Implement a Transparent Cognition & Streaming UX pass for Loreweaver.
+Implement Dynamic Character Portraits and World Banner Generation for Loreweaver.
 
-The application now has:
+The app now has:
 - world generation
 - retrieval
-- persistent memory
+- streaming cognition
+- memory systems
 - relationships
 - timelines
-- onboarding
-- polished UI
-- Docker-first runtime
-- testing infrastructure
+- polished visual identity
 
 The next priority is:
-
 ```txt
-make the AI cognition pipeline visible and emotionally understandable
+make generated worlds visually alive
 ```
 
 This phase focuses on:
-- streaming responses
-- transparent retrieval visibility
-- visible memory recall
-- visible relationship changes
-- observable AI context assembly
+- generated character portraits
+- generated world banners
+- immersive visual identity
+- persistent visual world assets
 
-The goal is to transform Loreweaver from:
+The goal is:
 ```txt
-AI black box
+generated worlds should feel visually real immediately
 ```
 
-into:
-```txt
-observable narrative cognition system
-```
+This is a high-impact portfolio and demo phase.
 
-This is a portfolio-impact phase.
-
-Not a major architecture rewrite.
+Not a major backend rewrite.
 
 ---
 
 # Primary Goals
 
-Users should be able to:
-- see responses stream in real-time
-- understand WHY the AI responded a certain way
-- see retrieved memories/lore
-- observe relationship changes
-- observe timeline creation
-- understand the system is persistent and retrieval-aware
+Generated worlds should now include:
+- visual identity
+- atmospheric imagery
+- memorable characters
 
-The system should feel:
-- alive
-- intelligent
-- inspectable
-- grounded
-- technically sophisticated
+Users should feel:
+```txt
+I just created a living world
+```
+
+not:
+```txt
+I generated some database rows
+```
 
 ---
 
@@ -67,227 +58,177 @@ The system should feel:
 
 Implement:
 
-- streaming chat responses
-- prompt context inspector
-- retrieval visibility
-- memory recall visibility
-- relationship delta visibility
-- timeline creation visibility
-- lightweight cognition transparency UI
+- generated character portraits
+- generated world banners
+- persistent image storage references
+- image generation pipeline
+- graceful fallback behavior
+- polished visual presentation
 
-Do not redesign the backend architecture.
-
-Do not introduce autonomous agents.
-
----
-
-# 1. Streaming Chat Responses
-
-Implement real-time streaming responses.
-
-Preferred:
-- Server-Sent Events (SSE)
-- fetch streaming
-
-Avoid:
-- websocket overengineering unless already trivial
-
-Requirements:
-- assistant responses stream token-by-token or chunk-by-chunk
-- loading states remain smooth
-- scrolling remains stable
-- partial responses render cleanly
-- streaming failure gracefully falls back to standard response behavior
+Do not:
+- redesign retrieval architecture
+- redesign persistence systems
+- add auth
+- add multiplayer
+- add advanced asset management systems
 
 ---
 
-# 2. Prompt Context Inspector
+# 1. World Banner Generation
 
-Create a developer/advanced-user cognition panel.
+When a world is generated:
+- generate a world banner image
 
-This is one of the highest-value portfolio features.
-
-The panel should expose:
-
-- retrieved lore chunks
-- retrieved memories
-- relationship state
-- recent timeline events
-- prompt sections
-- token/context estimates if easy
-- AI mode (live/simulated)
-
-The inspector should feel:
-- elegant
-- inspectable
-- archival
-- readable
-
-Not:
-```txt
-raw debug log spam
-```
-
-Preferred placement:
-- collapsible sidebar
-- expandable panel
-- developer toggle
-
----
-
-# 3. Retrieved Lore Visibility
-
-During chat:
-- visibly show which lore entries influenced the response
-- optionally highlight:
-  - title
-  - snippet
-  - similarity score if available
-
-Suggested label:
-```txt
-Retrieved Lore
-```
-
-Users should understand:
-```txt
-the AI searched the world archive
-```
-
----
-
-# 4. Memory Recall Visibility
-
-When memories are injected or referenced:
-- show memory recall cards/snippets
-- optionally animate subtly
-
-Suggested label:
-```txt
-Recalled Memory
-```
-
-Goal:
-Users should emotionally understand:
-```txt
-the system remembers prior interactions
-```
-
----
-
-# 5. Relationship Delta Visibility
-
-After meaningful interactions:
-- visibly show relationship changes
+Banner should visually reflect:
+- world tone
+- genre
+- atmosphere
+- factions/themes
 
 Examples:
-```txt
-Trust +2
-Respect -1
-Affection +3
-```
+- gothic kingdoms
+- sci-fi ruins
+- haunted forests
+- cosmic archives
 
-Keep visual treatment:
-- subtle
-- elegant
-- non-gamified
+Banner should:
+- persist
+- display on dashboard/world page
+- become part of world identity
+
+---
+
+# 2. Character Portrait Generation
+
+When characters are generated:
+- generate stylized portraits
+
+Portraits should reflect:
+- character role
+- personality
+- world aesthetic
+- faction alignment
+
+Portrait style direction:
+- painterly
+- cinematic
+- dark fantasy/sci-fi
+- restrained
+- atmospheric
 
 Avoid:
-- giant RPG stat explosions
-- MMO UI styling
+- anime overload
+- meme aesthetics
+- hypersexualized designs
+- generic AI headshots
 
 ---
 
-# 6. Timeline Event Visibility
+# 3. Generation Provider Architecture
 
-When a timeline event is created:
-- show subtle timeline creation feedback
+Use the simplest viable image generation path.
 
-Example:
-```txt
-Timeline Updated
-"The Blackwood Pact was discussed."
-```
+Preferred:
+- OpenAI image API
+- Fal
+- Replicate
+- equivalent existing provider
 
-Should feel:
-- archival
-- narrative
-- persistent
+Do not:
+- build giant provider abstraction systems
+- add unnecessary orchestration layers
+
+Keep implementation pragmatic.
 
 ---
 
-# 7. Cognition Pipeline UX
+# 4. Fallback Behavior
 
-The app should now communicate:
+If image generation is unavailable:
+- use deterministic fallback placeholders
+- preserve layout quality
+- clearly indicate image generation unavailable
 
-```txt
-retrieve
-↓
-assemble context
-↓
-generate
-↓
-persist memory
-↓
-update relationships
-↓
-update timeline
-```
+Do not break onboarding or world generation.
 
-Without overwhelming the user.
+---
 
-The system should feel:
-- understandable
-- layered
-- intelligent
+# 5. Persistence Requirements
+
+Persist:
+- image URLs
+- asset metadata
+- generation status if useful
+
+Do not:
+- build full asset CDN systems
+- add object storage infrastructure unless already trivial
+
+Simple persistent URLs are acceptable.
+
+---
+
+# 6. UI Integration
+
+Integrate imagery into:
+
+- onboarding flow
+- dashboard
+- world overview
+- character profile
+- chat header/sidebar if appropriate
+
+Imagery should feel:
+- atmospheric
+- premium
+- cohesive with VISUAL_DIRECTION.md
+
+Avoid:
+- giant cluttered image walls
+- noisy gallery layouts
+
+---
+
+# 7. Loading & Generation States
+
+Image generation may take time.
+
+Add:
+- elegant loading states
+- generation placeholders
+- retry behavior if practical
+
+Avoid:
+- ugly spinners
+- layout jumps
+- broken empty boxes
 
 ---
 
 # 8. Visual Consistency
 
-All new UI must follow:
-- VISUAL_DIRECTION.md
-- existing visual overhaul direction
-
-Preserve:
-- atmospheric design
-- typography hierarchy
-- restrained motion
+All imagery must match:
+- existing visual overhaul
 - dark codex/archive aesthetic
+- restrained atmosphere
 
 Avoid:
-- generic debug panels
-- bright developer dashboards
-- ugly JSON walls
-- noisy telemetry aesthetics
+- bright startup aesthetics
+- neon cyberpunk overload
+- inconsistent styles
 
 ---
 
-# 9. Streaming State Polish
-
-Improve:
-- typing indicators
-- partial message rendering
-- loading transitions
-- interruption handling if practical
-
-Streaming should feel:
-- smooth
-- premium
-- intentional
-
----
-
-# 10. Documentation
+# 9. Documentation
 
 Update:
 - README.md
 - MEMORY.md
 
 Document:
-- streaming architecture
-- cognition inspector
-- transparent retrieval features
+- image generation behavior
+- provider configuration
+- fallback behavior
 - known limitations
 
 ---
@@ -295,24 +236,20 @@ Document:
 # Constraints
 
 Do not:
-- redesign core backend architecture
-- add autonomous agents
-- add multi-agent orchestration
-- add voice
+- redesign backend architecture
+- add auth
+- add billing
 - add multiplayer
-- add Kubernetes
-- add background job systems
-- massively refactor persistence
-- introduce massive frontend state complexity
+- add complex asset pipelines
+- add autonomous agents
+- add background queues unless absolutely required
 
 Preserve:
-- Docker-first runtime
-- current onboarding
-- current retrieval pipeline
-- current persistence systems
-- current visual direction
-- passing tests
-- type safety
+- onboarding flow
+- retrieval pipeline
+- streaming cognition systems
+- Docker runtime
+- current tests/builds
 
 ---
 
@@ -330,29 +267,23 @@ npm test
 Manual verification:
 - onboarding still works
 - world generation still works
-- streaming responses work
-- lore retrieval visibly appears
-- memory recall visibly appears
-- relationship changes visibly appear
-- timeline creation visibly appears
-- inspector panel works
-- UI remains visually cohesive
+- banner generates
+- portraits generate
+- fallback behavior works without provider
+- generated imagery persists
+- layouts remain visually cohesive
 
 ---
 
 # Success Criteria
 
-- responses stream in real time
-- cognition pipeline feels observable
-- lore retrieval is visible
-- memory recall is visible
-- relationship changes are visible
-- timeline creation is visible
-- inspector panel feels polished
-- app feels technically sophisticated
-- app feels emotionally alive
-- visual consistency preserved
-- tests/builds remain green
+- worlds gain strong visual identity
+- characters feel memorable
+- onboarding becomes emotionally impactful
+- screenshots become dramatically stronger
+- visual atmosphere improves substantially
+- fallback behavior remains stable
+- builds/tests remain green
 
 ---
 
@@ -360,9 +291,9 @@ Manual verification:
 
 Provide:
 - changed files
-- streaming implementation summary
-- cognition inspector summary
-- retrieval/memory visibility summary
+- image generation architecture summary
+- provider configuration summary
+- fallback behavior summary
+- screenshots/checklist
 - verification results
-- remaining UX limitations
-- recommendations for future premium polish
+- remaining limitations

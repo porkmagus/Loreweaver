@@ -27,8 +27,13 @@ export function Onboarding() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-xl space-y-10 text-center">
+    <div className="relative -m-8 flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center overflow-hidden px-4 py-12">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(201,169,110,0.18),transparent_32%),linear-gradient(145deg,#0A0B0F,#111318_48%,#201713)]" />
+      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-[linear-gradient(180deg,transparent,#0A0B0F_78%)]" />
+      <div className="absolute left-[10%] top-[18%] h-72 w-72 rounded-full bg-memory/10 blur-3xl" />
+      <div className="absolute right-[12%] top-[28%] h-80 w-80 rounded-full bg-ember/10 blur-3xl" />
+
+      <div className="relative w-full max-w-2xl space-y-10 text-center">
         {/* Hero */}
         <div className="space-y-4">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-card border border-gold/30 bg-gold/5">
@@ -39,7 +44,7 @@ export function Onboarding() {
               Loreweaver
             </h1>
             <p className="text-body text-ash max-w-md mx-auto">
-              Describe a world and the archive will build it — characters, lore, timeline, and living memory.
+              Describe a world and the archive will build it — characters, lore, timeline, living memory, and a visual identity.
             </p>
           </div>
         </div>
@@ -77,7 +82,7 @@ export function Onboarding() {
             {generating ? (
               <span className="flex items-center justify-center gap-2">
                 <Spinner className="h-4 w-4" />
-                Weaving world…
+                Weaving world and imagery…
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2">
@@ -88,8 +93,16 @@ export function Onboarding() {
           </Button>
         </form>
 
+        <div className="mx-auto grid max-w-xl gap-2 text-left text-tiny uppercase tracking-widest text-dust sm:grid-cols-3">
+          {['Banner identity', 'Character portraits', 'Persistent archive'].map((item) => (
+            <div key={item} className="rounded-card border border-ridge bg-depth/70 px-3 py-2">
+              {item}
+            </div>
+          ))}
+        </div>
+
         <p className="text-small text-dust">
-          No API key? The archive will craft a curated demo world. Add OPENAI_API_KEY for AI-generated creations.
+          No image provider? The archive keeps cinematic fallback visuals so generation never breaks the flow.
         </p>
       </div>
     </div>

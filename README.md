@@ -45,6 +45,7 @@ Drop lore into the system. Characters will reference it naturally in conversatio
 | **Lore Ingestion** | Paragraph-aware chunking with overlap — no heavy NLP dependencies |
 | **Semantic Search** | Find relevant lore by meaning, not just keywords |
 | **World Generation** | Describe a concept — the system builds a complete starter world |
+| **Generated Visual Identity** | Worlds gain persistent banners and characters gain cinematic portraits |
 | **Docker-First** | One command: `docker compose up -d` — entire stack online |
 
 ---
@@ -161,9 +162,13 @@ QDRANT_URL=http://qdrant:6333
 EMBEDDING_DIMENSION=1536
 EMBEDDING_MODEL=text-embedding-3-small
 CHAT_MODEL=gpt-4o-mini
+IMAGE_GENERATION_ENABLED=true
+IMAGE_MODEL=gpt-image-1-mini
+IMAGE_QUALITY=low
+IMAGE_GENERATION_TIMEOUT_MS=20000
 ```
 
-Without an `OPENAI_API_KEY`, the app uses deterministic simulated responses — fully usable for exploration and demos.
+Without an `OPENAI_API_KEY`, the app uses deterministic simulated responses and deterministic visual fallbacks — fully usable for exploration and demos.
 
 ---
 
@@ -192,6 +197,7 @@ npm run verify
 | **Modular monolith** | Single deployable unit. No microservices overhead |
 | **SSE for chat streaming** | Real-time UX without websocket infrastructure |
 | **Transparent cognition snapshot** | Exposes retrieval and prompt assembly without turning Qdrant into source-of-truth |
+| **Visual assets in metadata** | Banners and portraits persist on canonical rows without introducing asset infrastructure |
 | **Serial integer PKs** | Simplicity and join performance over UUID complexity |
 | **Docker-first** | `docker compose up -d` runs the entire stack |
 | **Postgres canonical, Qdrant retrieval only** | Deterministic, recoverable. Never trust vector DB with source of truth |
@@ -216,6 +222,8 @@ Stable velocity > sporadic brilliance
 
 - **Playwright E2E on Ubuntu 26.04**: Host OS not officially supported by Playwright 1.60.0. Tests run successfully inside `mcr.microsoft.com/playwright:v1.60.0-jammy` Docker container.
 - **Simulated AI fallback**: Without an `OPENAI_API_KEY`, chat uses deterministic template responses.
+- **Image fallback**: Without image generation, world banners and portraits use deterministic archival data-URI artwork.
+- **Image storage**: Generated images are stored as simple data URLs in row metadata. This is pragmatic for demos, but not a replacement for object storage at scale.
 - **Streaming fallback**: If the SSE request fails before completion, the web client falls back to the existing synchronous chat endpoint.
 - **Cognition visibility**: The inspector shows assembled context and retrieval signals, but it does not yet provide full token accounting or semantic memory compression.
 - **No auth / multi-user isolation**: All data is shared.
@@ -238,6 +246,7 @@ Stable velocity > sporadic brilliance
 ### Upcoming (v0.2.0)
 - [x] Streaming chat responses
 - [x] Transparent cognition inspector
+- [x] Dynamic world banners and character portraits
 - [ ] PDF/EPUB ingestion
 - [ ] Memory compression and summarization
 - [ ] Character-to-character relationship visualization

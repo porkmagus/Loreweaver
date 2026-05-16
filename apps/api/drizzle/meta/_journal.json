@@ -8,6 +8,13 @@
       "when": 1778855224389,
       "tag": "0000_early_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778906376784,
+      "tag": "0001_clear_wolfsbane",
+      "breakpoints": true
     }
   ]
 }

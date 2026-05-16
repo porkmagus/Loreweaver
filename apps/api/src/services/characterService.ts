@@ -41,6 +41,7 @@ export async function createCharacter(data: {
   personality?: string;
   role?: string;
   isPlayer?: boolean;
+  metadata?: unknown;
 }) {
   const [character] = await db.insert(characters).values({
     worldId: data.worldId,
@@ -49,6 +50,7 @@ export async function createCharacter(data: {
     personality: data.personality ?? null,
     role: data.role ?? null,
     isPlayer: data.isPlayer ?? false,
+    metadata: data.metadata ?? null,
   }).returning();
   return character;
 }
@@ -59,6 +61,7 @@ export async function updateCharacter(id: number, data: Partial<{
   personality: string | null;
   role: string | null;
   isPlayer: boolean;
+  metadata: unknown;
 }>) {
   const [character] = await db.update(characters)
     .set(data)

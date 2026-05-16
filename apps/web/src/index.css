@@ -5,6 +5,64 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --color-void: 245 241 234;
+    --color-depth: 237 232 223;
+    --color-depth-muted: 229 223 213;
+    --color-surface: 250 247 241;
+    --color-surface-muted: 242 238 230;
+    --color-ridge: 212 204 192;
+    --color-shingle: 188 178 164;
+    --color-parchment: 42 37 32;
+    --color-ash: 90 82 72;
+    --color-dust: 116 106 94;
+    --color-ghost: 154 143 129;
+    --color-gold: 143 104 43;
+    --color-gold-dim: 111 78 31;
+    --color-sage: 80 116 96;
+    --color-ember: 139 90 60;
+    --color-silver: 108 113 122;
+    --color-mist: 83 101 119;
+    --color-trust: 83 130 83;
+    --color-fear: 139 69 87;
+    --color-memory: 112 93 145;
+    --color-parchment-bg: 245 241 234;
+    --color-parchment-surface: 237 232 223;
+    --color-parchment-ridge: 212 207 198;
+    --color-ink: 42 37 32;
+    --color-soot: 90 85 78;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --color-void: 10 11 15;
+    --color-depth: 17 19 24;
+    --color-depth-muted: 14 16 21;
+    --color-surface: 24 26 33;
+    --color-surface-muted: 21 23 30;
+    --color-ridge: 34 36 45;
+    --color-shingle: 45 48 58;
+    --color-parchment: 232 228 220;
+    --color-ash: 168 162 158;
+    --color-dust: 107 101 96;
+    --color-ghost: 74 69 64;
+    --color-gold: 201 169 110;
+    --color-gold-dim: 160 131 74;
+    --color-sage: 90 122 106;
+    --color-ember: 139 90 60;
+    --color-silver: 138 143 152;
+    --color-mist: 94 107 122;
+    --color-trust: 107 142 107;
+    --color-fear: 139 69 87;
+    --color-memory: 123 107 154;
+    --color-parchment-bg: 245 241 234;
+    --color-parchment-surface: 237 232 223;
+    --color-parchment-ridge: 212 207 198;
+    --color-ink: 42 37 32;
+    --color-soot: 90 85 78;
+  }
+
   html {
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -13,13 +71,13 @@
 
   body {
     margin: 0;
-    background-color: #0A0B0F;
-    color: #E8E4DC;
+    background-color: rgb(var(--color-void));
+    color: rgb(var(--color-parchment));
   }
 
   ::selection {
-    background-color: rgba(201, 169, 110, 0.25);
-    color: #E8E4DC;
+    background-color: rgb(var(--color-gold) / 0.25);
+    color: rgb(var(--color-parchment));
   }
 
   /* Custom scrollbar */
@@ -33,12 +91,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #2D303A;
+    background: rgb(var(--color-shingle));
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #3D404A;
+    background: rgb(var(--color-ghost));
   }
 }
 
