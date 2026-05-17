@@ -4,12 +4,22 @@ import { resolveProviderConfig } from './provider.js';
 
 const dimension = Number(process.env.EMBEDDING_DIMENSION ?? 1536);
 
+let cachedEmbeddingClient: { client: OpenAI; key: string } | null = null;
+
 function getEmbeddingClient(): { client: OpenAI | null; apiKey: string | undefined; model: string; baseUrl: string | undefined } {
   const cfg = resolveProviderConfig();
   const apiKey = cfg.apiKey ?? process.env.OPENAI_API_KEY;
   const model = cfg.embeddingModel ?? process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
   const baseUrl = cfg.baseUrl;
-  const client = apiKey ? new OpenAI({ apiKey, baseURL: baseUrl?.trim() || undefined }) : null;
+  if (!apiKey) return { client: null, apiKey, model, baseUrl };
+
+  const key = `${apiKey}::${baseUrl ?? ''}`;
+  if (cachedEmbeddingClient && cachedEmbeddingClient.key === key) {
+    return { client: cachedEmbeddingClient.client, apiKey, model, baseUrl };
+  }
+
+  const client = new OpenAI({ apiKey, baseURL: baseUrl?.trim() || undefined });
+  cachedEmbeddingClient = { client, key };
   return { client, apiKey, model, baseUrl };
 }
 

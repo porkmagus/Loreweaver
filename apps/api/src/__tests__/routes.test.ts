@@ -66,6 +66,7 @@ vi.mock('../services/provider.js', () => ({
     maxTokens: z.number().int().positive().optional(),
   }),
   resolveProviderConfig: vi.fn(),
+  hasLiveProvider: vi.fn().mockReturnValue(true),
   testProviderConnection: vi.fn(),
 }));
 

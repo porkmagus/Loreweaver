@@ -18,6 +18,7 @@ export const ImageProviderConfigSchema = z.object({
 export type ImageProviderConfigInput = z.infer<typeof ImageProviderConfigSchema>;
 
 // Environment defaults
+const CUSTOM_ENDPOINT_TIMEOUT_MS = Number(process.env.IMAGE_GENERATION_TIMEOUT_MS ?? 20_000);
 const ENV_PROVIDER = (process.env.IMAGE_PROVIDER ?? 'disabled') as ImageProviderType;
 const ENV_BASE_URL = process.env.IMAGE_BASE_URL ?? '';
 const ENV_API_KEY = process.env.IMAGE_API_KEY ?? process.env.OPENAI_API_KEY ?? '';
@@ -30,8 +31,8 @@ const ENV_ENABLED = process.env.IMAGE_GENERATION_ENABLED !== 'false';
 export function getEnvImageProviderConfig(): ImageProviderConfig {
   return {
     provider: ENV_PROVIDER,
-    baseUrl: ENV_BASE_URL || undefined,
-    apiKey: ENV_API_KEY || undefined,
+    baseUrl: ENV_BASE_URL,
+    apiKey: ENV_API_KEY,
     model: ENV_MODEL || undefined,
     size: ENV_SIZE || undefined,
     quality: ENV_QUALITY || undefined,
@@ -107,6 +108,7 @@ export async function generateImage(
     const url = `${base}/images/generations`;
     const res = await fetch(url, {
       method: 'POST',
+      signal: AbortSignal.timeout(CUSTOM_ENDPOINT_TIMEOUT_MS),
       headers: {
         'Content-Type': 'application/json',
         ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),

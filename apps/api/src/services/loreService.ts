@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { loreEntries } from '../db/schema.js';
 
@@ -20,6 +20,11 @@ export async function getLoreByWorldId(worldId: number, opts?: { limit?: number;
 export async function getLoreById(id: number) {
   const [entry] = await db.select().from(loreEntries).where(eq(loreEntries.id, id)).limit(1);
   return entry ?? null;
+}
+
+export async function getLoreByIds(ids: number[]) {
+  if (ids.length === 0) return [];
+  return db.select().from(loreEntries).where(inArray(loreEntries.id, ids));
 }
 
 export async function createLore(data: {

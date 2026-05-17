@@ -79,35 +79,39 @@ function applyProviderDefaults(config: ProviderConfig): ProviderConfig {
 export function resolveProviderConfig(override?: Partial<ProviderConfig>): ProviderConfig {
   const env = getEnvProviderConfig();
   const runtime = runtimeProviderConfig;
-  const base = applyProviderDefaults(runtime ? { ...env, ...runtime } : env);
-  if (!override) return base;
-  const provider = override.provider ?? base.provider;
-  let baseUrl = pickNonEmpty(override.baseUrl, base.baseUrl) ?? '';
-  if (!baseUrl) {
-    if (provider === 'ollama') baseUrl = 'http://localhost:11434';
-    else if (provider === 'openrouter') baseUrl = 'https://openrouter.ai/api/v1';
-  }
-  return {
-    provider,
-    baseUrl,
-    apiKey: pickNonEmpty(override.apiKey, base.apiKey),
-    chatModel: override.chatModel ?? base.chatModel,
-    embeddingModel: pickNonEmpty(override.embeddingModel, base.embeddingModel),
-    imageModel: pickNonEmpty(override.imageModel, base.imageModel),
-    temperature: override.temperature ?? base.temperature,
-    maxTokens: override.maxTokens ?? base.maxTokens,
+  const merged: ProviderConfig = runtime ? { ...env, ...runtime } : env;
+  if (!override) return applyProviderDefaults(merged);
+  const result: ProviderConfig = {
+    provider: override.provider ?? merged.provider,
+    baseUrl: pickNonEmpty(override.baseUrl, merged.baseUrl) ?? '',
+    apiKey: pickNonEmpty(override.apiKey, merged.apiKey),
+    chatModel: override.chatModel ?? merged.chatModel,
+    embeddingModel: pickNonEmpty(override.embeddingModel, merged.embeddingModel),
+    imageModel: pickNonEmpty(override.imageModel, merged.imageModel),
+    temperature: override.temperature ?? merged.temperature,
+    maxTokens: override.maxTokens ?? merged.maxTokens,
   };
+  return applyProviderDefaults(result);
 }
 
+export function hasLiveProvider(cfg?: ProviderConfig): boolean {
+  const config = cfg ?? resolveProviderConfig();
+  return Boolean(config.chatModel);
+}
+
+let cachedOpenAIClient: { client: OpenAI; key: string } | null = null;
 
 function getOpenAIClient(config: ProviderConfig): OpenAI | null {
   if (config.provider === 'ollama') return null;
   const apiKey = config.apiKey || 'dummy';
-  return new OpenAI({
-    apiKey,
-    baseURL: config.baseUrl?.trim() || undefined,
-    dangerouslyAllowBrowser: false,
-  });
+  const baseURL = config.baseUrl?.trim() || undefined;
+  const key = `${apiKey}::${baseURL ?? ''}`;
+  if (cachedOpenAIClient && cachedOpenAIClient.key === key) {
+    return cachedOpenAIClient.client;
+  }
+  const client = new OpenAI({ apiKey, baseURL, dangerouslyAllowBrowser: false });
+  cachedOpenAIClient = { client, key };
+  return client;
 }
 
 export async function chatCompletion(

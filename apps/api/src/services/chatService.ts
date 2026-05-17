@@ -12,6 +12,7 @@ import {
   chatCompletion,
   streamChatCompletion,
   resolveProviderConfig,
+  hasLiveProvider,
   getEnvProviderConfig,
   type ProviderConfig,
 } from './provider.js';
@@ -24,11 +25,6 @@ const TIMELINE_LIMIT = 5;
 const RELATIONSHIP_LIMIT = 5;
 
 type MemoryRow = typeof memories.$inferSelect;
-
-function hasLiveProvider(): boolean {
-  const cfg = resolveProviderConfig();
-  return Boolean(cfg.chatModel);
-}
 
 export async function getOrCreateSession(characterId: number, worldId: number, userId?: number | null) {
   const existing = await db.select().from(chatSessions)

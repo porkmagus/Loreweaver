@@ -50,9 +50,16 @@ export function Dashboard() {
   const activeCharacter = characters?.find((c) => c.id === getActiveCharacterId()) ?? characters?.[0];
 
   useEffect(() => {
-    if (activeWorldId) setActiveWorldId(activeWorldId);
-    if (activeCharacter) setActiveCharacterId(activeCharacter.id);
-  }, [activeWorldId, activeCharacter]);
+    if (activeWorldId && activeWorldId !== getActiveWorldId()) {
+      setActiveWorldId(activeWorldId);
+    }
+  }, [activeWorldId]);
+
+  useEffect(() => {
+    if (activeCharacter && activeCharacter.id !== getActiveCharacterId()) {
+      setActiveCharacterId(activeCharacter.id);
+    }
+  }, [activeCharacter]);
 
   const anyLoading = hLoading || wLoading || cLoading || lLoading || eLoading || sLoading;
   const world = activeWorld;
@@ -105,7 +112,7 @@ export function Dashboard() {
       </div>
 
       {/* World Focus */}
-      {anyLoading && !world ? (
+      {wLoading && !world ? (
         <div className="flex h-48 items-center justify-center">
           <Spinner />
         </div>

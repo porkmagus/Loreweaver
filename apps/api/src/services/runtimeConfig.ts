@@ -2,6 +2,7 @@ import {
   getEnvProviderConfig,
   setRuntimeProviderConfig,
   resolveProviderConfig,
+  hasLiveProvider,
   type ProviderConfig,
 } from './provider.js';
 import {
@@ -38,7 +39,7 @@ export async function loadPersistedConfig(): Promise<ResolvedConfig> {
 
   const provider = resolveProviderConfig();
   const imageProvider = resolveImageProviderConfig();
-  const simulated = !Boolean(provider.chatModel);
+  const simulated = !hasLiveProvider(provider);
 
   cachedConfig = { provider, imageProvider, simulated };
   return cachedConfig;
@@ -48,7 +49,7 @@ export function getResolvedConfig(): ResolvedConfig {
   if (cachedConfig) return cachedConfig;
   const provider = resolveProviderConfig();
   const imageProvider = resolveImageProviderConfig();
-  const simulated = !Boolean(provider.chatModel);
+  const simulated = !hasLiveProvider(provider);
   return { provider, imageProvider, simulated };
 }
 
@@ -71,6 +72,6 @@ export async function updateImageProviderConfig(config: Partial<ImageProviderCon
 function refreshCache(): void {
   const provider = resolveProviderConfig();
   const imageProvider = resolveImageProviderConfig();
-  const simulated = !Boolean(provider.chatModel);
+  const simulated = !hasLiveProvider(provider);
   cachedConfig = { provider, imageProvider, simulated };
 }

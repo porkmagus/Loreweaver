@@ -374,3 +374,77 @@ Preserve:
 - Dashboard CTAs route intelligently to active/latest world/character
 - app functionality remains intact
 - build/typecheck/tests pass
+
+---
+
+# Phase 4.5 — Cohesion & Resilience Fixes (Completed)
+
+## Principles
+- No new user-facing features.
+- No breaking API or DB schema changes.
+- No dependency additions.
+- Preserve all existing behavior; only fix inefficiencies, duplication, and papercuts.
+- Every file change passes the existing test suite.
+
+## Phase A: API Backend (Cohesion + Performance)
+
+### A1. Cache OpenAI client after first instantiation
+- **Files**: `apps/api/src/services/embedding.ts`, `apps/api/src/services/provider.ts`
+- Added module-level `cachedOpenAIClient` and `cachedEmbeddingClient` with key-based invalidation (`apiKey + baseURL`).
+
+### A2. Centralize `hasLiveProvider()`
+- **Files**: `apps/api/src/services/provider.ts` (add), `apps/api/src/services/chatService.ts`, `apps/api/src/services/worldGenerationService.ts`, `apps/api/src/services/runtimeConfig.ts`, `apps/api/src/routes/health.ts`
+- Exported `hasLiveProvider(cfg?)` from `provider.ts`. Replaced all 4 inline `Boolean(cfg.chatModel)` copies.
+
+### A3. Batch Postgres lookup in semantic search
+- **Files**: `apps/api/src/routes/search.ts`, `apps/api/src/services/loreService.ts`
+- Added `getLoreByIds(ids)` using `inArray(loreEntries.id, ids)`. Search route now does a single batch query instead of N round-trips.
+
+### A4. Move `ensureCollection()` from per-request to startup-time
+- **Files**: `apps/api/src/services/qdrant.ts`, `apps/api/src/startup.ts`
+- Added `collectionChecked` flag in `qdrant.ts`. Called `ensureCollection()` once during `startup()` sequence.
+
+### A5. Deduplicate provider defaulting logic
+- **Files**: `apps/api/src/services/provider.ts`
+- Removed redundant inline `if (!baseUrl)` defaulting in `resolveProviderConfig`. `applyProviderDefaults` now runs once on the final merged config.
+
+### A6. Align empty-string semantics in image provider
+- **Files**: `apps/api/src/services/imageProvider.ts`
+- `getEnvImageProviderConfig()` now preserves empty strings (same as `provider.ts`) instead of converting to `undefined`. Makes clearing behavior consistent.
+
+### A7. Add timeout to custom image endpoint fetch
+- **Files**: `apps/api/src/services/imageProvider.ts`
+- Added `AbortSignal.timeout(CUSTOM_ENDPOINT_TIMEOUT_MS)` to the custom image proxy `fetch` call.
+
+## Phase B: Web Frontend (UX + Resilience)
+
+### B1. Clear Settings draft from localStorage after successful save
+- **Files**: `apps/web/src/pages/Settings.tsx`
+- `localStorage.removeItem(STORAGE_KEY)` and `localStorage.removeItem(IMAGE_STORAGE_KEY)` after successful save.
+
+### B2. Add request timeout to `apiPost` / `apiPatch` / `apiDelete`
+- **Files**: `apps/web/src/hooks/useApi.ts`
+- Added `fetchWithTimeout()` helper (15s default via `AbortController`).
+
+### B3. Fix Dashboard localStorage write thrashing
+- **Files**: `apps/web/src/pages/Dashboard.tsx`
+- Split single `useEffect` into two gated effects that only write when the derived selection differs from stored state.
+
+### B4. Scope Dashboard loading spinner to banner only
+- **Files**: `apps/web/src/pages/Dashboard.tsx`
+- Changed hero spinner condition from `anyLoading && !world` to `wLoading && !world`.
+
+## Phase C: Regression & Commit
+
+- API tests: 8 files, 73 tests ✅
+- Web tests: 5 files, 13 tests ✅
+- Web build: ✅
+- Docker stack rebuild: ✅
+- End-to-end lore pipeline (create → ingest → search): ✅
+- Commit: `refactor: cohesion and resilience fixes across api and web`
+
+## Explicitly Excluded
+
+- **Chat history pagination** (`HISTORY_LIMIT = 20`): User-facing feature change deferred.
+- **useApi request deduplication**: Module-level promise cache deferred due to edge-case risk.
+- **Any new dependencies**: None required.

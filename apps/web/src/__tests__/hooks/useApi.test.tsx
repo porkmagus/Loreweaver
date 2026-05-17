@@ -68,6 +68,6 @@ describe('apiDelete', () => {
   it('deletes successfully', async () => {
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: true } as Response);
     await apiDelete('/worlds/1');
-    expect(fetch).toHaveBeenCalledWith(`${base}/worlds/1`, { method: 'DELETE' });
+    expect(fetch).toHaveBeenCalledWith(`${base}/worlds/1`, expect.objectContaining({ method: 'DELETE' }));
   });
 });

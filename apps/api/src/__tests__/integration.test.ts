@@ -4,6 +4,7 @@ import { buildApp } from '../index.js';
 import { getCharacterById } from '../services/characterService.js';
 import { sendCharacterChat, getChatHistory } from '../services/chatService.js';
 import { searchLore } from '../services/qdrant.js';
+import { getLoreByIds, createLore, getLoreById } from '../services/loreService.js';
 import { getWorldById, getWorldStats } from '../services/worldService.js';
 
 const mockSelect = vi.fn();
@@ -48,6 +49,16 @@ vi.mock('../services/chatService.js', () => ({
   getChatHistory: vi.fn(),
 }));
 
+vi.mock('../services/loreService.js', () => ({
+  listLore: vi.fn(),
+  getLoreByWorldId: vi.fn(),
+  getLoreById: vi.fn(),
+  getLoreByIds: vi.fn(),
+  createLore: vi.fn(),
+  updateLore: vi.fn(),
+  deleteLore: vi.fn(),
+}));
+
 vi.mock('../services/worldService.js', () => ({
   listWorlds: vi.fn(),
   getWorldById: vi.fn(),
@@ -74,7 +85,7 @@ describe('Lore ingestion and semantic search integration', () => {
 
     // Step 1: Create lore
     const lore = { id: 1, title: 'Ancient Map', worldId: 1, content: 'The map shows hidden treasures.' };
-    mockReturning.mockResolvedValueOnce([lore]);
+    vi.mocked(createLore).mockResolvedValueOnce(lore);
     const createRes = await request(a.server)
       .post('/api/lore')
       .send({ title: lore.title, worldId: lore.worldId, content: lore.content })
@@ -82,9 +93,7 @@ describe('Lore ingestion and semantic search integration', () => {
     expect(createRes.body.data).toEqual(lore);
 
     // Step 2: Ingest lore
-    mockFrom.mockReturnValue({ where: mockWhere, limit: mockLimit });
-    mockWhere.mockReturnValue({ limit: mockLimit });
-    mockLimit.mockResolvedValueOnce([lore]);
+    vi.mocked(getLoreById).mockResolvedValueOnce(lore);
     const ingestRes = await request(a.server)
       .post('/api/lore/1/ingest')
       .expect(200);
@@ -104,10 +113,7 @@ describe('Lore ingestion and semantic search integration', () => {
       },
     };
     vi.mocked(searchLore).mockResolvedValueOnce([searchHit]);
-
-    mockFrom.mockReturnValue({ where: mockWhere, limit: mockLimit });
-    mockWhere.mockReturnValue({ limit: mockLimit });
-    mockLimit.mockResolvedValueOnce([lore]);
+    vi.mocked(getLoreByIds).mockResolvedValueOnce([lore]);
 
     const searchRes = await request(a.server)
       .post('/api/search/lore')

@@ -11,6 +11,7 @@ import {
   type VisualMetadata,
 } from './services/imageGenerationService.js';
 import { loadPersistedConfig } from './services/runtimeConfig.js';
+import { ensureCollection } from './services/qdrant.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -245,6 +246,14 @@ export async function startup() {
     } else {
       console.log('✅ Database has existing data. Skipping seed.\n');
     }
+  }
+
+  // 3. Ensure Qdrant collection exists
+  try {
+    await ensureCollection();
+    console.log('✅ Qdrant vector collection ready.\n');
+  } catch (err) {
+    console.warn('⚠️ Qdrant collection check failed:', err instanceof Error ? err.message : String(err));
   }
 
   await ensureFallbackVisualMetadata();

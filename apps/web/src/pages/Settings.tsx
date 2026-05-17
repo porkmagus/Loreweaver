@@ -261,6 +261,7 @@ export function Settings() {
         maxTokens: form.maxTokens ?? 800,
       };
       await apiPost<ProviderConfig>('/settings/provider', payload);
+      localStorage.removeItem(STORAGE_KEY);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -314,6 +315,7 @@ export function Settings() {
         enabled: imageForm.enabled ?? false,
       };
       await apiPost<ImageProviderConfig>('/settings/image-provider', payload);
+      localStorage.removeItem(IMAGE_STORAGE_KEY);
       setImageSaved(true);
       setTimeout(() => setImageSaved(false), 3000);
     } catch (err) {

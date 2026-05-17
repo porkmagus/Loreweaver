@@ -6,10 +6,16 @@ const vectorDim = Number(process.env.EMBEDDING_DIMENSION ?? 1536);
 
 const client = new QdrantClient({ url: qdrantUrl });
 
+let collectionChecked = false;
+
 export async function ensureCollection(): Promise<void> {
+  if (collectionChecked) return;
   const { collections } = await client.getCollections();
   const exists = collections.some((c) => c.name === collectionName);
-  if (exists) return;
+  if (exists) {
+    collectionChecked = true;
+    return;
+  }
 
   await client.createCollection(collectionName, {
     vectors: {
@@ -27,6 +33,8 @@ export async function ensureCollection(): Promise<void> {
     field_name: 'loreEntryId',
     field_schema: 'integer',
   });
+
+  collectionChecked = true;
 }
 
 export interface LoreChunkPayload {

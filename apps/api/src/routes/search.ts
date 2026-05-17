@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { embedText } from '../services/embedding.js';
 import { searchLore, ensureCollection } from '../services/qdrant.js';
-import { getLoreById } from '../services/loreService.js';
+import { getLoreByIds } from '../services/loreService.js';
 
 const SearchLoreSchema = z.object({
   worldId: z.number().int().positive(),
@@ -29,20 +29,19 @@ export async function searchRoutes(app: FastifyInstance) {
       const vector = await embedText(query);
       const hits = await searchLore(worldId, vector, limit ?? 10);
 
-      // Map hits back to Postgres entries to validate existence
-      const enriched = await Promise.all(
-        hits.map(async (hit) => {
-          const entry = await getLoreById(hit.payload.loreEntryId);
-          return {
-            chunkIndex: hit.payload.chunkIndex,
-            chunkText: hit.payload.chunkText,
-            score: hit.score,
-            loreEntryId: hit.payload.loreEntryId,
-            title: hit.payload.title,
-            entryExists: !!entry,
-          };
-        }),
-      );
+      // Batch-fetch Postgres entries to validate existence (single round-trip)
+      const loreIds = hits.map((h) => h.payload.loreEntryId);
+      const entries = await getLoreByIds(loreIds);
+      const entryMap = new Map(entries.map((e) => [e.id, e]));
+
+      const enriched = hits.map((hit) => ({
+        chunkIndex: hit.payload.chunkIndex,
+        chunkText: hit.payload.chunkText,
+        score: hit.score,
+        loreEntryId: hit.payload.loreEntryId,
+        title: hit.payload.title,
+        entryExists: entryMap.has(hit.payload.loreEntryId),
+      }));
 
       reply.send({ data: enriched });
     } catch (err) {

@@ -47,8 +47,17 @@ export function useApi<T>(url: string | null): ApiState<T> & { refetch: () => vo
   return { ...state, refetch: fetchData };
 }
 
+const DEFAULT_TIMEOUT_MS = 15_000;
+
+function fetchWithTimeout(url: string, init?: RequestInit & { timeout?: number }): Promise<Response> {
+  const { timeout = DEFAULT_TIMEOUT_MS, ...rest } = init ?? {};
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { ...rest, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 export async function apiPost<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, {
+  const res = await fetchWithTimeout(`${API_BASE}${url}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -62,7 +71,7 @@ export async function apiPost<T>(url: string, body: unknown): Promise<T> {
 }
 
 export async function apiPatch<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, {
+  const res = await fetchWithTimeout(`${API_BASE}${url}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -76,7 +85,7 @@ export async function apiPatch<T>(url: string, body: unknown): Promise<T> {
 }
 
 export async function apiDelete(url: string): Promise<void> {
-  const res = await fetch(`${API_BASE}${url}`, { method: 'DELETE' });
+  const res = await fetchWithTimeout(`${API_BASE}${url}`, { method: 'DELETE' });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error ?? `HTTP ${res.status}`);

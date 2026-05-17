@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { HealthResponseSchema } from '@loreweaver/shared';
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { resolveProviderConfig, testProviderConnection } from '../services/provider.js';
+import { resolveProviderConfig, hasLiveProvider, testProviderConnection } from '../services/provider.js';
 import { resolveImageProviderConfig, testImageProviderConnection } from '../services/imageProvider.js';
 
 const qdrantUrl = process.env.QDRANT_URL ?? 'http://localhost:6333';
@@ -27,7 +27,7 @@ export async function healthRoutes(app: FastifyInstance) {
   app.get('/health', async (_request, reply) => {
     const qdrantOk = await checkQdrant();
     const providerConfig = resolveProviderConfig();
-    const live = Boolean(providerConfig.chatModel);
+    const live = hasLiveProvider(providerConfig);
     const providerStatus = live ? await testProviderConnection(providerConfig) : null;
 
     const imageConfig = resolveImageProviderConfig();

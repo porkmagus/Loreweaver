@@ -8,13 +8,9 @@ import { generateCharacterPortrait, generateWorldBanner, type VisualMetadata } f
 import {
   chatCompletion,
   resolveProviderConfig,
+  hasLiveProvider,
   getEnvProviderConfig,
 } from './provider.js';
-
-function hasLiveProvider(): boolean {
-  const cfg = resolveProviderConfig();
-  return Boolean(cfg.chatModel);
-}
 
 interface GeneratedWorld {
   name: string;
