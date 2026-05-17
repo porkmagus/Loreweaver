@@ -130,6 +130,21 @@ USER PROMPT
 ${userPrompt}`;
 }
 
+function extractJson(text: string): string {
+  // Try markdown code fences first
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (fenceMatch) return fenceMatch[1].trim();
+
+  // Find first { and last } to extract a JSON object
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end !== -1 && end > start) {
+    return text.slice(start, end + 1);
+  }
+
+  return text.trim();
+}
+
 function deterministicWorld(prompt: string): GeneratedWorld {
   // Deterministic fallback: hash the prompt to pick from a small palette
   const hash = Array.from(prompt).reduce((acc, c) => acc + c.charCodeAt(0), 0);
@@ -193,7 +208,10 @@ async function callLLM(prompt: string): Promise<GeneratedWorld> {
     throw new Error('AI provider not available');
   }
 
-  const config = resolveProviderConfig();
+  const baseConfig = resolveProviderConfig();
+  // World generation needs significantly more tokens than chat (full JSON world output)
+  const config = { ...baseConfig, maxTokens: 8192 };
+
   const completion = await chatCompletion(config, [
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'user', content: buildUserPrompt(prompt) },
@@ -204,7 +222,17 @@ async function callLLM(prompt: string): Promise<GeneratedWorld> {
     throw new Error('Empty LLM response');
   }
 
-  const parsed = JSON.parse(raw) as GeneratedWorld;
+  const jsonText = extractJson(raw);
+
+  let parsed: GeneratedWorld;
+  try {
+    parsed = JSON.parse(jsonText) as GeneratedWorld;
+  } catch (err) {
+    throw new Error(
+      `Failed to parse LLM response as JSON: ${err instanceof Error ? err.message : String(err)}. ` +
+      `Raw preview (first 800 chars): ${raw.slice(0, 800)}`
+    );
+  }
 
   // Sanitize
   parsed.characters = (parsed.characters ?? []).map((c) => ({
@@ -230,9 +258,19 @@ async function callLLM(prompt: string): Promise<GeneratedWorld> {
 }
 
 export async function generateWorldFromPrompt(userPrompt: string): Promise<{ worldId: number; name: string }> {
-  const generated = hasLiveProvider()
-    ? await callLLM(userPrompt).catch(() => deterministicWorld(userPrompt))
-    : deterministicWorld(userPrompt);
+  let generated: GeneratedWorld;
+
+  if (hasLiveProvider()) {
+    try {
+      generated = await callLLM(userPrompt);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      console.error('[world-generation] LLM call failed, using deterministic fallback:', reason);
+      generated = deterministicWorld(userPrompt);
+    }
+  } else {
+    generated = deterministicWorld(userPrompt);
+  }
 
   const world = await createWorld({
     name: generated.name,
