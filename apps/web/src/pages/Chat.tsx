@@ -32,6 +32,7 @@ interface ChatMessage {
   content: string;
   createdAt: string;
   pending?: boolean;
+  optimistic?: boolean;
 }
 
 interface PostChatEffects {
@@ -69,15 +70,23 @@ function useMergeableHistory(historyData: ChatMessage[] | null) {
 
       const lastLocal = prev[prev.length - 1];
       const lastServer = historyData[historyData.length - 1];
-      // Accept server history only if it has the same or more messages
-      // AND the last message content/role match the local last message.
-      // This proves the server state is fresh (not a stale refetch).
-      const serverIsFresh =
-        historyData.length >= prev.length &&
+      // Accept server history if the last message content/role match.
+      const tailsMatch =
         lastServer.role === lastLocal.role &&
         lastServer.content === lastLocal.content;
 
-      return serverIsFresh ? historyData : prev;
+      if (!tailsMatch) return prev;
+
+      // If server has same or more messages, it's definitely fresh.
+      if (historyData.length >= prev.length) return historyData;
+
+      // Server has fewer messages: this can be a stale fetch or a HISTORY_LIMIT
+      // truncation. If the excess local messages are optimistic orphans,
+      // replace to clean them up. Otherwise keep local to preserve messages
+      // that extend beyond the server limit.
+      const excessLocal = prev.slice(0, prev.length - historyData.length);
+      const hasOptimisticExcess = excessLocal.some((m) => m.optimistic);
+      return hasOptimisticExcess ? historyData : prev;
     });
   }, [historyData]);
 
@@ -139,6 +148,7 @@ export function Chat() {
   const { messages, setMessages } = useMergeableHistory(historyData);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [contextRefreshing, setContextRefreshing] = useState(false);
   const [cognitionData, setCognitionData] = useState<CognitionData | null>(null);
@@ -322,14 +332,15 @@ export function Chat() {
 
   const handleSend = useCallback(async (e?: React.FormEvent | React.KeyboardEvent) => {
     e?.preventDefault();
-    if (!input.trim() || sending || !selectedWorldId || !selectedCharacterId) return;
+    if (!input.trim() || sendingRef.current || !selectedWorldId || !selectedCharacterId) return;
 
+    sendingRef.current = true;
     const trimmed = input.trim();
     const assistantId = Date.now() + 1;
     setMessages((prev) => [
       ...prev,
-      { id: Date.now(), role: 'user', content: trimmed, createdAt: new Date().toISOString() },
-      { id: assistantId, role: 'assistant', content: '', createdAt: new Date().toISOString(), pending: true },
+      { id: Date.now(), role: 'user', content: trimmed, createdAt: new Date().toISOString(), optimistic: true },
+      { id: assistantId, role: 'assistant', content: '', createdAt: new Date().toISOString(), pending: true, optimistic: true },
     ]);
     setInput('');
     setSending(true);
@@ -349,9 +360,10 @@ export function Chat() {
         setError(fallbackErr instanceof Error ? fallbackErr.message : err instanceof Error ? err.message : 'Chat failed');
       }
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
-  }, [input, sending, selectedWorldId, selectedCharacterId, sendWithStreaming, sendWithStandardFallback, setMessages]);
+  }, [input, selectedWorldId, selectedCharacterId, sendWithStreaming, sendWithStandardFallback, setMessages]);
 
   const selectedCharacter = characters?.find((c) => c.id === selectedCharacterId);
   const pipelineSteps = [
