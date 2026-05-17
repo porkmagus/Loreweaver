@@ -3,7 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { apiPost, API_BASE } from '@/hooks/useApi';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
-import { Globe, Sparkles, AlertCircle, Settings } from 'lucide-react';
+import { Globe, Sparkles, AlertCircle, Settings, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const PHASES = [
+  { label: 'World', delay: 0 },
+  { label: 'Banner', delay: 3500 },
+  { label: 'Portraits', delay: 7000 },
+] as const;
 
 interface HealthData {
   status: string;
@@ -18,6 +25,7 @@ export function Onboarding() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthData | null>(null);
+  const [phase, setPhase] = useState(0);
 
   useEffect(() => {
     fetch(`${API_BASE}/health`)
@@ -26,11 +34,23 @@ export function Onboarding() {
       .catch(() => setHealth({ status: 'ok', aiMode: 'simulated' }));
   }, []);
 
+  useEffect(() => {
+    if (!generating) {
+      setPhase(0);
+      return;
+    }
+    const timers = PHASES.slice(1).map((p) =>
+      setTimeout(() => setPhase((i) => Math.max(i, PHASES.indexOf(p) + 1)), p.delay)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [generating]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim()) return;
     setGenerating(true);
     setError(null);
+    setPhase(0);
     try {
       await apiPost<{ worldId: number; name: string }>('/worlds/generate', { prompt: prompt.trim() }, { timeout: 180_000 });
       navigate('/');
@@ -42,13 +62,13 @@ export function Onboarding() {
   };
 
   return (
-    <div className="relative -m-8 flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center overflow-hidden px-4 py-12">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(201,169,110,0.18),transparent_32%),linear-gradient(145deg,#0A0B0F,#111318_48%,#201713)]" />
-      <div className="absolute inset-x-0 bottom-0 h-2/3 bg-[linear-gradient(180deg,transparent,#0A0B0F_78%)]" />
-      <div className="absolute left-[10%] top-[18%] h-72 w-72 rounded-full bg-memory/10 blur-3xl" />
-      <div className="absolute right-[12%] top-[28%] h-80 w-80 rounded-full bg-ember/10 blur-3xl" />
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-void px-4 py-12">
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(201,169,110,0.18),transparent_32%),linear-gradient(145deg,#0A0B0F,#111318_48%,#201713)]" />
+      <div className="fixed inset-x-0 bottom-0 h-2/3 bg-[linear-gradient(180deg,transparent,#0A0B0F_78%)]" />
+      <div className="fixed left-[10%] top-[18%] h-72 w-72 rounded-full bg-memory/10 blur-3xl" />
+      <div className="fixed right-[12%] top-[28%] h-80 w-80 rounded-full bg-ember/10 blur-3xl" />
 
-      <div className="relative w-full max-w-2xl space-y-10 text-center">
+      <div className="relative z-10 w-full max-w-2xl space-y-10 text-center">
         {/* Hero */}
         <div className="space-y-4">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-card border border-gold/30 bg-gold/5">
@@ -93,7 +113,7 @@ export function Onboarding() {
               disabled={generating}
               className="w-full resize-none rounded-card border border-ridge bg-surface px-5 py-4 text-body text-parchment placeholder:text-dust focus:border-gold focus:shadow-gold-glow focus:outline-none disabled:opacity-50 transition-all duration-archive"
             />
-            <div className="absolute bottom-3 right-4 text-tiny text-ghost">
+            <div className="absolute bottom-3 right-4 text-tiny text-dust">
               {prompt.length}/2000
             </div>
           </div>
@@ -123,17 +143,42 @@ export function Onboarding() {
               </span>
             )}
           </Button>
+
+          {generating && (
+            <div className="grid grid-cols-3 gap-2 text-center text-tiny uppercase tracking-widest">
+              {PHASES.map((p, i) => {
+                const active = i === phase;
+                const done = i < phase;
+                return (
+                  <span
+                    key={p.label}
+                    className={cn(
+                      'rounded-card border px-2 py-2 transition-all duration-archive flex items-center justify-center gap-1.5',
+                      active
+                        ? 'border-gold/40 text-gold bg-gold/10 shadow-gold-glow animate-pulse'
+                        : done
+                          ? 'border-sage/30 text-sage bg-sage/5'
+                          : 'border-ridge text-dust bg-depth'
+                    )}
+                  >
+                    {done && <Check className="h-3 w-3" strokeWidth={2} />}
+                    {p.label}
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </form>
 
-        <div className="mx-auto grid max-w-xl gap-2 text-left text-tiny uppercase tracking-widest text-dust sm:grid-cols-3">
+        <div className="mx-auto grid max-w-xl gap-2 text-left text-tiny uppercase tracking-widest text-ash sm:grid-cols-3">
           {['Banner identity', 'Character portraits', 'Persistent archive'].map((item) => (
-            <div key={item} className="rounded-card border border-ridge bg-depth/70 px-3 py-2">
+            <div key={item} className="rounded-card border border-ridge bg-surface/60 px-3 py-2 text-parchment">
               {item}
             </div>
           ))}
         </div>
 
-        <p className="text-small text-dust">
+        <p className="text-small text-ash">
           No image provider? The archive keeps cinematic fallback visuals so generation never breaks the flow.
         </p>
       </div>

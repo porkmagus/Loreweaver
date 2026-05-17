@@ -311,7 +311,7 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
     const c = generated.characters[i];
     const charId = characterIds[i];
     if (i > 0) {
-      await new Promise((r) => setTimeout(r, 500)); // 500ms stagger between portrait requests
+      await new Promise((r) => setTimeout(r, 15_000)); // 15s stagger to stay under OpenAI 5 img/min rate limit
     }
     characterVisualTasks.push(
       generateCharacterPortrait({

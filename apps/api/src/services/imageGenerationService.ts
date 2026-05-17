@@ -4,7 +4,7 @@ import {
   type GenerateImageResult,
 } from './imageProvider.js';
 
-const imageTimeoutMs = Number(process.env.IMAGE_GENERATION_TIMEOUT_MS ?? 20_000);
+const imageTimeoutMs = Number(process.env.IMAGE_GENERATION_TIMEOUT_MS ?? 60_000);
 
 export type VisualAssetKind = 'world-banner' | 'character-portrait';
 export type VisualAssetStatus = 'generated' | 'fallback' | 'failed' | 'disabled' | 'generating';
@@ -144,7 +144,8 @@ async function generateVisualAsset({
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     if (attempt > 0) {
-      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+      // OpenAI image rate limit is ~5/min; wait at least 15s between retries
+      const delay = Math.min(15_000 * attempt, 60_000);
       console.log(`[image-generation] Retry ${attempt}/${maxRetries} for ${kind} "${fallbackLabel}" after ${delay}ms`);
       await new Promise((r) => setTimeout(r, delay));
     }
