@@ -5,7 +5,7 @@
     "rootDir": "./src",
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "noEmit": true,
+    "emitDeclarationOnly": true,
     "module": "ES2022",
     "moduleResolution": "bundler",
     "baseUrl": ".",
