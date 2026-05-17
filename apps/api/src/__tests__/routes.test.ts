@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { z } from 'zod';
 import request from 'supertest';
 import { buildApp } from '../index.js';
 import { listCharacters, getCharacterById } from '../services/characterService.js';
+import { listRelationships, getRelationshipsForCharacter } from '../services/relationshipService.js';
+import { resolveProviderConfig, testProviderConnection } from '../services/provider.js';
+import { resolveImageProviderConfig, testImageProviderConnection } from '../services/imageProvider.js';
+import { updateProviderConfig, updateImageProviderConfig } from '../services/runtimeConfig.js';
 import {
   sendCharacterChat,
   getChatHistory,
@@ -45,6 +50,45 @@ vi.mock('../services/characterService.js', () => ({
   getCharacterById: vi.fn(),
 }));
 
+vi.mock('../services/relationshipService.js', () => ({
+  listRelationships: vi.fn(),
+  getRelationshipsForCharacter: vi.fn(),
+}));
+
+vi.mock('../services/provider.js', () => ({
+  ProviderConfigSchema: z.object({
+    provider: z.enum(['custom-openai', 'ollama', 'openrouter']),
+    baseUrl: z.string().optional(),
+    apiKey: z.string().optional(),
+    chatModel: z.string().min(1),
+    embeddingModel: z.string().optional(),
+    temperature: z.number().min(0).max(2).optional(),
+    maxTokens: z.number().int().positive().optional(),
+  }),
+  resolveProviderConfig: vi.fn(),
+  testProviderConnection: vi.fn(),
+}));
+
+vi.mock('../services/imageProvider.js', () => ({
+  ImageProviderConfigSchema: z.object({
+    provider: z.string(),
+    baseUrl: z.string().optional(),
+    apiKey: z.string().optional(),
+    model: z.string().optional(),
+    size: z.string().optional(),
+    quality: z.string().optional(),
+    format: z.string().optional(),
+    enabled: z.boolean().optional().default(true),
+  }),
+  resolveImageProviderConfig: vi.fn(),
+  testImageProviderConnection: vi.fn(),
+}));
+
+vi.mock('../services/runtimeConfig.js', () => ({
+  updateProviderConfig: vi.fn(),
+  updateImageProviderConfig: vi.fn(),
+}));
+
 vi.mock('../services/chatService.js', () => ({
   sendCharacterChat: vi.fn(),
   getChatHistory: vi.fn(),
@@ -70,6 +114,17 @@ beforeEach(() => {
 describe('GET /api/health', () => {
   it('returns status ok', async () => {
     const a = await readyApp();
+    vi.mocked(resolveProviderConfig).mockReturnValue({
+      provider: 'custom-openai',
+      baseUrl: 'http://localhost:1234/v1',
+      chatModel: 'gpt-4o-mini',
+    } as any);
+    vi.mocked(testProviderConnection).mockResolvedValue({
+      ok: true, provider: 'custom-openai', streaming: true, model: 'gpt-4o-mini',
+    });
+    vi.mocked(resolveImageProviderConfig).mockReturnValue({
+      provider: 'openai-image', enabled: false, model: '',
+    } as any);
     const res = await request(a.server)
       .get('/api/health')
       .expect(200);
@@ -348,5 +403,101 @@ describe('GET /api/chat/character/:id/sessions', () => {
       .get('/api/chat/character/1/sessions')
       .expect(404);
     expect(res.body.code).toBe('NOT_FOUND');
+  });
+});
+
+describe('GET /api/relationships', () => {
+  it('lists relationships', async () => {
+    const a = await readyApp();
+    vi.mocked(listRelationships).mockResolvedValue([{ id: 1, fromCharacterId: 1, toCharacterId: 2 } as any]);
+    const res = await request(a.server)
+      .get('/api/relationships')
+      .expect(200);
+    expect(res.body.data).toEqual([{ id: 1, fromCharacterId: 1, toCharacterId: 2 }]);
+  });
+});
+
+describe('GET /api/relationships/character/:characterId', () => {
+  it('returns relationships for a character', async () => {
+    const a = await readyApp();
+    vi.mocked(getCharacterById).mockResolvedValue({ id: 1, worldId: 1, name: 'Alice' } as any);
+    vi.mocked(getRelationshipsForCharacter).mockResolvedValue([{ id: 1, fromCharacterId: 1, toCharacterId: 2 } as any]);
+    const res = await request(a.server)
+      .get('/api/relationships/character/1')
+      .expect(200);
+    expect(res.body.data).toEqual([{ id: 1, fromCharacterId: 1, toCharacterId: 2 }]);
+  });
+
+  it('returns 404 when character not found', async () => {
+    const a = await readyApp();
+    vi.mocked(getCharacterById).mockResolvedValue(null as any);
+    const res = await request(a.server)
+      .get('/api/relationships/character/1')
+      .expect(404);
+    expect(res.body.code).toBe('NOT_FOUND');
+  });
+});
+
+describe('GET /api/settings/provider', () => {
+  it('returns provider config', async () => {
+    const a = await readyApp();
+    vi.mocked(resolveProviderConfig).mockReturnValue({ provider: 'openai', chatModel: 'gpt-4o-mini' } as any);
+    const res = await request(a.server)
+      .get('/api/settings/provider')
+      .expect(200);
+    expect(res.body.data).toEqual({ provider: 'openai', chatModel: 'gpt-4o-mini' });
+  });
+});
+
+describe('POST /api/settings/provider/test', () => {
+  it('returns connection status', async () => {
+    const a = await readyApp();
+    vi.mocked(testProviderConnection).mockResolvedValue({ ok: true, provider: 'custom-openai', streaming: true });
+    const res = await request(a.server)
+      .post('/api/settings/provider/test')
+      .send({ provider: 'custom-openai', chatModel: 'gpt-4o-mini' })
+      .expect(200);
+    expect(res.body.data).toEqual({ ok: true, provider: 'custom-openai', streaming: true });
+  });
+});
+
+describe('GET /api/settings/image-provider', () => {
+  it('returns image provider config', async () => {
+    const a = await readyApp();
+    vi.mocked(resolveImageProviderConfig).mockReturnValue({ provider: 'openai-image', enabled: true } as any);
+    const res = await request(a.server)
+      .get('/api/settings/image-provider')
+      .expect(200);
+    expect(res.body.data).toEqual({ provider: 'openai-image', enabled: true });
+  });
+});
+
+describe('POST /api/dev/reset', () => {
+  it('resets data in non-production', async () => {
+    const a = await readyApp();
+    const prev = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+    try {
+      const res = await request(a.server)
+        .post('/api/dev/reset')
+        .expect(200);
+      expect(res.body.data.reset).toBe(true);
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it('returns 403 in production', async () => {
+    const a = await readyApp();
+    const prev = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      const res = await request(a.server)
+        .post('/api/dev/reset')
+        .expect(403);
+      expect(res.body.code).toBe('FORBIDDEN');
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
   });
 });
