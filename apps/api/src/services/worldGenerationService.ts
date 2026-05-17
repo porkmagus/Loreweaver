@@ -292,7 +292,6 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
     } satisfies VisualMetadata,
   }));
 
-  const characterVisualTasks: Array<Promise<unknown>> = [];
   const characterIds: number[] = [];
   for (const c of generated.characters) {
     const char = await createCharacter({
@@ -303,20 +302,32 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
       role: c.role,
       isPlayer: c.isPlayer,
     });
-    characterVisualTasks.push(generateCharacterPortrait({
-      worldName: generated.name,
-      worldGenre: generated.genre,
-      worldDescription: generated.description,
-      name: c.name,
-      description: c.description,
-      personality: c.personality,
-      role: c.role,
-    }).then((portrait) => updateCharacter(char.id, {
-      metadata: {
-        visual: { portrait },
-      } satisfies VisualMetadata,
-    })));
     characterIds.push(char.id);
+  }
+
+  // Generate character portraits sequentially with a small delay to avoid rate limits
+  const characterVisualTasks: Array<Promise<unknown>> = [];
+  for (let i = 0; i < generated.characters.length; i++) {
+    const c = generated.characters[i];
+    const charId = characterIds[i];
+    if (i > 0) {
+      await new Promise((r) => setTimeout(r, 500)); // 500ms stagger between portrait requests
+    }
+    characterVisualTasks.push(
+      generateCharacterPortrait({
+        worldName: generated.name,
+        worldGenre: generated.genre,
+        worldDescription: generated.description,
+        name: c.name,
+        description: c.description,
+        personality: c.personality,
+        role: c.role,
+      }).then((portrait) => updateCharacter(charId, {
+        metadata: {
+          visual: { portrait },
+        } satisfies VisualMetadata,
+      }))
+    );
   }
 
   const createdLoreIds: number[] = [];

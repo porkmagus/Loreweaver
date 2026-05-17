@@ -138,39 +138,54 @@ async function generateVisualAsset({
     return deterministicVisualAsset(kind, prompt, fallbackSeed, fallbackLabel, fallbackSubLabel, 'image generation disabled', 'disabled');
   }
 
-  try {
-    const result = await withTimeout(
-      generateImage(config, { prompt, size }),
-      imageTimeoutMs,
-      'image generation timed out',
-    );
+  // Retry with exponential backoff to handle transient rate limits
+  const maxRetries = 3;
+  let lastError: string | undefined;
 
-    if (result.imageUrl) {
-      return {
-        kind,
-        status: 'generated',
-        provider: config.provider === 'custom-image-endpoint' ? 'custom-image-endpoint' : 'openai-image',
-        imageUrl: result.imageUrl,
-        prompt,
-        model: result.model,
-        generatedAt: new Date().toISOString(),
-      };
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    if (attempt > 0) {
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+      console.log(`[image-generation] Retry ${attempt}/${maxRetries} for ${kind} "${fallbackLabel}" after ${delay}ms`);
+      await new Promise((r) => setTimeout(r, delay));
     }
 
-    // Provider returned no image — fall back deterministically
-    return deterministicVisualAsset(
-      kind,
-      prompt,
-      fallbackSeed,
-      fallbackLabel,
-      fallbackSubLabel,
-      result.error ?? 'image provider returned no image',
-      'failed',
-    );
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : 'image generation failed';
-    return deterministicVisualAsset(kind, prompt, fallbackSeed, fallbackLabel, fallbackSubLabel, reason, 'failed');
+    try {
+      const result = await withTimeout(
+        generateImage(config, { prompt, size }),
+        imageTimeoutMs,
+        'image generation timed out',
+      );
+
+      if (result.imageUrl) {
+        return {
+          kind,
+          status: 'generated',
+          provider: config.provider === 'custom-image-endpoint' ? 'custom-image-endpoint' : 'openai-image',
+          imageUrl: result.imageUrl,
+          prompt,
+          model: result.model,
+          generatedAt: new Date().toISOString(),
+        };
+      }
+
+      lastError = result.error ?? 'image provider returned no image';
+      console.error(`[image-generation] Attempt ${attempt + 1} failed for ${kind} "${fallbackLabel}": ${lastError}`);
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : 'image generation failed';
+      console.error(`[image-generation] Attempt ${attempt + 1} exception for ${kind} "${fallbackLabel}": ${lastError}`);
+    }
   }
+
+  // All retries exhausted — fall back deterministically
+  return deterministicVisualAsset(
+    kind,
+    prompt,
+    fallbackSeed,
+    fallbackLabel,
+    fallbackSubLabel,
+    lastError ?? 'all retries exhausted',
+    'failed',
+  );
 }
 
 function deterministicVisualAsset(
