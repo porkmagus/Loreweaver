@@ -114,6 +114,8 @@ function WorldList() {
               asset={getWorldBanner(world.metadata)}
               title={world.name}
               subtitle={world.genre}
+              worldId={world.id}
+              onRegenerate={refetch}
               className="min-h-[190px] border-0"
             />
             <div className="space-y-4 p-5">
@@ -241,6 +243,8 @@ function WorldDetail({ worldId }: { worldId: number }) {
             asset={getWorldBanner(world.metadata)}
             title={world.name}
             subtitle={world.description}
+            worldId={world.id}
+            onRegenerate={refetch}
             className="min-h-[320px] border-0"
           />
           <CardContent className="p-inner space-y-4">

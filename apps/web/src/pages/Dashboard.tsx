@@ -39,7 +39,7 @@ export function Dashboard() {
   const activeWorld = worlds?.find((w) => w.id === activeWorldId) ?? worlds?.[0];
 
   const charactersUrl = activeWorldId ? `/worlds/${activeWorldId}/characters` : null;
-  const { data: characters, loading: cLoading } = useApi<Character[]>(charactersUrl);
+  const { data: characters, loading: cLoading, refetch: refetchCharacters } = useApi<Character[]>(charactersUrl);
   const loreUrl = activeWorldId ? `/worlds/${activeWorldId}/lore` : null;
   const { data: lore, loading: lLoading } = useApi<LoreEntry[]>(loreUrl);
   const eventsUrl = activeWorldId ? `/worlds/${activeWorldId}/timeline` : null;
@@ -121,6 +121,8 @@ export function Dashboard() {
           asset={getWorldBanner(world.metadata)}
           title={world.name}
           subtitle={world.description}
+          worldId={world.id}
+          onRegenerate={refetchWorlds}
           className="min-h-[280px]"
         />
       ) : null}
@@ -201,6 +203,8 @@ export function Dashboard() {
                   asset={getCharacterPortrait(char.metadata)}
                   name={char.name}
                   role={char.role}
+                  characterId={char.id}
+                  onRegenerate={refetchCharacters}
                   className="aspect-[4/3] border-0"
                 />
                 <div className="space-y-3 p-5">

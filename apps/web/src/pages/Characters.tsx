@@ -141,6 +141,8 @@ function CharacterList() {
               asset={getCharacterPortrait(char.metadata)}
               name={char.name}
               role={char.role}
+              characterId={char.id}
+              onRegenerate={refetch}
               className="aspect-[4/3] border-0"
             />
             <div className="space-y-3 p-5">
@@ -269,6 +271,8 @@ function CharacterDetail({ characterId }: { characterId: number }) {
                 asset={getCharacterPortrait(char.metadata)}
                 name={char.name}
                 role={char.role}
+                characterId={char.id}
+                onRegenerate={refetch}
                 className="aspect-[3/4] min-h-[360px]"
               />
               <div className="space-y-5">

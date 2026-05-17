@@ -2,6 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import { CreateCharacterSchema } from '../schemas/requests.js';
 import { listCharacters, getCharacterById, getCharacterTimeline, getCharacterMemories, createCharacter, updateCharacter, deleteCharacter } from '../services/characterService.js';
 import { getRelationshipsForCharacter } from '../services/relationshipService.js';
+import { getWorldById } from '../services/worldService.js';
+import { generateCharacterPortrait, type VisualMetadata } from '../services/imageGenerationService.js';
 
 export async function characterRoutes(app: FastifyInstance) {
   app.get('/characters', async (request, reply) => {
@@ -108,5 +110,39 @@ export async function characterRoutes(app: FastifyInstance) {
       offset: q.offset ? Number(q.offset) : undefined,
     });
     reply.send({ data: results });
+  });
+
+  app.post('/characters/:id/regenerate-portrait', async (request, reply) => {
+    const id = Number((request.params as { id: string }).id);
+    const character = await getCharacterById(id);
+    if (!character) {
+      reply.status(404).send({ error: 'Character not found', code: 'NOT_FOUND' });
+      return;
+    }
+
+    const world = await getWorldById(character.worldId);
+    if (!world) {
+      reply.status(404).send({ error: 'World not found', code: 'NOT_FOUND' });
+      return;
+    }
+
+    const portrait = await generateCharacterPortrait({
+      worldName: world.name,
+      worldGenre: world.genre || 'speculative fiction',
+      worldDescription: world.description || '',
+      name: character.name,
+      description: character.description || '',
+      personality: character.personality || '',
+      role: character.role || '',
+    });
+
+    const updated = await updateCharacter(id, {
+      metadata: {
+        ...(character.metadata as Record<string, unknown> || {}),
+        visual: { portrait },
+      } satisfies VisualMetadata,
+    });
+
+    reply.send({ data: updated });
   });
 }

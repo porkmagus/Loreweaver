@@ -1,6 +1,8 @@
-import { ImageOff, Sparkles, AlertTriangle, Ban } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ImageOff, Sparkles, AlertTriangle, Ban, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { visualStatusLabel, visualStatusShort, type VisualAsset } from '@/lib/visualAssets';
+import { apiPost } from '@/hooks/useApi';
 
 function StatusDot({ asset }: { asset: VisualAsset | null }) {
   if (!asset) return <span className="h-1.5 w-1.5 rounded-full bg-ghost" />;
@@ -18,17 +20,59 @@ function StatusIcon({ asset }: { asset: VisualAsset | null }) {
   return <ImageOff className="h-3 w-3 shrink-0 text-dust" strokeWidth={1.5} />;
 }
 
+interface WorldApiResponse {
+  data?: {
+    metadata?: {
+      visual?: {
+        banner?: VisualAsset;
+      };
+    };
+  };
+}
+
 export function WorldBannerFrame({
-  asset,
+  asset: initialAsset,
   title,
   subtitle,
+  worldId,
+  onRegenerate,
   className,
 }: {
   asset: VisualAsset | null;
   title: string;
   subtitle?: string | null;
+  worldId?: number;
+  onRegenerate?: () => void;
   className?: string;
 }) {
+  const [regeneratedAsset, setRegeneratedAsset] = useState<VisualAsset | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
+
+  const asset = regeneratedAsset ?? initialAsset;
+
+  useEffect(() => {
+    setRegeneratedAsset(null);
+  }, [initialAsset?.imageUrl, initialAsset?.status]);
+
+  const canRegenerate = worldId != null && asset != null && asset.status !== 'generated' && asset.status !== 'generating';
+
+  const handleRegenerate = async () => {
+    if (!worldId || regenerating) return;
+    setRegenerating(true);
+    try {
+      const result = await apiPost<WorldApiResponse>(`/worlds/${worldId}/regenerate-banner`, {});
+      const newBanner = result.data?.metadata?.visual?.banner;
+      if (newBanner) {
+        setRegeneratedAsset(newBanner);
+      }
+      onRegenerate?.();
+    } catch (err) {
+      console.error('[WorldBannerFrame] Regenerate failed:', err);
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   return (
     <div className={cn("relative overflow-hidden rounded-card border border-ridge bg-depth", className)}>
       {asset?.imageUrl ? (
@@ -43,6 +87,18 @@ export function WorldBannerFrame({
           <div className="flex items-center gap-2">
             <StatusDot asset={asset} />
             <span className="text-tiny uppercase tracking-widest text-dust">{visualStatusLabel(asset)}</span>
+            {canRegenerate && (
+              <button
+                type="button"
+                onClick={handleRegenerate}
+                disabled={regenerating}
+                className="inline-flex items-center gap-1 text-gold hover:text-parchment transition-colors disabled:opacity-50"
+                title="Regenerate banner"
+              >
+                <RefreshCw className={cn("h-3 w-3", regenerating && "animate-spin")} strokeWidth={1.5} />
+                <span className="hidden sm:inline">{regenerating ? 'Regenerating…' : 'Regenerate'}</span>
+              </button>
+            )}
           </div>
           <h2 className="font-serif text-display text-parchment">{title}</h2>
           {subtitle && <p className="max-w-xl text-body leading-relaxed text-ash">{subtitle}</p>}
@@ -52,17 +108,60 @@ export function WorldBannerFrame({
   );
 }
 
+interface CharacterApiResponse {
+  data?: {
+    metadata?: {
+      visual?: {
+        portrait?: VisualAsset;
+      };
+    };
+  };
+}
+
 export function PortraitFrame({
-  asset,
+  asset: initialAsset,
   name,
   role,
+  characterId,
+  onRegenerate,
   className,
 }: {
   asset: VisualAsset | null;
   name: string;
   role?: string | null;
+  characterId?: number;
+  onRegenerate?: () => void;
   className?: string;
 }) {
+  const [regeneratedAsset, setRegeneratedAsset] = useState<VisualAsset | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
+
+  const asset = regeneratedAsset ?? initialAsset;
+
+  // Clear local override when parent sends a fresh asset (e.g. after refetch)
+  useEffect(() => {
+    setRegeneratedAsset(null);
+  }, [initialAsset?.imageUrl, initialAsset?.status]);
+
+  const canRegenerate = characterId != null && asset != null && asset.status !== 'generated' && asset.status !== 'generating';
+
+  const handleRegenerate = async () => {
+    if (!characterId || regenerating) return;
+    setRegenerating(true);
+    try {
+      const result = await apiPost<CharacterApiResponse>(`/characters/${characterId}/regenerate-portrait`, {});
+      const newPortrait = result.data?.metadata?.visual?.portrait;
+      if (newPortrait) {
+        setRegeneratedAsset(newPortrait);
+      }
+      onRegenerate?.();
+    } catch (err) {
+      console.error('[PortraitFrame] Regenerate failed:', err);
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   return (
     <div className={cn("relative overflow-hidden rounded-card border border-ridge bg-depth", className)}>
       {asset?.imageUrl ? (
@@ -78,6 +177,18 @@ export function PortraitFrame({
           <span className="inline-flex items-center gap-1 text-tiny text-dust" title={visualStatusLabel(asset)}>
             <StatusIcon asset={asset} />
             <span className="hidden sm:inline">{visualStatusShort(asset)}</span>
+            {canRegenerate && (
+              <button
+                type="button"
+                onClick={handleRegenerate}
+                disabled={regenerating}
+                className="ml-1 inline-flex items-center gap-1 text-gold hover:text-parchment transition-colors disabled:opacity-50"
+                title="Regenerate portrait"
+              >
+                <RefreshCw className={cn("h-3 w-3", regenerating && "animate-spin")} strokeWidth={1.5} />
+                <span className="hidden sm:inline">{regenerating ? 'Regenerating…' : 'Regenerate'}</span>
+              </button>
+            )}
           </span>
         </div>
       </div>

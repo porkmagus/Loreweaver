@@ -355,6 +355,7 @@ export function Chat() {
                 asset={getCharacterPortrait(selectedCharacter.metadata)}
                 name={selectedCharacter.name}
                 role={selectedCharacter.role}
+                characterId={selectedCharacter.id}
                 className="hidden h-20 w-16 shrink-0 md:block"
               />
             )}

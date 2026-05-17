@@ -5,6 +5,7 @@ import { listWorlds, getWorldById, getWorldCharacters, createWorld, updateWorld,
 import { getLoreByWorldId } from '../services/loreService.js';
 import { listTimelineByWorldId } from '../services/timelineService.js';
 import { generateWorldFromPrompt } from '../services/worldGenerationService.js';
+import { generateWorldBanner, type VisualMetadata } from '../services/imageGenerationService.js';
 
 const GenerateWorldSchema = z.object({
   prompt: z.string().min(1).max(2000),
@@ -171,5 +172,37 @@ export async function worldRoutes(app: FastifyInstance) {
       const msg = err instanceof Error ? err.message : 'Generation failed';
       reply.status(500).send({ error: msg, code: 'GENERATION_ERROR' });
     }
+  });
+
+  app.post('/worlds/:id/regenerate-banner', async (request, reply) => {
+    const id = Number((request.params as { id: string }).id);
+    const world = await getWorldById(id);
+    if (!world) {
+      reply.status(404).send({ error: 'World not found', code: 'NOT_FOUND' });
+      return;
+    }
+
+    const lore = await getLoreByWorldId(id, { limit: 10 });
+    const timeline = await listTimelineByWorldId(id, { limit: 10 });
+    const themes = [
+      ...lore.map((l) => l.title),
+      ...timeline.map((t) => t.title),
+    ].slice(0, 6);
+
+    const banner = await generateWorldBanner({
+      name: world.name,
+      description: world.description || '',
+      genre: world.genre || 'speculative fiction',
+      themes,
+    });
+
+    const updated = await updateWorld(id, {
+      metadata: {
+        ...(world.metadata as Record<string, unknown> || {}),
+        visual: { banner },
+      } satisfies VisualMetadata,
+    });
+
+    reply.send({ data: updated });
   });
 }
