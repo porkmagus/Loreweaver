@@ -17,7 +17,7 @@
     "test": "npm run test --workspace=apps/api && npm run test --workspace=apps/web --if-present",
     "test:e2e": "npm run test:e2e --workspace=apps/web --if-present",
     "smoke": "npx tsx scripts/smoke-test.ts",
-    "verify": "npm run typecheck --workspaces --if-present && npm run test && npm run test:e2e",
+    "verify": "npx tsx scripts/verify.ts",
     "clean": "rm -rf apps/*/node_modules apps/*/dist packages/*/node_modules packages/*/dist node_modules",
     "seed": "docker compose exec api node dist/seed/index.js"
   },
