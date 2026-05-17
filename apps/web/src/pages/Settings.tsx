@@ -78,27 +78,23 @@ function matchTextPreset(form: Partial<ProviderConfig>): TextPreset | undefined 
 }
 
 // ── Embedding Provider presets ────────────────────────────────────
-const EMBEDDING_PRESETS: TextPreset[] = [
+interface EmbeddingPreset {
+  label: string;
+  embeddingModel: string;
+}
+
+const EMBEDDING_PRESETS: EmbeddingPreset[] = [
   {
     label: 'Same as Text Provider',
-    value: 'custom-openai',
-    baseUrl: '',
-    chatModel: '',
     embeddingModel: '',
   },
   {
     label: 'Custom OpenAI-Compatible',
-    value: 'custom-openai',
-    baseUrl: '',
-    chatModel: '',
-    embeddingModel: '',
+    embeddingModel: 'text-embedding-3-small',
   },
   {
     label: 'Ollama Local',
-    value: 'ollama',
-    baseUrl: 'http://localhost:11434',
-    chatModel: '',
-    embeddingModel: '',
+    embeddingModel: 'nomic-embed-text',
   },
 ];
 
@@ -541,18 +537,13 @@ export function Settings() {
 
         <div className="flex flex-wrap gap-3">
           {EMBEDDING_PRESETS.map((preset) => {
-            const isActive = (form.embeddingModel === '' && preset.label === 'Same as Text Provider') ||
-              (form.provider === preset.value && form.embeddingModel !== '');
+            const isActive = form.embeddingModel === preset.embeddingModel;
             return (
               <button
                 key={preset.label}
                 type="button"
                 onClick={() => {
-                  if (preset.label === 'Same as Text Provider') {
-                    setForm((prev) => ({ ...prev, embeddingModel: '' }));
-                  } else {
-                    applyPreset(preset);
-                  }
+                  setForm((prev) => ({ ...prev, embeddingModel: preset.embeddingModel }));
                   setSaved(false);
                 }}
                 className={cn(
