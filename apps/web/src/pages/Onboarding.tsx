@@ -32,7 +32,7 @@ export function Onboarding() {
     setGenerating(true);
     setError(null);
     try {
-      await apiPost<{ worldId: number; name: string }>('/worlds/generate', { prompt: prompt.trim() });
+      await apiPost<{ worldId: number; name: string }>('/worlds/generate', { prompt: prompt.trim() }, { timeout: 180_000 });
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate world');

@@ -56,11 +56,12 @@ function fetchWithTimeout(url: string, init?: RequestInit & { timeout?: number }
   return fetch(url, { ...rest, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
-export async function apiPost<T>(url: string, body: unknown): Promise<T> {
+export async function apiPost<T>(url: string, body: unknown, opts?: { timeout?: number }): Promise<T> {
   const res = await fetchWithTimeout(`${API_BASE}${url}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    timeout: opts?.timeout,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

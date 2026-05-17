@@ -19,7 +19,7 @@ export function GenerateWorldModal({ onClose }: { onClose?: () => void }) {
     try {
       const res = await apiPost<{ worldId: number; name: string }>('/worlds/generate', {
         prompt: prompt.trim(),
-      });
+      }, { timeout: 180_000 });
       onClose?.();
       navigate(`/worlds?id=${res.worldId}`);
     } catch (err) {
