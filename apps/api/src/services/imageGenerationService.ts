@@ -138,8 +138,8 @@ async function generateVisualAsset({
     return deterministicVisualAsset(kind, prompt, fallbackSeed, fallbackLabel, fallbackSubLabel, 'image generation disabled', 'disabled');
   }
 
-  // Retry with exponential backoff to handle transient rate limits
-  const maxRetries = 3;
+  // Retry once to handle transient rate limits, then fall back fast
+  const maxRetries = 1;
   let lastError: string | undefined;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -248,18 +248,22 @@ function makePortraitDataUri(seed: string, label: string, subLabel?: string): st
       <stop offset="0" stop-color="${palette[0]}"/>
       <stop offset="1" stop-color="#0A0B0F"/>
     </linearGradient>
-    <radialGradient id="aura" cx="50%" cy="38%" r="60%">
-      <stop offset="0" stop-color="${palette[2]}" stop-opacity="0.30"/>
+    <radialGradient id="aura" cx="50%" cy="42%" r="52%">
+      <stop offset="0" stop-color="${palette[2]}" stop-opacity="0.28"/>
       <stop offset="1" stop-color="${palette[2]}" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
   <rect width="1024" height="1024" fill="url(#aura)"/>
-  <path d="M300 960 Q300 740 512 700 Q714 740 714 960 L714 1024 L300 1024 Z" fill="#161821" stroke="#2D303A" stroke-width="4"/>
-  <circle cx="512" cy="390" r="180" fill="#1A1D26" stroke="${palette[2]}" stroke-opacity="0.55" stroke-width="5"/>
-  <circle cx="512" cy="390" r="160" fill="none" stroke="${palette[2]}" stroke-opacity="0.22" stroke-width="1.5"/>
-  <text x="512" y="432" text-anchor="middle" fill="#E8E4DC" font-family="Georgia, serif" font-size="132" font-weight="400">${initials}</text>
-  <text x="512" y="860" text-anchor="middle" fill="#A8A29E" font-family="Inter, Arial, sans-serif" font-size="32" letter-spacing="6">${safeSubLabel.toUpperCase()}</text>
+  <!-- Shoulders / bust silhouette -->
+  <path d="M200 1024 L200 860 C200 740 340 680 512 680 C684 680 824 740 824 860 L824 1024 Z" fill="#161821" stroke="#2D303A" stroke-width="3"/>
+  <!-- Head circle with accent border -->
+  <circle cx="512" cy="430" r="210" fill="#1A1D26" stroke="${palette[2]}" stroke-opacity="0.50" stroke-width="4"/>
+  <circle cx="512" cy="430" r="190" fill="none" stroke="${palette[2]}" stroke-opacity="0.18" stroke-width="1.5"/>
+  <!-- Initials centered in head -->
+  <text x="512" y="480" text-anchor="middle" fill="#E8E4DC" font-family="Georgia, serif" font-size="128" font-weight="400">${initials}</text>
+  <!-- Role label at bottom -->
+  <text x="512" y="940" text-anchor="middle" fill="#A8A29E" font-family="Inter, Arial, sans-serif" font-size="28" letter-spacing="5">${safeSubLabel.toUpperCase()}</text>
 </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }

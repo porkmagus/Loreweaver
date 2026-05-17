@@ -278,20 +278,6 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
     genre: generated.genre,
   });
 
-  const bannerTask = generateWorldBanner({
-    name: generated.name,
-    description: generated.description,
-    genre: generated.genre,
-    themes: [
-      ...generated.lore.map((l) => l.title),
-      ...generated.timeline.map((t) => t.title),
-    ].slice(0, 6),
-  }).then((banner) => updateWorld(world.id, {
-    metadata: {
-      visual: { banner },
-    } satisfies VisualMetadata,
-  }));
-
   const characterIds: number[] = [];
   for (const c of generated.characters) {
     const char = await createCharacter({
@@ -303,31 +289,6 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
       isPlayer: c.isPlayer,
     });
     characterIds.push(char.id);
-  }
-
-  // Generate character portraits sequentially with a small delay to avoid rate limits
-  const characterVisualTasks: Array<Promise<unknown>> = [];
-  for (let i = 0; i < generated.characters.length; i++) {
-    const c = generated.characters[i];
-    const charId = characterIds[i];
-    if (i > 0) {
-      await new Promise((r) => setTimeout(r, 15_000)); // 15s stagger to stay under OpenAI 5 img/min rate limit
-    }
-    characterVisualTasks.push(
-      generateCharacterPortrait({
-        worldName: generated.name,
-        worldGenre: generated.genre,
-        worldDescription: generated.description,
-        name: c.name,
-        description: c.description,
-        personality: c.personality,
-        role: c.role,
-      }).then((portrait) => updateCharacter(charId, {
-        metadata: {
-          visual: { portrait },
-        } satisfies VisualMetadata,
-      }))
-    );
   }
 
   const createdLoreIds: number[] = [];
@@ -377,7 +338,47 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
     });
   }
 
-  await Promise.allSettled([bannerTask, ...characterVisualTasks]);
+  // Fire image generation asynchronously so the API response returns immediately.
+  // Images will appear on subsequent frontend polls as they complete.
+  const worldId = world.id;
+
+  generateWorldBanner({
+    name: generated.name,
+    description: generated.description,
+    genre: generated.genre,
+    themes: [
+      ...generated.lore.map((l) => l.title),
+      ...generated.timeline.map((t) => t.title),
+    ].slice(0, 6),
+  }).then((banner) => updateWorld(worldId, {
+    metadata: {
+      visual: { banner },
+    } satisfies VisualMetadata,
+  })).catch((err) => {
+    console.error('[world-generation] Banner background generation failed:', err);
+  });
+
+  for (let i = 0; i < generated.characters.length; i++) {
+    const c = generated.characters[i];
+    const charId = characterIds[i];
+    setTimeout(() => {
+      generateCharacterPortrait({
+        worldName: generated.name,
+        worldGenre: generated.genre,
+        worldDescription: generated.description,
+        name: c.name,
+        description: c.description,
+        personality: c.personality,
+        role: c.role,
+      }).then((portrait) => updateCharacter(charId, {
+        metadata: {
+          visual: { portrait },
+        } satisfies VisualMetadata,
+      })).catch((err) => {
+        console.error('[world-generation] Portrait background generation failed:', err);
+      });
+    }, i * 15_000);
+  }
 
   return { worldId: world.id, name: world.name };
 }
