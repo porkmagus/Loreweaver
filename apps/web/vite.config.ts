@@ -11,6 +11,7 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_API_URL ?? 'http://localhost:3001',
         changeOrigin: true,
+        timeout: 0,
       },
     },
   },

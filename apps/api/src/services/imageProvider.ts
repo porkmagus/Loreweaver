@@ -79,7 +79,7 @@ function getOpenAIImageClient(config: ImageProviderConfig): OpenAI | null {
   const baseURL = config.provider === 'custom-image-endpoint' && config.baseUrl
     ? config.baseUrl
     : undefined; // official OpenAI default
-  return new OpenAI({ apiKey, baseURL, dangerouslyAllowBrowser: false });
+  return new OpenAI({ apiKey, baseURL, dangerouslyAllowBrowser: false, timeout: 300_000 });
 }
 
 export interface GenerateImageInput {

@@ -109,7 +109,7 @@ function getOpenAIClient(config: ProviderConfig): OpenAI | null {
   if (cachedOpenAIClient && cachedOpenAIClient.key === key) {
     return cachedOpenAIClient.client;
   }
-  const client = new OpenAI({ apiKey, baseURL, dangerouslyAllowBrowser: false });
+  const client = new OpenAI({ apiKey, baseURL, dangerouslyAllowBrowser: false, timeout: 300_000 });
   cachedOpenAIClient = { client, key };
   return client;
 }
