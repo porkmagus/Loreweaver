@@ -1,21 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiPost } from '@/hooks/useApi';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
-import { Globe, Sparkles, AlertCircle, X } from 'lucide-react';
+import { Globe, Sparkles, AlertCircle, X, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const PHASES = [
+  { label: 'World', delay: 0 },
+  { label: 'Banner', delay: 3500 },
+  { label: 'Portraits', delay: 7000 },
+] as const;
 
 export function GenerateWorldModal({ onClose }: { onClose?: () => void }) {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState('');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [phase, setPhase] = useState(0);
+
+  useEffect(() => {
+    if (!generating) {
+      setPhase(0);
+      return;
+    }
+    const timers = PHASES.slice(1).map((p) =>
+      setTimeout(() => setPhase((i) => Math.max(i, PHASES.indexOf(p) + 1)), p.delay)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [generating]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim()) return;
     setGenerating(true);
     setError(null);
+    setPhase(0);
     try {
       const res = await apiPost<{ worldId: number; name: string }>('/worlds/generate', {
         prompt: prompt.trim(),
@@ -30,7 +50,7 @@ export function GenerateWorldModal({ onClose }: { onClose?: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
       <div className="w-full max-w-lg rounded-card border border-ridge bg-surface bg-surface-grad p-6 shadow-depth">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="font-serif text-h2 text-parchment flex items-center gap-2">
@@ -88,10 +108,27 @@ export function GenerateWorldModal({ onClose }: { onClose?: () => void }) {
             )}
           </Button>
           {generating && (
-            <div className="grid grid-cols-3 gap-2 text-center text-tiny uppercase tracking-widest text-dust">
-              <span className="rounded-card border border-ridge bg-depth px-2 py-2">World</span>
-              <span className="rounded-card border border-ridge bg-depth px-2 py-2">Banner</span>
-              <span className="rounded-card border border-ridge bg-depth px-2 py-2">Portraits</span>
+            <div className="grid grid-cols-3 gap-2 text-center text-tiny uppercase tracking-widest">
+              {PHASES.map((p, i) => {
+                const active = i === phase;
+                const done = i < phase;
+                return (
+                  <span
+                    key={p.label}
+                    className={cn(
+                      'rounded-card border px-2 py-2 transition-all duration-archive flex items-center justify-center gap-1.5',
+                      active
+                        ? 'border-gold/40 text-gold bg-gold/10 shadow-gold-glow animate-pulse'
+                        : done
+                          ? 'border-sage/30 text-sage bg-sage/5'
+                          : 'border-ridge text-dust bg-depth'
+                    )}
+                  >
+                    {done && <Check className="h-3 w-3" strokeWidth={2} />}
+                    {p.label}
+                  </span>
+                );
+              })}
             </div>
           )}
         </form>
