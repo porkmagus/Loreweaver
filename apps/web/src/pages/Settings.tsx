@@ -225,11 +225,12 @@ export function Settings() {
     setImageForm((prev: Partial<ImageProviderConfig>) => ({
       ...prev,
       provider: preset.value,
-      baseUrl: preset.defaults.baseUrl ?? prev.baseUrl,
-      model: preset.defaults.model ?? prev.model,
-      size: preset.defaults.size ?? prev.size,
-      quality: preset.defaults.quality ?? prev.quality,
-      format: preset.defaults.format ?? prev.format,
+      baseUrl: preset.defaults.baseUrl ?? '',
+      apiKey: '',
+      model: preset.defaults.model ?? '',
+      size: preset.defaults.size ?? '',
+      quality: preset.defaults.quality ?? '',
+      format: preset.defaults.format ?? '',
       enabled: preset.defaults.enabled ?? true,
     }));
     setImageSaved(false);
@@ -645,19 +646,6 @@ export function Settings() {
                 : 'Image generation is disabled. Deterministic SVG fallbacks will be used for all visual assets.'}
             </p>
 
-            <FieldRow icon={Plug} label="Image Provider">
-              <select
-                aria-label="Image provider type"
-                value={imageForm.provider ?? 'disabled'}
-                onChange={(e) => updateImageField('provider', e.target.value as ImageProviderConfig['provider'])}
-                disabled={!imageForm.enabled}
-                className="h-10 w-full appearance-none rounded-card border border-ridge bg-surface px-4 text-small text-parchment focus:border-gold focus:shadow-gold-glow focus:outline-none disabled:opacity-40"
-              >
-                <option value="openai-image">OpenAI Image</option>
-                <option value="custom-image-endpoint">Custom Image Endpoint</option>
-                <option value="disabled">Disabled / Fallback Only</option>
-              </select>
-            </FieldRow>
 
             <FieldRow icon={Server} label="Image Base URL">
               <Input
