@@ -84,7 +84,7 @@ describe('Lore ingestion and semantic search integration', () => {
     const a = await readyApp();
 
     // Step 1: Create lore
-    const lore = { id: 1, title: 'Ancient Map', worldId: 1, content: 'The map shows hidden treasures.' };
+    const lore = { id: 1, title: 'Ancient Map', worldId: 1, content: 'The map shows hidden treasures.', category: null, tags: null, createdAt: '2024-01-01T00:00:00.000Z', updatedAt: '2024-01-01T00:00:00.000Z' };
     vi.mocked(createLore).mockResolvedValueOnce(lore);
     const createRes = await request(a.server)
       .post('/api/lore')
