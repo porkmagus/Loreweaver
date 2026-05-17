@@ -4,7 +4,7 @@ import { resolveProviderConfig } from './provider.js';
 
 const dimension = Number(process.env.EMBEDDING_DIMENSION ?? 1536);
 
-function getEmbeddingClient(): { client: OpenAI | null; apiKey: string | undefined; model: string; baseUrl: string } {
+function getEmbeddingClient(): { client: OpenAI | null; apiKey: string | undefined; model: string; baseUrl: string | undefined } {
   const cfg = resolveProviderConfig();
   const apiKey = cfg.apiKey ?? process.env.OPENAI_API_KEY;
   const model = cfg.embeddingModel ?? process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';

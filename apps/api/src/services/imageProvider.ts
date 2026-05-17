@@ -50,6 +50,11 @@ export function getRuntimeImageProviderConfig(): Partial<ImageProviderConfig> | 
   return runtimeImageProviderConfig;
 }
 
+function pickNonEmpty<T>(override: T | null | undefined | '', base: T | undefined): T | undefined {
+  if (override === undefined || override === null || override === '') return base;
+  return override;
+}
+
 export function resolveImageProviderConfig(override?: Partial<ImageProviderConfig>): ImageProviderConfig {
   const env = getEnvImageProviderConfig();
   const runtime = runtimeImageProviderConfig;
@@ -57,12 +62,12 @@ export function resolveImageProviderConfig(override?: Partial<ImageProviderConfi
   if (!override) return base;
   return {
     provider: override.provider ?? base.provider,
-    baseUrl: override.baseUrl ?? base.baseUrl,
-    apiKey: override.apiKey ?? base.apiKey,
-    model: override.model ?? base.model,
-    size: override.size ?? base.size,
-    quality: override.quality ?? base.quality,
-    format: override.format ?? base.format,
+    baseUrl: pickNonEmpty(override.baseUrl, base.baseUrl),
+    apiKey: pickNonEmpty(override.apiKey, base.apiKey),
+    model: pickNonEmpty(override.model, base.model),
+    size: pickNonEmpty(override.size, base.size),
+    quality: pickNonEmpty(override.quality, base.quality),
+    format: pickNonEmpty(override.format, base.format),
     enabled: override.enabled ?? base.enabled,
   };
 }

@@ -6,7 +6,7 @@ export type ProviderType = z.infer<typeof ProviderTypeSchema>;
 
 export const ProviderConfigSchema = z.object({
   provider: ProviderTypeSchema,
-  baseUrl: z.string().min(1),
+  baseUrl: z.string().optional(),
   apiKey: z.string().optional(),
   chatModel: z.string().min(1),
   embeddingModel: z.string().optional(),
@@ -63,6 +63,11 @@ export function getRuntimeProviderConfig(): Partial<ProviderConfig> | null {
   return runtimeProviderConfig;
 }
 
+function pickNonEmpty<T>(override: T | null | undefined | '', base: T | undefined): T | undefined {
+  if (override === undefined || override === null || override === '') return base;
+  return override;
+}
+
 export function resolveProviderConfig(override?: Partial<ProviderConfig>): ProviderConfig {
   const env = getEnvProviderConfig();
   const runtime = runtimeProviderConfig;
@@ -70,11 +75,11 @@ export function resolveProviderConfig(override?: Partial<ProviderConfig>): Provi
   if (!override) return base;
   return {
     provider: override.provider ?? base.provider,
-    baseUrl: override.baseUrl ?? base.baseUrl,
-    apiKey: override.apiKey ?? base.apiKey,
+    baseUrl: pickNonEmpty(override.baseUrl, base.baseUrl) ?? base.baseUrl,
+    apiKey: pickNonEmpty(override.apiKey, base.apiKey),
     chatModel: override.chatModel ?? base.chatModel,
-    embeddingModel: override.embeddingModel ?? base.embeddingModel,
-    imageModel: override.imageModel ?? base.imageModel,
+    embeddingModel: pickNonEmpty(override.embeddingModel, base.embeddingModel),
+    imageModel: pickNonEmpty(override.imageModel, base.imageModel),
     temperature: override.temperature ?? base.temperature,
     maxTokens: override.maxTokens ?? base.maxTokens,
   };

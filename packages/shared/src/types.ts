@@ -11,7 +11,7 @@ export type ProviderType = 'custom-openai' | 'ollama' | 'openrouter';
 
 export interface ProviderConfig {
   provider: ProviderType;
-  baseUrl: string;
+  baseUrl?: string;
   apiKey?: string;
   chatModel: string;
   embeddingModel?: string;

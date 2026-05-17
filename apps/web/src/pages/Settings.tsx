@@ -226,7 +226,6 @@ export function Settings() {
       ...prev,
       provider: preset.value,
       baseUrl: preset.defaults.baseUrl ?? '',
-      apiKey: '',
       model: preset.defaults.model ?? '',
       size: preset.defaults.size ?? '',
       quality: preset.defaults.quality ?? '',
@@ -255,10 +254,10 @@ export function Settings() {
       saveDraft(form);
       const payload: ProviderConfig = {
         provider: form.provider ?? 'custom-openai',
-        baseUrl: form.baseUrl ?? '',
-        apiKey: form.apiKey,
+        baseUrl: form.provider === 'custom-openai' ? (form.baseUrl || undefined) : (form.baseUrl ?? ''),
+        apiKey: form.apiKey || undefined,
         chatModel: form.chatModel,
-        embeddingModel: form.embeddingModel,
+        embeddingModel: form.embeddingModel || undefined,
         temperature: form.temperature ?? 0.8,
         maxTokens: form.maxTokens ?? 800,
       };
@@ -280,10 +279,10 @@ export function Settings() {
     try {
       const payload: ProviderConfig = {
         provider: form.provider ?? 'custom-openai',
-        baseUrl: form.baseUrl ?? '',
-        apiKey: form.apiKey,
+        baseUrl: form.provider === 'custom-openai' ? (form.baseUrl || undefined) : (form.baseUrl ?? ''),
+        apiKey: form.apiKey || undefined,
         chatModel: form.chatModel,
-        embeddingModel: form.embeddingModel,
+        embeddingModel: form.embeddingModel || undefined,
         temperature: form.temperature ?? 0.8,
         maxTokens: form.maxTokens ?? 800,
       };
@@ -308,12 +307,12 @@ export function Settings() {
       saveImageDraft(imageForm);
       const payload: ImageProviderConfig = {
         provider: imageForm.provider ?? 'disabled',
-        baseUrl: imageForm.baseUrl ?? '',
-        apiKey: imageForm.apiKey,
-        model: imageForm.model,
-        size: imageForm.size,
-        quality: imageForm.quality,
-        format: imageForm.format,
+        baseUrl: imageForm.baseUrl || undefined,
+        apiKey: imageForm.apiKey || undefined,
+        model: imageForm.model || undefined,
+        size: imageForm.size || undefined,
+        quality: imageForm.quality || undefined,
+        format: imageForm.format || undefined,
         enabled: imageForm.enabled ?? false,
       };
       await apiPost<ImageProviderConfig>('/settings/image-provider', payload);
@@ -346,12 +345,12 @@ export function Settings() {
     try {
       const payload: ImageProviderConfig = {
         provider: imageForm.provider ?? 'disabled',
-        baseUrl: imageForm.baseUrl ?? '',
-        apiKey: imageForm.apiKey,
-        model: imageForm.model,
-        size: imageForm.size,
-        quality: imageForm.quality,
-        format: imageForm.format,
+        baseUrl: imageForm.baseUrl || undefined,
+        apiKey: imageForm.apiKey || undefined,
+        model: imageForm.model || undefined,
+        size: imageForm.size || undefined,
+        quality: imageForm.quality || undefined,
+        format: imageForm.format || undefined,
         enabled: imageForm.enabled ?? false,
       };
       const res = await apiPost<ImageProviderStatus>('/settings/image-provider/test', payload);
@@ -513,15 +512,15 @@ export function Settings() {
 
             <div className="rounded-card border border-ridge bg-depth/50 p-4 space-y-2 text-tiny text-dust">
               <p className="text-small font-medium text-ash">Current Configuration</p>
-              <div className="grid grid-cols-2 gap-2">
-                <span>Provider:</span>
-                <span className="text-ash">{form.provider ?? '—'}</span>
-                <span>Base URL:</span>
-                <span className="text-ash">{form.baseUrl || '—'}</span>
-                <span>Chat Model:</span>
-                <span className="text-ash">{form.chatModel || '—'}</span>
-                <span>API Key:</span>
-                <span className="text-ash">{form.apiKey || 'none'}</span>
+              <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1">
+                <span className="shrink-0">Provider:</span>
+                <span className="text-ash break-all">{form.provider ?? '—'}</span>
+                <span className="shrink-0">Base URL:</span>
+                <span className="text-ash break-all">{form.baseUrl || 'official'}</span>
+                <span className="shrink-0">Chat Model:</span>
+                <span className="text-ash break-all">{form.chatModel || '—'}</span>
+                <span className="shrink-0">API Key:</span>
+                <span className="text-ash break-all">{form.apiKey || 'none'}</span>
               </div>
             </div>
           </CardContent>
@@ -719,7 +718,7 @@ export function Settings() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Button onClick={handleImageSave} disabled={imageSaving || (!!imageForm.provider && imageForm.provider !== 'disabled' && !imageForm.model)} variant="primary">
+              <Button onClick={handleImageSave} disabled={imageSaving || ((imageForm.provider === 'openai-image' || imageForm.provider === 'custom-image-endpoint') && !imageForm.model)} variant="primary">
                 {imageSaving ? <Spinner className="mr-2 h-4 w-4" /> : imageSaved ? <CheckCircle2 className="mr-2 h-4 w-4" /> : null}
                 {imageSaved ? 'Saved' : 'Save Image Settings'}
               </Button>
@@ -763,19 +762,19 @@ export function Settings() {
 
             <div className="rounded-card border border-ridge bg-depth/50 p-4 space-y-2 text-tiny text-dust">
               <p className="text-small font-medium text-ash">Image Configuration</p>
-              <div className="grid grid-cols-2 gap-2">
-                <span>Enabled:</span>
-                <span className="text-ash">{imageForm.enabled ? 'yes' : 'no'}</span>
-                <span>Provider:</span>
-                <span className="text-ash">{imageForm.provider ?? '—'}</span>
-                <span>Model:</span>
-                <span className="text-ash">{imageForm.model || 'default'}</span>
-                <span>API Key:</span>
-                <span className="text-ash">{imageForm.apiKey || 'none'}</span>
-                <span>Base URL:</span>
-                <span className="text-ash">{imageForm.baseUrl || 'official'}</span>
-                <span>Size / Quality / Format:</span>
-                <span className="text-ash">{imageForm.size || '—'} / {imageForm.quality || '—'} / {imageForm.format || '—'}</span>
+              <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1">
+                <span className="shrink-0">Enabled:</span>
+                <span className="text-ash break-all">{imageForm.enabled ? 'yes' : 'no'}</span>
+                <span className="shrink-0">Provider:</span>
+                <span className="text-ash break-all">{imageForm.provider ?? '—'}</span>
+                <span className="shrink-0">Model:</span>
+                <span className="text-ash break-all">{imageForm.model || 'default'}</span>
+                <span className="shrink-0">API Key:</span>
+                <span className="text-ash break-all">{imageForm.apiKey || 'none'}</span>
+                <span className="shrink-0">Base URL:</span>
+                <span className="text-ash break-all">{imageForm.baseUrl || 'official'}</span>
+                <span className="shrink-0">Size / Quality / Format:</span>
+                <span className="text-ash break-all">{imageForm.size || '—'} / {imageForm.quality || '—'} / {imageForm.format || '—'}</span>
               </div>
             </div>
           </CardContent>
