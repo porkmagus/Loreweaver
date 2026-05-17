@@ -46,13 +46,12 @@ describe('imageGenerationService', () => {
     const portraitSvg = decodeURIComponent(portrait.imageUrl.replace('data:image/svg+xml;utf8,', ''));
     expect(portraitSvg).toContain('<svg');
     expect(portraitSvg).toContain('</svg>');
-    // Should contain a clear head circle with visible fill
-    expect(portraitSvg).toContain('fill="#1A1D26"');
-    // Should contain a symmetrical shoulder silhouette
+    // Should contain a centered head circle with visible fill
     expect(portraitSvg).toContain('fill="#161821"');
     // Should not contain the old dark glitchy body path fill
     expect(portraitSvg).not.toContain('fill="#111318"');
-    // Should contain initials text
+    // Should contain initials text centered with dy
     expect(portraitSvg).toContain('text-anchor="middle"');
+    expect(portraitSvg).toContain('dy="0.35em"');
   });
 });

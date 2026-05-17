@@ -232,32 +232,25 @@ function makeWorldBannerDataUri(seed: string, label: string, subLabel?: string):
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-function makePortraitDataUri(seed: string, label: string, subLabel?: string): string {
+function makePortraitDataUri(seed: string, label: string, _subLabel?: string): string {
   const palette = paletteFromSeed(seed);
   const initials = escapeXml(label.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'LW');
-  const safeSubLabel = escapeXml(subLabel ?? 'persona');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="${palette[0]}"/>
       <stop offset="1" stop-color="#0A0B0F"/>
     </linearGradient>
-    <radialGradient id="aura" cx="50%" cy="42%" r="52%">
-      <stop offset="0" stop-color="${palette[2]}" stop-opacity="0.28"/>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="${palette[2]}" stop-opacity="0.18"/>
       <stop offset="1" stop-color="${palette[2]}" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
-  <rect width="1024" height="1024" fill="url(#aura)"/>
-  <!-- Shoulders / bust silhouette -->
-  <path d="M200 1024 L200 860 C200 740 340 680 512 680 C684 680 824 740 824 860 L824 1024 Z" fill="#161821" stroke="#2D303A" stroke-width="3"/>
-  <!-- Head circle with accent border -->
-  <circle cx="512" cy="430" r="210" fill="#1A1D26" stroke="${palette[2]}" stroke-opacity="0.50" stroke-width="4"/>
-  <circle cx="512" cy="430" r="190" fill="none" stroke="${palette[2]}" stroke-opacity="0.18" stroke-width="1.5"/>
-  <!-- Initials centered in head -->
-  <text x="512" y="480" text-anchor="middle" fill="#E8E4DC" font-family="Georgia, serif" font-size="128" font-weight="400">${initials}</text>
-  <!-- Role label at bottom -->
-  <text x="512" y="940" text-anchor="middle" fill="#A8A29E" font-family="Inter, Arial, sans-serif" font-size="28" letter-spacing="5">${safeSubLabel.toUpperCase()}</text>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+  <circle cx="512" cy="512" r="260" fill="#161821"/>
+  <circle cx="512" cy="512" r="240" fill="none" stroke="${palette[2]}" stroke-opacity="0.25" stroke-width="2"/>
+  <text x="512" y="512" text-anchor="middle" dy="0.35em" fill="#E8E4DC" font-family="Georgia, serif" font-size="140" font-weight="400">${initials}</text>
 </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
