@@ -15,19 +15,24 @@ interface ApiState<T> {
 export function useApi<T>(url: string | null): ApiState<T> & { refetch: () => void } {
   const [state, setState] = useState<ApiState<T>>({ data: null, loading: !!url, error: null });
   const urlRef = useRef(url);
+  const fetchCountRef = useRef(0);
 
   const fetchData = useCallback(async () => {
     if (!url) {
       setState({ data: null, loading: false, error: null });
       return;
     }
+    const currentFetch = ++fetchCountRef.current;
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
       const res = await fetch(`${API_BASE}${url}`);
+      if (currentFetch !== fetchCountRef.current) return;
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
+      if (currentFetch !== fetchCountRef.current) return;
       setState({ data: json.data ?? json, loading: false, error: null });
     } catch (err) {
+      if (currentFetch !== fetchCountRef.current) return;
       setState({ data: null, loading: false, error: err instanceof Error ? err.message : 'Unknown error' });
     }
   }, [url]);
@@ -53,6 +58,9 @@ function fetchWithTimeout(url: string, init?: RequestInit & { timeout?: number }
   const { timeout = DEFAULT_TIMEOUT_MS, ...rest } = init ?? {};
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
+  if (rest.signal) {
+    rest.signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
   return fetch(url, { ...rest, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 

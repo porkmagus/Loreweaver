@@ -7,15 +7,12 @@ import {
   getChatHistory,
 } from '../services/chatService.js';
 
-const mockSelect = vi.fn();
 const mockFrom = vi.fn();
 const mockWhere = vi.fn();
 const mockOrderBy = vi.fn();
 const mockLimit = vi.fn();
-const mockInsert = vi.fn();
 const mockValues = vi.fn();
 const mockReturning = vi.fn();
-const mockUpdate = vi.fn();
 const mockSet = vi.fn();
 
 vi.mock('../db/client.js', () => {

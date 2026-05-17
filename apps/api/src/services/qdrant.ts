@@ -53,11 +53,16 @@ export interface UpsertChunk {
 
 export async function upsertChunks(chunks: UpsertChunk[]): Promise<void> {
   if (chunks.length === 0) return;
-  const points = chunks.map((c) => ({
-    id: deterministicId(c.payload.loreEntryId, c.chunkIndex),
-    vector: c.vector,
-    payload: (c.payload as unknown) as Record<string, unknown>,
-  }));
+  const points = chunks.map((c) => {
+    if (typeof c.payload.loreEntryId !== 'number' || typeof c.payload.worldId !== 'number') {
+      throw new Error(`Invalid Qdrant chunk payload: missing loreEntryId or worldId for chunk ${c.chunkIndex}`);
+    }
+    return {
+      id: deterministicId(c.payload.loreEntryId, c.chunkIndex),
+      vector: c.vector,
+      payload: (c.payload as unknown) as Record<string, unknown>,
+    };
+  });
   await client.upsert(collectionName, { points, wait: true });
 }
 
@@ -82,11 +87,17 @@ export async function searchLore(
     with_vector: false,
   });
 
-  return result.map((r) => ({
-    id: r.id as number,
-    score: r.score,
-    payload: r.payload as unknown as LoreChunkPayload,
-  }));
+  return result.map((r) => {
+    const payload = r.payload as unknown as LoreChunkPayload;
+    if (typeof payload.loreEntryId !== 'number' || typeof payload.worldId !== 'number') {
+      throw new Error(`Qdrant search returned malformed payload: ${JSON.stringify(r.payload)}`);
+    }
+    return {
+      id: r.id as number,
+      score: r.score,
+      payload,
+    };
+  });
 }
 
 function deterministicId(loreEntryId: number, chunkIndex: number): number {

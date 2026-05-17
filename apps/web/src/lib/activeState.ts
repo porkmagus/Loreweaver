@@ -13,7 +13,11 @@ export function getActiveWorldId(): number | null {
 }
 
 export function setActiveWorldId(id: number) {
-  localStorage.setItem(ACTIVE_WORLD_KEY, String(id));
+  try {
+    localStorage.setItem(ACTIVE_WORLD_KEY, String(id));
+  } catch {
+    // storage may be unavailable or full
+  }
 }
 
 export function getActiveCharacterId(): number | null {
@@ -28,5 +32,9 @@ export function getActiveCharacterId(): number | null {
 }
 
 export function setActiveCharacterId(id: number) {
-  localStorage.setItem(ACTIVE_CHARACTER_KEY, String(id));
+  try {
+    localStorage.setItem(ACTIVE_CHARACTER_KEY, String(id));
+  } catch {
+    // storage may be unavailable or full
+  }
 }

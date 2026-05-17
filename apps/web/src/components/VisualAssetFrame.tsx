@@ -49,10 +49,14 @@ export function WorldBannerFrame({
   const [regenerating, setRegenerating] = useState(false);
 
   const asset = regeneratedAsset ?? initialAsset;
+  const imageUrl = initialAsset?.imageUrl ?? '';
+  const status = initialAsset?.status ?? '';
 
   useEffect(() => {
+    void imageUrl;
+    void status;
     setRegeneratedAsset(null);
-  }, [initialAsset?.imageUrl, initialAsset?.status]);
+  }, [imageUrl, status]);
 
   const canRegenerate = worldId != null && asset != null && asset.status !== 'generated' && asset.status !== 'generating';
 
@@ -137,11 +141,15 @@ export function PortraitFrame({
   const [regenerating, setRegenerating] = useState(false);
 
   const asset = regeneratedAsset ?? initialAsset;
+  const imageUrl = initialAsset?.imageUrl ?? '';
+  const status = initialAsset?.status ?? '';
 
   // Clear local override when parent sends a fresh asset (e.g. after refetch)
   useEffect(() => {
+    void imageUrl;
+    void status;
     setRegeneratedAsset(null);
-  }, [initialAsset?.imageUrl, initialAsset?.status]);
+  }, [imageUrl, status]);
 
   const canRegenerate = characterId != null && asset != null && asset.status !== 'generated' && asset.status !== 'generating';
 

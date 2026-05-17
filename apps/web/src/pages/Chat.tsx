@@ -148,6 +148,7 @@ export function Chat() {
   const [inspectorOpen, setInspectorOpen] = useState(true);
 
   const { scrollContainerRef, messagesEndRef, scrollToBottom, handleScroll } = useSmartScroll();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Restore world/character/session from URL on mount
   useEffect(() => {
@@ -197,8 +198,16 @@ export function Chat() {
   }, [searchParams, setSearchParams, selectedWorldId, selectedCharacterId]);
 
   useEffect(() => {
+    void messages.length;
+    void sending;
     scrollToBottom('smooth');
   }, [messages, sending, scrollToBottom]);
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   const refreshContextPanels = useCallback(() => {
     setContextRefreshing(true);
@@ -229,9 +238,13 @@ export function Chat() {
     )));
     refetchHistory();
     refreshContextPanels();
-  }, [selectedCharacterId, selectedWorldId, sessionId, refetchHistory, refreshContextPanels, updateUrlSession]);
+  }, [selectedCharacterId, selectedWorldId, sessionId, refetchHistory, refreshContextPanels, updateUrlSession, setMessages]);
 
   const sendWithStreaming = useCallback(async (message: string) => {
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const response = await fetch(`${API_BASE}/chat/character/${selectedCharacterId}/stream`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
@@ -240,6 +253,7 @@ export function Chat() {
         message,
         sessionId: sessionId ?? undefined,
       }),
+      signal: controller.signal,
     });
 
     if (!response.ok || !response.body) {
@@ -297,10 +311,14 @@ export function Chat() {
       for (const rawEvent of events) {
         const dataLine = rawEvent.split('\n').find((line) => line.startsWith('data: '));
         if (!dataLine) continue;
-        handleEvent(JSON.parse(dataLine.slice(6)) as StreamEvent);
+        try {
+          handleEvent(JSON.parse(dataLine.slice(6)) as StreamEvent);
+        } catch {
+          // ignore malformed SSE event
+        }
       }
     }
-  }, [selectedCharacterId, selectedWorldId, sessionId, refetchHistory, refreshContextPanels, updateUrlSession]);
+  }, [selectedCharacterId, selectedWorldId, sessionId, refetchHistory, refreshContextPanels, updateUrlSession, setMessages]);
 
   const handleSend = useCallback(async (e?: React.FormEvent | React.KeyboardEvent) => {
     e?.preventDefault();
@@ -333,7 +351,7 @@ export function Chat() {
     } finally {
       setSending(false);
     }
-  }, [input, sending, selectedWorldId, selectedCharacterId, sendWithStreaming, sendWithStandardFallback]);
+  }, [input, sending, selectedWorldId, selectedCharacterId, sendWithStreaming, sendWithStandardFallback, setMessages]);
 
   const selectedCharacter = characters?.find((c) => c.id === selectedCharacterId);
   const pipelineSteps = [
@@ -411,7 +429,7 @@ export function Chat() {
               ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-              <svg className="h-4 w-4 text-dust" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
+              <svg role="img" aria-label="Dropdown arrow" className="h-4 w-4 text-dust" fill="none" stroke="currentColor" viewBox="0 0 24 24"><title>Dropdown arrow</title><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
             </div>
           </div>
 
@@ -443,7 +461,7 @@ export function Chat() {
                     ))}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                    <svg className="h-4 w-4 text-dust" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
+                    <svg role="img" aria-label="Dropdown arrow" className="h-4 w-4 text-dust" fill="none" stroke="currentColor" viewBox="0 0 24 24"><title>Dropdown arrow</title><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>
                   </div>
                 </div>
               )}
@@ -554,7 +572,7 @@ export function Chat() {
                       {recalledMemories.length} {recalledMemories.length === 1 ? 'memory' : 'memories'}
                     </span>
                   )}
-                  {latestEffects && latestEffects.relationshipUpdates.some((u) => [u.trustDelta, u.respectDelta, u.affectionDelta, u.rivalryDelta, u.fearDelta].some((v) => v !== 0)) && (
+                  {latestEffects?.relationshipUpdates.some((u) => [u.trustDelta, u.respectDelta, u.affectionDelta, u.rivalryDelta, u.fearDelta].some((v) => v !== 0)) && (
                     <span className="inline-flex items-center gap-1.5 rounded-card border border-ridge bg-depth/70 px-2 py-1 text-tiny text-dust">
                       <HeartPulse className="h-3 w-3 text-trust" strokeWidth={1.5} />
                       Relationships shifted

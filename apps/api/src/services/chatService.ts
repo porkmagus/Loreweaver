@@ -14,7 +14,6 @@ import {
   resolveProviderConfig,
   hasLiveProvider,
   getEnvProviderConfig,
-  type ProviderConfig,
 } from './provider.js';
 
 const SESSION_LIMIT = 10;
@@ -54,7 +53,7 @@ export async function getOrCreateSession(characterId: number, worldId: number, u
 export async function getChatHistory(sessionId: number, limit = HISTORY_LIMIT) {
   return db.select().from(chatMessages)
     .where(eq(chatMessages.sessionId, sessionId))
-    .orderBy(chatMessages.createdAt)
+    .orderBy(desc(chatMessages.createdAt))
     .limit(limit);
 }
 
@@ -283,7 +282,7 @@ export async function buildChatContext(characterId: number, worldId: number, use
     memories: cognition.retrievedMemories.map((m) => m.content),
     relationships: cognition.relationships.map((r) => `To character ${r.toCharacterId}: trust=${r.trust}, respect=${r.respect}, affection=${r.affection}, notes=${r.notes ?? ''}`),
     timeline: cognition.timeline.map((t) => `[${t.happenedAt}] ${t.title}: ${t.description ?? ''}`),
-    history: cognition.history.map((h) => `${h.role}: ${h.content}`),
+    history: cognition.history.slice(0, 20).reverse().map((h) => `${h.role}: ${h.content}`),
   };
 }
 
@@ -478,9 +477,7 @@ export async function sendCharacterChat(
 
   await saveMessage(session.id, 'assistant', reply);
 
-  processPostChatEffects(characterId, session.id, userMessage, reply).catch((err) => {
-    console.error('Post-chat effects error:', err);
-  });
+  await processPostChatEffects(characterId, session.id, userMessage, reply);
 
   return { reply, sessionId: session.id };
 }

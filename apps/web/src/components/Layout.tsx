@@ -39,10 +39,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (dark) {
       document.documentElement.classList.add('dark');
-      window.localStorage.setItem('loreweaver-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      window.localStorage.setItem('loreweaver-theme', 'light');
+    }
+    try {
+      window.localStorage.setItem('loreweaver-theme', dark ? 'dark' : 'light');
+    } catch {
+      // storage may be unavailable or full
     }
   }, [dark]);
 
@@ -53,7 +56,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen w-full bg-void text-parchment">
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div
+        <button
+          type="button"
+          aria-label="Close sidebar overlay"
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />

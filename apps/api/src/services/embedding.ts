@@ -35,6 +35,7 @@ function deterministicVector(text: string, dim: number): number[] {
 export async function embedTexts(texts: string[]): Promise<number[][]> {
   const { client, apiKey, model } = getEmbeddingClient();
   if (!client || !apiKey) {
+    console.warn('[embedding] No API key configured; falling back to deterministic vectors. Semantic search quality will be degraded.');
     return texts.map((t) => deterministicVector(t, dimension));
   }
   const response = await client.embeddings.create({

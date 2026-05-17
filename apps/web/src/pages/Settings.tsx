@@ -138,29 +138,19 @@ const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; de
 ];
 
 // ── Draft caching ───────────────────────────────────────────────
-function loadDraft(): Partial<ProviderConfig> | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as Partial<ProviderConfig>;
-  } catch {
-    return null;
-  }
-}
 function saveDraft(config: Partial<ProviderConfig>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-}
-function loadImageDraft(): Partial<ImageProviderConfig> | null {
   try {
-    const raw = localStorage.getItem(IMAGE_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as Partial<ImageProviderConfig>;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
   } catch {
-    return null;
+    // storage may be unavailable or full
   }
 }
 function saveImageDraft(config: Partial<ImageProviderConfig>) {
-  localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(config));
+  try {
+    localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(config));
+  } catch {
+    // storage may be unavailable or full
+  }
 }
 
 export function Settings() {
@@ -460,8 +450,9 @@ export function Settings() {
                 />
               </FieldRow>
               <div className="space-y-2">
-                <label className="text-small font-medium text-parchment">Max Tokens</label>
+                <label htmlFor="max-tokens" className="text-small font-medium text-parchment">Max Tokens</label>
                 <Input
+                  id="max-tokens"
                   type="number"
                   min={1}
                   value={form.maxTokens ?? 800}
@@ -615,11 +606,12 @@ export function Settings() {
           <CardContent className="space-y-5 p-5">
             {/* Enable toggle */}
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-small font-medium text-parchment">
+              <label htmlFor="image-enabled" className="flex items-center gap-2 text-small font-medium text-parchment">
                 <Image className="h-4 w-4 text-gold" strokeWidth={1.5} />
                 Enable Image Generation
               </label>
               <button
+                id="image-enabled"
                 type="button"
                 aria-label={imageForm.enabled ? 'Disable image generation' : 'Enable image generation'}
                 title={imageForm.enabled ? 'Disable image generation' : 'Enable image generation'}
@@ -684,8 +676,9 @@ export function Settings() {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-small font-medium text-parchment">Size</label>
+                <label htmlFor="image-size" className="text-small font-medium text-parchment">Size</label>
                 <Input
+                  id="image-size"
                   value={imageForm.size ?? ''}
                   onChange={(e) => updateImageField('size', e.target.value)}
                   placeholder="1536x1024"
@@ -694,8 +687,9 @@ export function Settings() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-small font-medium text-parchment">Quality</label>
+                <label htmlFor="image-quality" className="text-small font-medium text-parchment">Quality</label>
                 <Input
+                  id="image-quality"
                   value={imageForm.quality ?? ''}
                   onChange={(e) => updateImageField('quality', e.target.value)}
                   placeholder="low"
@@ -704,8 +698,9 @@ export function Settings() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-small font-medium text-parchment">Format</label>
+                <label htmlFor="image-format" className="text-small font-medium text-parchment">Format</label>
                 <Input
+                  id="image-format"
                   value={imageForm.format ?? ''}
                   onChange={(e) => updateImageField('format', e.target.value)}
                   placeholder="webp"
@@ -785,10 +780,10 @@ export function Settings() {
 function FieldRow({ icon: Icon, label, children }: { icon: LucideIcon; label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-2 text-small font-medium text-parchment">
+      <div className="flex items-center gap-2 text-small font-medium text-parchment">
         <Icon className="h-4 w-4 text-gold" strokeWidth={1.5} />
         {label}
-      </label>
+      </div>
       {children}
     </div>
   );

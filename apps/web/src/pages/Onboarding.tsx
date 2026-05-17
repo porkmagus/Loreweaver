@@ -29,9 +29,15 @@ export function Onboarding() {
 
   useEffect(() => {
     fetch(`${API_BASE}/health`)
-      .then((r) => r.json())
-      .then((json) => setHealth(json))
-      .catch(() => setHealth({ status: 'ok', aiMode: 'simulated' }));
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const json = await r.json();
+        setHealth(json);
+      })
+      .catch((err) => {
+        console.error('[onboarding] Health check failed:', err);
+        setHealth({ status: 'error', aiMode: 'simulated' });
+      });
   }, []);
 
   useEffect(() => {

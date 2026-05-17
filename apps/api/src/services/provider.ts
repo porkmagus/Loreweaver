@@ -190,8 +190,8 @@ export async function* streamChatCompletion(
           const content = chunk.message?.content ?? null;
           const doneFlag = chunk.done ?? false;
           yield { content, done: doneFlag };
-        } catch {
-          // ignore malformed lines
+        } catch (err) {
+          console.warn('[ollama-stream] Malformed line:', line, err);
         }
       }
     }

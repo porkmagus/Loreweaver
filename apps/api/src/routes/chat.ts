@@ -181,7 +181,7 @@ export async function chatRoutes(app: FastifyInstance) {
         resolvedSessionId = latest.id;
       }
       const history = await getChatHistory(resolvedSessionId);
-      reply.send({ data: history });
+      reply.send({ data: history.slice().reverse() });
     } catch (err) {
       reply.status(500).send({
         error: err instanceof Error ? err.message : 'Failed to fetch history',

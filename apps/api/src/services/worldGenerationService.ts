@@ -52,7 +52,7 @@ interface GeneratedWorld {
 function sanitizeDate(d: string | undefined): string {
   if (!d) return new Date().toISOString();
   const parsed = new Date(d);
-  if (isNaN(parsed.getTime())) return new Date().toISOString();
+  if (Number.isNaN(parsed.getTime())) return new Date().toISOString();
   return parsed.toISOString();
 }
 
@@ -304,8 +304,10 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
   }
 
   // Async ingest into vector store (best-effort)
-  for (const loreId of createdLoreIds) {
-    ingestLore(loreId).catch(() => { /* silent fail; health page shows ingest status */ });
+  const ingestResults = await Promise.allSettled(createdLoreIds.map((id) => ingestLore(id)));
+  const failedIngests = ingestResults.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+  if (failedIngests.length > 0) {
+    console.error(`[world-generation] ${failedIngests.length} lore ingest(s) failed:`, failedIngests.map((r) => r.reason));
   }
 
   for (const t of generated.timeline) {

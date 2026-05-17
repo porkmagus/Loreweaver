@@ -6,7 +6,6 @@ import { listCharacters, getCharacterById } from '../services/characterService.j
 import { listRelationships, getRelationshipsForCharacter } from '../services/relationshipService.js';
 import { resolveProviderConfig, testProviderConnection } from '../services/provider.js';
 import { resolveImageProviderConfig, testImageProviderConnection } from '../services/imageProvider.js';
-import { updateProviderConfig, updateImageProviderConfig } from '../services/runtimeConfig.js';
 import {
   sendCharacterChat,
   getChatHistory,
@@ -16,8 +15,6 @@ import {
   listCharacterChatSessions,
 } from '../services/chatService.js';
 
-const mockSelect = vi.fn();
-const mockInsert = vi.fn();
 const mockFrom = vi.fn();
 const mockWhere = vi.fn();
 const mockLimit = vi.fn();
@@ -347,14 +344,14 @@ describe('GET /api/chat/character/:id/history', () => {
     vi.mocked(getCharacterById).mockResolvedValue({ id: 1, worldId: 1, name: 'Alice' } as any);
     vi.mocked(getLatestSessionForCharacter).mockResolvedValue({ id: 7, characterId: 1, worldId: 1, userId: null, title: null, summary: null, createdAt: new Date(), updatedAt: new Date() } as any);
     const history = [
-      { id: 1, role: 'user', content: 'hi', createdAt: '2024-01-01T00:00:00Z' },
       { id: 2, role: 'assistant', content: 'hello', createdAt: '2024-01-01T00:00:01Z' },
+      { id: 1, role: 'user', content: 'hi', createdAt: '2024-01-01T00:00:00Z' },
     ];
     vi.mocked(getChatHistory).mockResolvedValue(history as any);
     const res = await request(a.server)
       .get('/api/chat/character/1/history')
       .expect(200);
-    expect(res.body.data).toEqual(history);
+    expect(res.body.data).toEqual(history.slice().reverse());
     expect(getLatestSessionForCharacter).toHaveBeenCalledWith(1);
     expect(getChatHistory).toHaveBeenCalledWith(7);
   });
@@ -372,14 +369,14 @@ describe('GET /api/chat/character/:id/history', () => {
   it('returns chat history with explicit sessionId', async () => {
     const a = await readyApp();
     const history = [
-      { id: 1, role: 'user', content: 'hi', createdAt: '2024-01-01T00:00:00Z' },
       { id: 2, role: 'assistant', content: 'hello', createdAt: '2024-01-01T00:00:01Z' },
+      { id: 1, role: 'user', content: 'hi', createdAt: '2024-01-01T00:00:00Z' },
     ];
     vi.mocked(getChatHistory).mockResolvedValue(history as any);
     const res = await request(a.server)
       .get('/api/chat/character/1/history?sessionId=7')
       .expect(200);
-    expect(res.body.data).toEqual(history);
+    expect(res.body.data).toEqual(history.slice().reverse());
   });
 });
 
