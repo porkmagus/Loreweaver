@@ -9,7 +9,7 @@ let cachedEmbeddingClient: { client: OpenAI; key: string } | null = null;
 function getEmbeddingClient(): { client: OpenAI | null; apiKey: string | undefined; model: string; baseUrl: string | undefined } {
   const cfg = resolveProviderConfig();
   const apiKey = cfg.apiKey ?? process.env.OPENAI_API_KEY;
-  const model = cfg.embeddingModel ?? process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
+  const model = cfg.embeddingModel || process.env.EMBEDDING_MODEL || 'text-embedding-3-small';
   const baseUrl = cfg.baseUrl;
   if (!apiKey) return { client: null, apiKey, model, baseUrl };
 

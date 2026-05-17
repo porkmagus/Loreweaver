@@ -107,7 +107,10 @@ function TimelineList() {
           </div>
         </div>
         {(selectedWorld || selectedCharacter) && (
-          <Link to={`/timeline?${selectedWorld ? `worldId=${selectedWorld}` : ''}${selectedCharacter ? `characterId=${selectedCharacter}` : ''}`}>
+          <Link to={`/timeline?${[
+            selectedWorld ? `worldId=${selectedWorld}` : '',
+            selectedCharacter ? `characterId=${selectedCharacter}` : '',
+          ].filter(Boolean).join('&')}`}>
             <Button variant="primary" size="sm">Apply</Button>
           </Link>
         )}
@@ -187,12 +190,21 @@ function TimelineList() {
         ))}
       </div>
 
-      {events?.length === 0 && !loading && (
+      {events?.length === 0 && !loading && !error && (
         <div className="flex flex-col items-center justify-center py-16 space-y-4 text-dust">
           <Clock className="h-10 w-10 opacity-20" strokeWidth={1.5} />
           <div className="text-center space-y-1">
-            <p className="text-body">The chronicle is blank.</p>
-            <p className="text-small">Events arise from dialogue and discovery.</p>
+            {characterId ? (
+              <>
+                <p className="text-body">The chronicle is blank for this persona.</p>
+                <p className="text-small">Speak with them to generate timeline events.</p>
+              </>
+            ) : (
+              <>
+                <p className="text-body">The chronicle is blank.</p>
+                <p className="text-small">Events arise from dialogue and discovery.</p>
+              </>
+            )}
           </div>
         </div>
       )}
