@@ -35,8 +35,8 @@ const ENV_PROVIDER = (process.env.AI_PROVIDER ?? 'custom-openai') as ProviderTyp
 const ENV_BASE_URL = process.env.AI_BASE_URL ?? process.env.OPENROUTER_BASE_URL ?? '';
 const ENV_API_KEY = process.env.AI_API_KEY ?? process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_API_KEY ?? '';
 const ENV_CHAT_MODEL = process.env.AI_CHAT_MODEL ?? process.env.CHAT_MODEL ?? 'gpt-4o-mini';
-const ENV_EMBEDDING_MODEL = process.env.AI_EMBEDDING_MODEL ?? process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
-const ENV_IMAGE_MODEL = process.env.AI_IMAGE_MODEL ?? process.env.IMAGE_MODEL ?? '';
+const ENV_EMBEDDING_MODEL = process.env.AI_EMBEDDING_MODEL || process.env.EMBEDDING_MODEL || 'text-embedding-3-small';
+const ENV_IMAGE_MODEL = process.env.AI_IMAGE_MODEL || process.env.IMAGE_MODEL || '';
 const ENV_TEMPERATURE = Number(process.env.AI_TEMPERATURE ?? 0.8);
 const ENV_MAX_TOKENS = Number(process.env.AI_MAX_TOKENS ?? 800);
 

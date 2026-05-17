@@ -29,6 +29,7 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+.prettierrc
 
 # TypeScript
 *.tsbuildinfo

@@ -516,12 +516,16 @@ Files modified:
 - `apps/api/src/services/qdrant.ts` — fixed type cast for Qdrant payload
 - `.env` / `.env.example` — added embedding/Qdrant variables
 
-Build status: API compiles, frontend compiles, all tests pass (21 total).
+Build status: API compiles, frontend compiles, all tests pass (86 total: API 73, Web 13, E2E 14).
 
-Pending:
-- 1 high-severity npm audit vulnerability in `apps/api` (needs dependency review)
-- End-to-end verification with live Qdrant + OpenAI keys
-- Docker-first runtime validation (`docker compose up -d`)
+Phase 4 Audit (2026-05-17):
+- npm audit: 0 vulnerabilities across all packages (prior high-severity resolved via dependency updates)
+- Docker-first runtime: `docker compose up -d --build` successful — postgres, qdrant, api, web all healthy
+- End-to-end ingest/search verified: lore entry created → chunked → embedded → upserted to Qdrant → semantic search returned exact match with score 0.37
+- Fixed `ENV_EMBEDDING_MODEL` empty string propagation bug in `provider.ts` (`??` → `||`) — prevents persisted empty string from blocking env fallback
+- Rebuilt API Docker image with provider fix; all containers healthy
+
+Pending: none.
 
 Explicitly excluded per Phase 4 directive:
 - Character chat
