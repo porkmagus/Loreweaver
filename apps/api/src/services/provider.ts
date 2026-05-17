@@ -32,7 +32,7 @@ export interface ChatStreamChunk {
 }
 
 const ENV_PROVIDER = (process.env.AI_PROVIDER ?? 'custom-openai') as ProviderType;
-const ENV_BASE_URL = process.env.AI_BASE_URL ?? process.env.OPENROUTER_BASE_URL ?? 'http://localhost:1234/v1';
+const ENV_BASE_URL = process.env.AI_BASE_URL ?? process.env.OPENROUTER_BASE_URL ?? '';
 const ENV_API_KEY = process.env.AI_API_KEY ?? process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_API_KEY ?? '';
 const ENV_CHAT_MODEL = process.env.AI_CHAT_MODEL ?? process.env.CHAT_MODEL ?? 'gpt-4o-mini';
 const ENV_EMBEDDING_MODEL = process.env.AI_EMBEDDING_MODEL ?? process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
@@ -64,18 +64,32 @@ export function getRuntimeProviderConfig(): Partial<ProviderConfig> | null {
 }
 
 function pickNonEmpty<T>(override: T | null | undefined | '', base: T | undefined): T | undefined {
-  if (override === undefined || override === null || override === '') return base;
-  return override;
+  if (override === undefined || override === null) return base;
+  return override as T;
+}
+
+function applyProviderDefaults(config: ProviderConfig): ProviderConfig {
+  if (!config.baseUrl) {
+    if (config.provider === 'ollama') config.baseUrl = 'http://localhost:11434';
+    else if (config.provider === 'openrouter') config.baseUrl = 'https://openrouter.ai/api/v1';
+  }
+  return config;
 }
 
 export function resolveProviderConfig(override?: Partial<ProviderConfig>): ProviderConfig {
   const env = getEnvProviderConfig();
   const runtime = runtimeProviderConfig;
-  const base = runtime ? { ...env, ...runtime } : env;
+  const base = applyProviderDefaults(runtime ? { ...env, ...runtime } : env);
   if (!override) return base;
+  const provider = override.provider ?? base.provider;
+  let baseUrl = pickNonEmpty(override.baseUrl, base.baseUrl) ?? '';
+  if (!baseUrl) {
+    if (provider === 'ollama') baseUrl = 'http://localhost:11434';
+    else if (provider === 'openrouter') baseUrl = 'https://openrouter.ai/api/v1';
+  }
   return {
-    provider: override.provider ?? base.provider,
-    baseUrl: pickNonEmpty(override.baseUrl, base.baseUrl) ?? base.baseUrl,
+    provider,
+    baseUrl,
     apiKey: pickNonEmpty(override.apiKey, base.apiKey),
     chatModel: override.chatModel ?? base.chatModel,
     embeddingModel: pickNonEmpty(override.embeddingModel, base.embeddingModel),
@@ -91,7 +105,7 @@ function getOpenAIClient(config: ProviderConfig): OpenAI | null {
   const apiKey = config.apiKey || 'dummy';
   return new OpenAI({
     apiKey,
-    baseURL: config.baseUrl || undefined,
+    baseURL: config.baseUrl?.trim() || undefined,
     dangerouslyAllowBrowser: false,
   });
 }

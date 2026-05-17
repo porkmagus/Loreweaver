@@ -1,4 +1,4 @@
-import { eq, count } from 'drizzle-orm';
+import { eq, count, desc, asc } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { worlds, characters, loreEntries, timelineEvents, chatSessions } from '../db/schema.js';
 
@@ -8,7 +8,7 @@ const MAX_LIMIT = 200;
 export async function listWorlds(opts?: { limit?: number; offset?: number }) {
   const limit = Math.min(opts?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
   const offset = opts?.offset ?? 0;
-  return db.select().from(worlds).limit(limit).offset(offset);
+  return db.select().from(worlds).orderBy(desc(worlds.id)).limit(limit).offset(offset);
 }
 
 export async function getWorldById(id: number) {
@@ -19,7 +19,7 @@ export async function getWorldById(id: number) {
 export async function getWorldCharacters(worldId: number, opts?: { limit?: number; offset?: number }) {
   const limit = Math.min(opts?.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
   const offset = opts?.offset ?? 0;
-  return db.select().from(characters).where(eq(characters.worldId, worldId)).limit(limit).offset(offset);
+  return db.select().from(characters).where(eq(characters.worldId, worldId)).orderBy(asc(characters.id)).limit(limit).offset(offset);
 }
 
 export async function createWorld(data: { name: string; description?: string; genre?: string; metadata?: unknown }) {

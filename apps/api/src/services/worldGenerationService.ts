@@ -13,7 +13,7 @@ import {
 
 function hasLiveProvider(): boolean {
   const cfg = resolveProviderConfig();
-  return Boolean(cfg.baseUrl && cfg.chatModel);
+  return Boolean(cfg.chatModel);
 }
 
 interface GeneratedWorld {

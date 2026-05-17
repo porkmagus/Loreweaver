@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApi } from '@/hooks/useApi';
 import { Spinner } from '@/components/ui/Spinner';
 import { Button } from '@/components/ui/Button';
@@ -6,6 +6,7 @@ import { GenerateWorldModal } from '@/components/GenerateWorldModal';
 import { PortraitFrame, WorldBannerFrame } from '@/components/VisualAssetFrame';
 import { cn } from '@/lib/utils';
 import { getCharacterPortrait, getWorldBanner } from '@/lib/visualAssets';
+import { getActiveWorldId, getActiveCharacterId, setActiveWorldId, setActiveCharacterId } from '@/lib/activeState';
 import {
   Globe,
   Users,
@@ -31,14 +32,30 @@ export function Dashboard() {
   const [resetting, setResetting] = useState(false);
   const { data: health, loading: hLoading, error: hError, refetch: refetchHealth } = useApi<HealthResponse>('/health');
   const { data: worlds, loading: wLoading, refetch: refetchWorlds } = useApi<World[]>('/worlds');
-  const firstWorldId = worlds?.[0]?.id ?? 1;
-  const { data: characters, loading: cLoading } = useApi<Character[]>(`/worlds/${firstWorldId}/characters`);
-  const { data: lore, loading: lLoading } = useApi<LoreEntry[]>(`/worlds/${firstWorldId}/lore`);
-  const { data: events, loading: eLoading } = useApi<TimelineEvent[]>(`/worlds/${firstWorldId}/timeline`);
-  const { data: stats, loading: sLoading } = useApi<WorldStats>(worlds?.[0] ? `/worlds/${firstWorldId}/stats` : null);
+
+  const activeWorldId = worlds
+    ? (worlds.find((w) => w.id === getActiveWorldId())?.id ?? worlds[0]?.id)
+    : null;
+  const activeWorld = worlds?.find((w) => w.id === activeWorldId) ?? worlds?.[0];
+
+  const charactersUrl = activeWorldId ? `/worlds/${activeWorldId}/characters` : null;
+  const { data: characters, loading: cLoading } = useApi<Character[]>(charactersUrl);
+  const loreUrl = activeWorldId ? `/worlds/${activeWorldId}/lore` : null;
+  const { data: lore, loading: lLoading } = useApi<LoreEntry[]>(loreUrl);
+  const eventsUrl = activeWorldId ? `/worlds/${activeWorldId}/timeline` : null;
+  const { data: events, loading: eLoading } = useApi<TimelineEvent[]>(eventsUrl);
+  const statsUrl = activeWorldId ? `/worlds/${activeWorldId}/stats` : null;
+  const { data: stats, loading: sLoading } = useApi<WorldStats>(statsUrl);
+
+  const activeCharacter = characters?.find((c) => c.id === getActiveCharacterId()) ?? characters?.[0];
+
+  useEffect(() => {
+    if (activeWorldId) setActiveWorldId(activeWorldId);
+    if (activeCharacter) setActiveCharacterId(activeCharacter.id);
+  }, [activeWorldId, activeCharacter]);
 
   const anyLoading = hLoading || wLoading || cLoading || lLoading || eLoading || sLoading;
-  const world = worlds?.[0];
+  const world = activeWorld;
 
   const handleReset = async () => {
     if (!confirm('Reset all data? This wipes worlds, characters, lore, timeline, and chat history.')) return;
@@ -108,11 +125,11 @@ export function Dashboard() {
               {world.genre}
             </span>
           )}
-          <Link to="/worlds" className="group flex items-center gap-1.5 text-small text-gold hover:text-gold-dim transition-colors">
+          <Link to={activeWorld ? `/worlds?id=${activeWorld.id}` : '/worlds'} className="group flex items-center gap-1.5 text-small text-gold hover:text-gold-dim transition-colors">
             <span>Explore World</span>
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={1.5} />
           </Link>
-          <Link to="/chat" className="group flex items-center gap-1.5 text-small text-gold hover:text-gold-dim transition-colors">
+          <Link to={activeCharacter ? `/chat?worldId=${activeCharacter.worldId}&characterId=${activeCharacter.id}` : (activeWorld ? `/characters?worldId=${activeWorld.id}` : '/characters')} className="group flex items-center gap-1.5 text-small text-gold hover:text-gold-dim transition-colors">
             <span>Converse</span>
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={1.5} />
           </Link>
@@ -127,7 +144,7 @@ export function Dashboard() {
             label="Characters"
             count={characters?.length ?? 0}
             description="Active personas"
-            to="/characters"
+            to={activeWorld ? `/characters?worldId=${activeWorld.id}` : '/characters'}
             color="text-sage"
           />
           <ChronicleTile
@@ -135,7 +152,7 @@ export function Dashboard() {
             label="Lore Entries"
             count={lore?.length ?? 0}
             description="Codex records"
-            to="/lore"
+            to={activeWorld ? `/lore?worldId=${activeWorld.id}` : '/lore'}
             color="text-gold"
           />
           <ChronicleTile
@@ -143,7 +160,7 @@ export function Dashboard() {
             label="Timeline Events"
             count={events?.length ?? 0}
             description="Chronicle entries"
-            to="/timeline"
+            to={activeWorld ? `/timeline?worldId=${activeWorld.id}` : '/timeline'}
             color="text-ember"
           />
           <ChronicleTile
@@ -151,7 +168,7 @@ export function Dashboard() {
             label="Chat Sessions"
             count={stats?.chatSessions ?? 0}
             description="Active dialogues"
-            to="/chat"
+            to={activeCharacter ? `/chat?worldId=${activeCharacter.worldId}&characterId=${activeCharacter.id}` : (activeWorld ? `/characters?worldId=${activeWorld.id}` : '/chat')}
             color="text-mist"
           />
         </div>

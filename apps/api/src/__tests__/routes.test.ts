@@ -135,7 +135,8 @@ describe('GET /api/health', () => {
 describe('GET /api/worlds', () => {
   it('lists worlds', async () => {
     const a = await readyApp();
-    mockFrom.mockReturnValue({ limit: mockLimit, offset: mockOffset });
+    mockFrom.mockReturnValue({ orderBy: mockOrderBy, limit: mockLimit, offset: mockOffset });
+    mockOrderBy.mockReturnValue({ limit: mockLimit, offset: mockOffset });
     mockLimit.mockReturnValue({ offset: mockOffset });
     mockOffset.mockResolvedValue([{ id: 1, name: 'Azeroth' }]);
     const res = await request(a.server)

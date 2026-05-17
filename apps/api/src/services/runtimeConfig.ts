@@ -38,7 +38,7 @@ export async function loadPersistedConfig(): Promise<ResolvedConfig> {
 
   const provider = resolveProviderConfig();
   const imageProvider = resolveImageProviderConfig();
-  const simulated = !Boolean(provider.baseUrl && provider.chatModel);
+  const simulated = !Boolean(provider.chatModel);
 
   cachedConfig = { provider, imageProvider, simulated };
   return cachedConfig;
@@ -48,7 +48,7 @@ export function getResolvedConfig(): ResolvedConfig {
   if (cachedConfig) return cachedConfig;
   const provider = resolveProviderConfig();
   const imageProvider = resolveImageProviderConfig();
-  const simulated = !Boolean(provider.baseUrl && provider.chatModel);
+  const simulated = !Boolean(provider.chatModel);
   return { provider, imageProvider, simulated };
 }
 
@@ -71,6 +71,6 @@ export async function updateImageProviderConfig(config: Partial<ImageProviderCon
 function refreshCache(): void {
   const provider = resolveProviderConfig();
   const imageProvider = resolveImageProviderConfig();
-  const simulated = !Boolean(provider.baseUrl && provider.chatModel);
+  const simulated = !Boolean(provider.chatModel);
   cachedConfig = { provider, imageProvider, simulated };
 }

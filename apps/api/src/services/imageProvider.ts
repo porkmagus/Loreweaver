@@ -51,8 +51,8 @@ export function getRuntimeImageProviderConfig(): Partial<ImageProviderConfig> | 
 }
 
 function pickNonEmpty<T>(override: T | null | undefined | '', base: T | undefined): T | undefined {
-  if (override === undefined || override === null || override === '') return base;
-  return override;
+  if (override === undefined || override === null) return base;
+  return override as T;
 }
 
 export function resolveImageProviderConfig(override?: Partial<ImageProviderConfig>): ImageProviderConfig {

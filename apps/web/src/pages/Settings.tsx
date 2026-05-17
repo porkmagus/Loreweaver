@@ -248,16 +248,15 @@ export function Settings() {
 
   const handleSave = async () => {
     if (!form.chatModel) return;
-    if (form.provider !== 'custom-openai' && !form.baseUrl) return;
     setSaving(true);
     try {
       saveDraft(form);
       const payload: ProviderConfig = {
         provider: form.provider ?? 'custom-openai',
-        baseUrl: form.provider === 'custom-openai' ? (form.baseUrl || undefined) : (form.baseUrl ?? ''),
-        apiKey: form.apiKey || undefined,
+        baseUrl: form.baseUrl ?? '',
+        apiKey: form.apiKey ?? '',
         chatModel: form.chatModel,
-        embeddingModel: form.embeddingModel || undefined,
+        embeddingModel: form.embeddingModel ?? '',
         temperature: form.temperature ?? 0.8,
         maxTokens: form.maxTokens ?? 800,
       };
@@ -273,16 +272,15 @@ export function Settings() {
 
   const handleTest = async () => {
     if (!form.chatModel) return;
-    if (form.provider !== 'custom-openai' && !form.baseUrl) return;
     setTesting(true);
     setTestResult(null);
     try {
       const payload: ProviderConfig = {
         provider: form.provider ?? 'custom-openai',
-        baseUrl: form.provider === 'custom-openai' ? (form.baseUrl || undefined) : (form.baseUrl ?? ''),
-        apiKey: form.apiKey || undefined,
+        baseUrl: form.baseUrl ?? '',
+        apiKey: form.apiKey ?? '',
         chatModel: form.chatModel,
-        embeddingModel: form.embeddingModel || undefined,
+        embeddingModel: form.embeddingModel ?? '',
         temperature: form.temperature ?? 0.8,
         maxTokens: form.maxTokens ?? 800,
       };
@@ -307,12 +305,12 @@ export function Settings() {
       saveImageDraft(imageForm);
       const payload: ImageProviderConfig = {
         provider: imageForm.provider ?? 'disabled',
-        baseUrl: imageForm.baseUrl || undefined,
-        apiKey: imageForm.apiKey || undefined,
-        model: imageForm.model || undefined,
-        size: imageForm.size || undefined,
-        quality: imageForm.quality || undefined,
-        format: imageForm.format || undefined,
+        baseUrl: imageForm.baseUrl ?? '',
+        apiKey: imageForm.apiKey ?? '',
+        model: imageForm.model ?? '',
+        size: imageForm.size ?? '',
+        quality: imageForm.quality ?? '',
+        format: imageForm.format ?? '',
         enabled: imageForm.enabled ?? false,
       };
       await apiPost<ImageProviderConfig>('/settings/image-provider', payload);
@@ -325,9 +323,7 @@ export function Settings() {
     }
   };
 
-  const isTextFormValid = Boolean(
-    form.chatModel && (form.provider === 'custom-openai' || form.baseUrl)
-  );
+  const isTextFormValid = Boolean(form.chatModel);
 
   const handleImageTest = async () => {
     if ((imageForm.provider ?? 'disabled') === 'disabled' || !imageForm.enabled) {
@@ -345,12 +341,12 @@ export function Settings() {
     try {
       const payload: ImageProviderConfig = {
         provider: imageForm.provider ?? 'disabled',
-        baseUrl: imageForm.baseUrl || undefined,
-        apiKey: imageForm.apiKey || undefined,
-        model: imageForm.model || undefined,
-        size: imageForm.size || undefined,
-        quality: imageForm.quality || undefined,
-        format: imageForm.format || undefined,
+        baseUrl: imageForm.baseUrl ?? '',
+        apiKey: imageForm.apiKey ?? '',
+        model: imageForm.model ?? '',
+        size: imageForm.size ?? '',
+        quality: imageForm.quality ?? '',
+        format: imageForm.format ?? '',
         enabled: imageForm.enabled ?? false,
       };
       const res = await apiPost<ImageProviderStatus>('/settings/image-provider/test', payload);

@@ -232,17 +232,18 @@ function makePortraitDataUri(seed: string, label: string, subLabel?: string): st
       <stop offset="0" stop-color="${palette[0]}"/>
       <stop offset="1" stop-color="#0A0B0F"/>
     </linearGradient>
-    <radialGradient id="aura" cx="50%" cy="30%" r="62%">
-      <stop offset="0" stop-color="${palette[2]}" stop-opacity="0.5"/>
+    <radialGradient id="aura" cx="50%" cy="38%" r="60%">
+      <stop offset="0" stop-color="${palette[2]}" stop-opacity="0.30"/>
       <stop offset="1" stop-color="${palette[2]}" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <rect width="1024" height="1024" fill="url(#bg)"/>
   <rect width="1024" height="1024" fill="url(#aura)"/>
-  <circle cx="512" cy="382" r="170" fill="#181A21" stroke="${palette[2]}" stroke-opacity="0.5" stroke-width="6"/>
-  <path d="M240 900 C280 690 372 594 512 594 C652 594 744 690 784 900 Z" fill="#111318" stroke="#2D303A" stroke-width="5"/>
-  <text x="512" y="422" text-anchor="middle" fill="#E8E4DC" font-family="Georgia, serif" font-size="124">${initials}</text>
-  <text x="512" y="812" text-anchor="middle" fill="#A8A29E" font-family="Inter, Arial, sans-serif" font-size="34" letter-spacing="5">${safeSubLabel.toUpperCase()}</text>
+  <path d="M300 960 Q300 740 512 700 Q714 740 714 960 L714 1024 L300 1024 Z" fill="#161821" stroke="#2D303A" stroke-width="4"/>
+  <circle cx="512" cy="390" r="180" fill="#1A1D26" stroke="${palette[2]}" stroke-opacity="0.55" stroke-width="5"/>
+  <circle cx="512" cy="390" r="160" fill="none" stroke="${palette[2]}" stroke-opacity="0.22" stroke-width="1.5"/>
+  <text x="512" y="432" text-anchor="middle" fill="#E8E4DC" font-family="Georgia, serif" font-size="132" font-weight="400">${initials}</text>
+  <text x="512" y="860" text-anchor="middle" fill="#A8A29E" font-family="Inter, Arial, sans-serif" font-size="32" letter-spacing="6">${safeSubLabel.toUpperCase()}</text>
 </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }

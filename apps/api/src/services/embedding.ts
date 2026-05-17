@@ -9,7 +9,7 @@ function getEmbeddingClient(): { client: OpenAI | null; apiKey: string | undefin
   const apiKey = cfg.apiKey ?? process.env.OPENAI_API_KEY;
   const model = cfg.embeddingModel ?? process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small';
   const baseUrl = cfg.baseUrl;
-  const client = apiKey && baseUrl ? new OpenAI({ apiKey, baseURL: baseUrl }) : null;
+  const client = apiKey ? new OpenAI({ apiKey, baseURL: baseUrl?.trim() || undefined }) : null;
   return { client, apiKey, model, baseUrl };
 }
 

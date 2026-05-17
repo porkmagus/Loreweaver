@@ -27,7 +27,7 @@ export async function healthRoutes(app: FastifyInstance) {
   app.get('/health', async (_request, reply) => {
     const qdrantOk = await checkQdrant();
     const providerConfig = resolveProviderConfig();
-    const live = Boolean(providerConfig.baseUrl && providerConfig.chatModel);
+    const live = Boolean(providerConfig.chatModel);
     const providerStatus = live ? await testProviderConnection(providerConfig) : null;
 
     const imageConfig = resolveImageProviderConfig();

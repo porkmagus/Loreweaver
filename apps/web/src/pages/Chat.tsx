@@ -10,6 +10,7 @@ import { MemoryCard } from '@/components/MemoryCard';
 import { CognitionPanel, type CognitionData, type CognitionLoreHit } from '@/components/CognitionPanel';
 import { PortraitFrame } from '@/components/VisualAssetFrame';
 import { getCharacterPortrait } from '@/lib/visualAssets';
+import { setActiveWorldId, setActiveCharacterId } from '@/lib/activeState';
 import { Send, Bot, User, Sparkles, BookOpen, Brain, HeartPulse, Clock, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import type { World, Character, Relationship, TimelineEvent, Memory } from '@loreweaver/shared';
 import { useSearchParams } from 'react-router-dom';
@@ -169,6 +170,14 @@ export function Chat() {
       setSessionId(sessionParam);
     }
   }, [searchParams, sessionId]);
+
+  useEffect(() => {
+    if (selectedWorldId) setActiveWorldId(selectedWorldId);
+  }, [selectedWorldId]);
+
+  useEffect(() => {
+    if (selectedCharacterId) setActiveCharacterId(selectedCharacterId);
+  }, [selectedCharacterId]);
 
   // When a character is selected but no sessionId is known, use the latest persisted session
   useEffect(() => {

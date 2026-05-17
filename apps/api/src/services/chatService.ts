@@ -27,7 +27,7 @@ type MemoryRow = typeof memories.$inferSelect;
 
 function hasLiveProvider(): boolean {
   const cfg = resolveProviderConfig();
-  return Boolean(cfg.baseUrl && cfg.chatModel);
+  return Boolean(cfg.chatModel);
 }
 
 export async function getOrCreateSession(characterId: number, worldId: number, userId?: number | null) {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApi, apiPost, apiPatch, apiDelete } from '@/hooks/useApi';
 import { Spinner } from '@/components/ui/Spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { GenerateWorldModal } from '@/components/GenerateWorldModal';
 import { WorldBannerFrame } from '@/components/VisualAssetFrame';
 import { getWorldBanner } from '@/lib/visualAssets';
+import { setActiveWorldId } from '@/lib/activeState';
 import {
   Globe, Plus, ChevronLeft, Users, BookOpen, Clock, Pencil, Trash2, Sparkles,
   ArrowRight
@@ -154,6 +155,10 @@ function WorldDetail({ worldId }: { worldId: number }) {
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (world) setActiveWorldId(world.id);
+  }, [world]);
 
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

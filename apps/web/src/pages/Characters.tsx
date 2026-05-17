@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApi, apiPost, apiPatch, apiDelete } from '@/hooks/useApi';
 import { Spinner } from '@/components/ui/Spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { PortraitFrame } from '@/components/VisualAssetFrame';
 import { getCharacterPortrait } from '@/lib/visualAssets';
+import { setActiveCharacterId } from '@/lib/activeState';
 import { Users, Plus, ChevronLeft, Heart, Clock, Pencil, Trash2 } from 'lucide-react';
 import type { Character, World, TimelineEvent } from '@loreweaver/shared';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -178,6 +179,10 @@ function CharacterDetail({ characterId }: { characterId: number }) {
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (char) setActiveCharacterId(char.id);
+  }, [char]);
 
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
