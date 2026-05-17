@@ -75,7 +75,7 @@ export function Onboarding() {
             <Globe className="h-8 w-8 text-gold" strokeWidth={1.5} />
           </div>
           <div className="space-y-2">
-            <h1 className="font-serif text-display text-parchment">
+            <h1 className="font-serif text-display text-gold drop-shadow-[0_0_24px_rgba(201,169,110,0.35)]">
               Loreweaver
             </h1>
             <p className="text-body text-ash max-w-md mx-auto">
@@ -169,14 +169,6 @@ export function Onboarding() {
             </div>
           )}
         </form>
-
-        <div className="mx-auto grid max-w-xl gap-2 text-left text-tiny uppercase tracking-widest text-ash sm:grid-cols-3">
-          {['Banner identity', 'Character portraits', 'Persistent archive'].map((item) => (
-            <div key={item} className="rounded-card border border-ridge bg-surface/60 px-3 py-2 text-parchment">
-              {item}
-            </div>
-          ))}
-        </div>
 
         <p className="text-small text-ash">
           No image provider? The archive keeps cinematic fallback visuals so generation never breaks the flow.

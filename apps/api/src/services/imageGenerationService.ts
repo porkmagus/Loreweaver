@@ -4,8 +4,6 @@ import {
   type GenerateImageResult,
 } from './imageProvider.js';
 
-const imageTimeoutMs = Number(process.env.IMAGE_GENERATION_TIMEOUT_MS ?? 60_000);
-
 export type VisualAssetKind = 'world-banner' | 'character-portrait';
 export type VisualAssetStatus = 'generated' | 'fallback' | 'failed' | 'disabled' | 'generating';
 
@@ -151,11 +149,7 @@ async function generateVisualAsset({
     }
 
     try {
-      const result = await withTimeout(
-        generateImage(config, { prompt, size }),
-        imageTimeoutMs,
-        'image generation timed out',
-      );
+      const result = await generateImage(config, { prompt, size });
 
       if (result.imageUrl) {
         return {
@@ -289,9 +283,4 @@ function escapeXml(value: string): string {
     .replace(/'/g, '&' + '#39;');
 }
 
-async function withTimeout<T>(promise: Promise<T>, ms: number, timeoutMessage: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(timeoutMessage)), ms)),
-  ]);
-}
+

@@ -342,21 +342,27 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
   // Images will appear on subsequent frontend polls as they complete.
   const worldId = world.id;
 
-  generateWorldBanner({
-    name: generated.name,
-    description: generated.description,
-    genre: generated.genre,
-    themes: [
-      ...generated.lore.map((l) => l.title),
-      ...generated.timeline.map((t) => t.title),
-    ].slice(0, 6),
-  }).then((banner) => updateWorld(worldId, {
-    metadata: {
-      visual: { banner },
-    } satisfies VisualMetadata,
-  })).catch((err) => {
-    console.error('[world-generation] Banner background generation failed:', err);
-  });
+  // Stagger image generation to stay safely under OpenAI Tier-1 rate limits
+  // (5 images/min). Use 30s spacing between all image requests.
+  const STAGGER_MS = 30_000;
+
+  setTimeout(() => {
+    generateWorldBanner({
+      name: generated.name,
+      description: generated.description,
+      genre: generated.genre,
+      themes: [
+        ...generated.lore.map((l) => l.title),
+        ...generated.timeline.map((t) => t.title),
+      ].slice(0, 6),
+    }).then((banner) => updateWorld(worldId, {
+      metadata: {
+        visual: { banner },
+      } satisfies VisualMetadata,
+    })).catch((err) => {
+      console.error('[world-generation] Banner background generation failed:', err);
+    });
+  }, 0);
 
   for (let i = 0; i < generated.characters.length; i++) {
     const c = generated.characters[i];
@@ -377,7 +383,7 @@ export async function generateWorldFromPrompt(userPrompt: string): Promise<{ wor
       })).catch((err) => {
         console.error('[world-generation] Portrait background generation failed:', err);
       });
-    }, i * 15_000);
+    }, (i + 1) * STAGGER_MS);
   }
 
   return { worldId: world.id, name: world.name };
