@@ -140,7 +140,8 @@ const IMAGE_PRESETS: { label: string; value: ImageProviderConfig['provider']; de
 // ── Draft caching ───────────────────────────────────────────────
 function saveDraft(config: Partial<ProviderConfig>) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    const { apiKey: _apiKey, ...safeConfig } = config;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(safeConfig));
   } catch {
     // storage may be unavailable or full
   }
